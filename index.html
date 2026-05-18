@@ -1,0 +1,2651 @@
+<!DOCTYPE html>
+
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Diario di Bordo CCB</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --paper:#fff;--ink:#1c1410;--ink-faded:#4a3f30;
+  --red:#c0392b;--blue:#4a90b8;--line:#ddd8ce;--line-light:#eeebe4;
+  --margin:#c8a0a0;--gold:#b8840a;--green:#2d6a4f;
+  --purple:#6b3fa0;--purple-light:#f3eefb;--purple-dark:#4a2870;
+  --orange:#c8854a;
+}
+body{background:#e8e0d0;background-image:radial-gradient(ellipse at 20% 50%,rgba(184,132,10,.08),transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(192,57,43,.06),transparent 50%),repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(180,160,120,.12) 39px,rgba(180,160,120,.12) 40px);min-height:100vh;font-family:'Source Sans 3',sans-serif;display:flex;flex-direction:column;align-items:center;padding:1.5rem .5rem 4rem;}
+.book{width:100%;max-width:700px;position:relative;filter:drop-shadow(0 24px 60px rgba(0,0,0,.35));}
+.cover{background:linear-gradient(160deg,#d4c9a8,#c8bc95 40%,#b8aa80);border-radius:4px 14px 14px 4px;padding:2rem 2rem 2rem 3rem;position:relative;overflow:hidden;border-left:22px solid #a09070;}
+.cover::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(255,255,255,.025) 3px,rgba(255,255,255,.025) 4px),repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,255,255,.025) 3px,rgba(255,255,255,.025) 4px);pointer-events:none;}
+.cover::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.08),transparent 45%,rgba(0,0,0,.18));pointer-events:none;}
+.cover-spine{position:absolute;left:0;top:0;bottom:0;width:22px;background:linear-gradient(90deg,#887860,#b0a080 40%,#907868 60%,#a09070);}
+.cover-title-wrap{position:relative;z-index:1;border:2px solid rgba(90,70,20,.28);padding:1.5rem 2rem;text-align:center;background:rgba(255,255,255,.12);}
+.cover-label{font-family:'Source Sans 3',sans-serif;font-size:.6rem;letter-spacing:.5em;color:#5a4a20;text-transform:uppercase;margin-bottom:.5rem;}
+.cover-main{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:700;color:#2a1f0a;line-height:1;}
+.cover-main em{font-style:italic;font-weight:400;font-size:1.2rem;display:block;margin-top:.3rem;color:#4a3a15;}
+.cover-ornament{color:#8a7040;font-size:1.1rem;margin:.6rem 0;opacity:.65;letter-spacing:.5em;}
+.cover-year{font-family:'Source Sans 3',sans-serif;font-size:.62rem;color:#6a5a30;letter-spacing:.4em;margin-top:.4rem;}
+.spirals{position:absolute;left:-7px;top:24px;bottom:24px;display:flex;flex-direction:column;justify-content:space-around;z-index:10;pointer-events:none;}
+.spiral{width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#d0d0d0,#888,#444);box-shadow:0 2px 4px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.35);flex-shrink:0;}
+.tabs-side{display:none;flex-direction:column;position:absolute;right:-2px;top:70px;gap:4px;z-index:20;}
+.side-tab{width:38px;padding:.6rem .3rem;border-radius:0 8px 8px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Source Sans 3',sans-serif;font-size:.52rem;font-weight:600;letter-spacing:.06em;writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);transition:all .2s;border:1px solid rgba(0,0,0,.12);border-left:none;box-shadow:3px 0 6px rgba(0,0,0,.2);user-select:none;}
+.side-tab.compila{background:var(--red);color:#fff;}
+.side-tab.registro{background:var(--blue);color:#fff;}
+.side-tab.carburanti{background:var(--orange);color:#fff;}
+.side-tab.cisterna{background:#1a6b8a;color:#fff;}
+.side-tab.admin{background:var(--green);color:#fff;}
+.side-tab.superadmin{background:var(--purple);color:#fff;}
+.side-tab.active,.side-tab:hover{width:44px;box-shadow:4px 0 10px rgba(0,0,0,.25);}
+.pages{position:relative;}
+.pages::before{content:'';position:absolute;top:4px;left:14px;right:-4px;bottom:-4px;background:linear-gradient(180deg,#e0d8c8,#d8ceb8);border-radius:0 5px 5px 0;}
+.pages::after{content:'';position:absolute;top:8px;left:11px;right:-7px;bottom:-8px;background:linear-gradient(180deg,#d8ceb8,#ccc4b0);border-radius:0 5px 5px 0;z-index:-1;}
+.page{display:none;background:#fff;position:relative;min-height:520px;padding:0 1.8rem 2.5rem 4rem;overflow-y:auto;overflow-x:hidden;border-radius:0 5px 5px 0;max-height:82vh;scrollbar-width:thin;scrollbar-color:var(--line) transparent;}
+.page.active{display:block;}
+.page::-webkit-scrollbar{width:4px;}.page::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px;}
+.page::before{content:'';position:absolute;left:3.2rem;top:0;bottom:0;width:1.5px;background:var(--margin);opacity:.6;}
+.page::after{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(180deg,transparent 0px,transparent 31px,rgba(200,188,170,.25) 31px,rgba(200,188,170,.25) 32px);background-position:0 44px;pointer-events:none;z-index:0;}
+.ph{position:relative;z-index:2;padding:1rem 0 .7rem;border-bottom:2px solid var(--line);margin-bottom:1.2rem;display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:.4rem;}
+.ph-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-style:italic;color:var(--ink);}
+.ph-date{font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);}
+/* LOGIN */
+.lp{background:#fff;border-radius:5px;padding:2.5rem 2rem 2.5rem 4rem;position:relative;overflow:hidden;min-height:460px;display:flex;flex-direction:column;justify-content:center;}
+.lp.normal{border-top:6px solid var(--red);}
+.lp.sa{border-top:6px solid var(--purple);display:none;}
+.lp::before{content:'';position:absolute;left:3.2rem;top:0;bottom:0;width:1.5px;background:var(--margin);opacity:.6;}
+.lp::after{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(180deg,transparent 0px,transparent 31px,rgba(200,188,170,.25) 31px,rgba(200,188,170,.25) 32px);background-position:0 44px;pointer-events:none;}
+.lp.sa::before{background:rgba(107,63,160,.4);}
+.lp.sa::after{background-image:repeating-linear-gradient(180deg,transparent 0px,transparent 31px,rgba(107,63,160,.06) 31px,rgba(107,63,160,.06) 32px);background-position:0 44px;}
+.li{position:relative;z-index:2;max-width:320px;margin:0 auto;}
+.lt{font-family:'Playfair Display',serif;font-size:1.6rem;font-style:italic;color:var(--ink);text-align:center;margin-bottom:.2rem;}
+.lt.purple{color:var(--purple);}
+.ls{font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);text-align:center;margin-bottom:2rem;line-height:1.5;}
+.lf{margin-bottom:1.6rem;}
+.ll{font-family:'Source Sans 3',sans-serif;font-size:.75rem;color:var(--ink-faded);display:block;margin-bottom:.25rem;}
+.lin{width:100%;background:transparent;border:none;border-bottom:1.5px solid var(--line);font-family:'Source Sans 3',sans-serif;font-size:1rem;color:var(--ink);padding:.35rem 0;outline:none;transition:border-color .2s;}
+.lin:focus{border-bottom-color:var(--red);}
+.lb{width:100%;border:none;padding:.9rem;font-family:'Playfair Display',serif;font-size:1rem;font-style:italic;cursor:pointer;margin-top:.6rem;transition:all .2s;position:relative;z-index:3;}
+.lb.dark{background:var(--ink);color:#f5f0e6;}
+.lb.dark:hover{background:var(--red);}
+.lb.pur{background:var(--purple);color:#fff;}
+.lb.pur:hover{background:var(--purple-dark);}
+.lb:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2);}
+.le{font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--red);text-align:center;margin-top:.7rem;display:none;}
+.le.show{display:block;}
+.lsw{text-align:center;margin-top:1.1rem;font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);}
+.lsw a{color:var(--blue);cursor:pointer;text-decoration:underline;}
+.lsw a.sa-link{color:var(--purple);}
+/* USER BAR */
+.ub{background:#fafaf8;border-bottom:1px solid var(--line);padding:.45rem 1.5rem .45rem 4rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem;position:relative;z-index:5;}
+.un{font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.un strong{color:var(--ink);}
+.bsa{display:inline-block;background:var(--purple);color:#fff;font-size:.58rem;font-weight:700;letter-spacing:.1em;padding:.15rem .4rem;border-radius:2px;margin-left:.4rem;vertical-align:middle;}
+.badm{display:inline-block;background:var(--green);color:#fff;font-size:.58rem;font-weight:700;letter-spacing:.1em;padding:.15rem .4rem;border-radius:2px;margin-left:.4rem;vertical-align:middle;}
+.ul{font-family:'Source Sans 3',sans-serif;font-size:.75rem;font-weight:600;color:#fff;background:var(--red);cursor:pointer;border:none;padding:.28rem .75rem;border-radius:4px;white-space:nowrap;flex-shrink:0;transition:background .15s,transform .1s;letter-spacing:.02em;}
+.ul:hover{background:#a93226;transform:translateY(-1px);}
+.ul:active{transform:translateY(0);}
+/* FIELDS */
+.field{margin-bottom:1.1rem;position:relative;z-index:2;}
+.fl{font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink-faded);display:block;margin-bottom:.18rem;letter-spacing:.04em;text-transform:uppercase;}
+.field input,.field select,.field textarea{width:100%;background:transparent;border:none;border-bottom:1px solid var(--line);font-family:'Source Sans 3',sans-serif;font-size:1rem;color:var(--ink);padding:.25rem 0;outline:none;appearance:none;-webkit-appearance:none;transition:border-color .2s;}
+.field input:focus,.field select:focus,.field textarea:focus{border-bottom-color:var(--red);}
+.field select{cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .3rem center;padding-right:1.5rem;}
+.field textarea{resize:none;min-height:80px;line-height:1.8;border:1px solid var(--line);padding:.45rem .7rem;margin-top:.2rem;background:#fafaf8;border-radius:2px;}
+.field textarea:focus{border-color:var(--red);}
+.fr{display:flex;gap:1.5rem;}.fr .field{flex:1;}
+.nw{position:relative;}
+.mb{position:absolute;bottom:.4rem;right:.5rem;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);background:#fff;font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:3;}
+.mb:hover{border-color:var(--red);}
+.mb.rec{background:var(--red);border-color:var(--red);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.4)}50%{box-shadow:0 0 0 8px rgba(192,57,43,0)}}
+.sb{position:relative;z-index:2;width:100%;background:var(--ink);color:#f5f0e6;border:none;padding:1rem;font-family:'Playfair Display',serif;font-size:1rem;font-style:italic;cursor:pointer;margin-top:1.2rem;transition:all .2s;}
+.sb:hover{background:var(--red);transform:translateY(-1px);}
+.sb:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.sb.pur{background:var(--purple);}
+.sb.pur:hover{background:var(--purple-dark);}
+.sb.teal{background:#1a6b8a;}
+.sb.teal:hover{background:#124f68;}
+.sn{position:relative;z-index:2;font-family:'Source Sans 3',sans-serif;font-size:.88rem;color:var(--green);text-align:center;margin-top:.6rem;display:none;padding:.4rem;background:rgba(45,106,79,.06);border-left:3px solid var(--green);}
+.sn.show{display:block;}
+.sn.pur{color:var(--purple);background:rgba(107,63,160,.06);border-color:var(--purple);}
+/* DASH */
+.dc{position:relative;z-index:2;display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center;justify-content:space-between;}
+.frow{display:flex;gap:1rem;flex-wrap:wrap;align-items:center;}
+.flbl{font-family:'Source Sans 3',sans-serif;font-size:.7rem;color:var(--ink-faded);text-transform:uppercase;letter-spacing:.06em;}
+.hs{border:none;border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.85rem;color:var(--ink);padding:.1rem 1.3rem .1rem 0;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0 center;}
+.cb{font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--blue);background:none;border:1px solid var(--line);padding:.25rem .9rem;cursor:pointer;transition:all .15s;}
+.cb:hover{background:#f5f5f5;border-color:var(--blue);}
+.ss{position:relative;z-index:2;display:flex;gap:2.5rem;margin-bottom:1rem;padding:.8rem 0;border-bottom:1px solid var(--line-light);}
+.sn2{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--red);line-height:1;display:block;}
+.sl{font-family:'Source Sans 3',sans-serif;font-size:.68rem;color:var(--ink-faded);text-transform:uppercase;letter-spacing:.04em;}
+/* TABLE */
+.at{position:relative;z-index:2;width:100%;border-collapse:collapse;}
+.at thead tr{border-bottom:2px solid var(--ink);}
+.at th{font-family:'Source Sans 3',sans-serif;font-size:.68rem;font-weight:600;color:var(--ink-faded);text-align:left;padding:.35rem .5rem .35rem 0;letter-spacing:.06em;text-transform:uppercase;}
+.at td{font-family:'Source Sans 3',sans-serif;font-size:.88rem;color:var(--ink);padding:.55rem .5rem .55rem 0;vertical-align:top;border-bottom:1px solid var(--line-light);}
+.at tr:hover td{background:rgba(200,160,160,.06);}
+.tm{font-weight:700;color:var(--blue);white-space:nowrap;}
+.td{color:var(--ink-faded);white-space:nowrap;font-size:.78rem;}
+.tn{font-style:italic;color:var(--ink-faded);max-width:180px;}
+.dx{background:none;border:none;color:var(--line);cursor:pointer;font-size:1.1rem;transition:color .15s;line-height:1;}
+.dx:hover{color:var(--red);}
+.el{font-family:'Source Sans 3',sans-serif;font-style:italic;color:var(--line);font-size:.9rem;text-align:center;padding:2.5rem 0;}
+/* ADMIN SECTIONS */
+.as{margin-bottom:1.8rem;position:relative;z-index:2;}
+.ast{font-family:'Playfair Display',serif;font-size:1rem;font-style:italic;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:.35rem;margin-bottom:.9rem;}
+.dr{display:flex;align-items:center;gap:.6rem;padding:.45rem 0;border-bottom:1px dashed var(--line-light);flex-wrap:wrap;}
+.dr:last-child{border-bottom:none;}
+.dn{font-family:'Source Sans 3',sans-serif;font-size:.92rem;color:var(--ink);min-width:130px;font-weight:600;}
+.dm{font-family:'Source Sans 3',sans-serif;font-size:.76rem;color:var(--ink-faded);flex:1;font-style:italic;}
+.da{display:flex;gap:.3rem;}
+.bh{font-family:'Source Sans 3',sans-serif;font-size:.72rem;border:1px solid var(--line);background:none;color:var(--ink-faded);padding:.18rem .55rem;cursor:pointer;transition:all .12s;}
+.bh:hover{border-color:var(--ink);color:var(--ink);}
+.bh.red:hover{border-color:var(--red);color:var(--red);}
+.bh.pur{border-color:var(--purple);color:var(--purple);}
+.bh.pur:hover{background:var(--purple);color:#fff;}
+.bh.grn{border-color:var(--green);color:var(--green);}
+.bh.grn:hover{background:var(--green);color:#fff;}
+.ar{display:flex;gap:.6rem;margin-top:.7rem;flex-wrap:wrap;}
+.hi{flex:1;min-width:140px;border:none;border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;color:var(--ink);padding:.25rem 0;outline:none;}
+.hi:focus{border-bottom-color:var(--red);}
+.ba{font-family:'Source Sans 3',sans-serif;font-size:.8rem;font-weight:600;background:var(--ink);color:#f5f0e6;border:none;padding:.35rem .9rem;cursor:pointer;transition:background .15s;}
+.ba:hover{background:var(--green);}
+/* MODAL */
+.mo{position:fixed;inset:0;background:rgba(28,20,10,.72);display:none;align-items:center;justify-content:center;z-index:300;padding:1.2rem;backdrop-filter:blur(2px);}
+.mo.show{display:flex;}
+.md{background:#fff;border:2px solid var(--line);max-width:440px;width:100%;box-shadow:10px 10px 0 rgba(0,0,0,.15);animation:mIn .2s ease;}
+@keyframes mIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.mh{font-family:'Playfair Display',serif;font-size:1.05rem;font-style:italic;color:var(--ink);padding:.9rem 1.1rem;border-bottom:2px solid var(--line);}
+.mb2{padding:1.1rem;}
+.mmz{display:flex;flex-direction:column;gap:.35rem;max-height:280px;overflow-y:auto;}
+.mck{display:flex;align-items:center;gap:.65rem;cursor:pointer;padding:.25rem 0;}
+.mck input{accent-color:var(--red);width:16px;height:16px;cursor:pointer;}
+.mck span{font-family:'Source Sans 3',sans-serif;font-size:.92rem;color:var(--ink);}
+.mf{display:flex;justify-content:flex-end;gap:.5rem;padding:.65rem 1.1rem;border-top:1px solid var(--line);}
+/* FUEL */
+.fs2{position:relative;z-index:2;margin-bottom:1.5rem;}
+.fh{font-family:'Playfair Display',serif;font-size:.95rem;font-style:italic;color:var(--ink-faded);margin-bottom:1rem;}
+.fsel{display:flex;gap:1.2rem;justify-content:center;}
+.ft{flex:1;max-width:160px;padding:1.3rem;border:2px solid var(--line);border-radius:10px;text-align:center;cursor:pointer;transition:all .3s;background:#fafaf8;}
+.ft:hover{border-color:var(--ink);transform:translateY(-3px);}
+.ft.diesel.active{background:linear-gradient(135deg,#1a1a1a,#333);border-color:#1a1a1a;color:#fff;}
+.ft.benzina.active{background:linear-gradient(135deg,#e07800,#ff9f20);border-color:#e07800;color:#fff;}
+.ft.elettrica.active{background:linear-gradient(135deg,#1a6b8a,#2ea8d5);border-color:#1a6b8a;color:#fff;}
+.fi{font-size:2.5rem;margin-bottom:.5rem;}
+.fn2{font-family:'Source Sans 3',sans-serif;font-size:.9rem;font-weight:600;color:var(--ink);}
+.ft.active .fn2{color:#fff;}
+.fd{position:relative;z-index:2;margin:1.5rem 0;display:flex;justify-content:center;}
+.pc{text-align:center;background:linear-gradient(135deg,#f0f0ee,#e6e6e2);border-radius:14px;padding:2rem 2.5rem;box-shadow:0 6px 20px rgba(0,0,0,.1);min-width:200px;border:2px solid var(--line);}
+.pi{font-size:4rem;margin-bottom:.8rem;}
+.pl{font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink-faded);text-transform:uppercase;letter-spacing:.12em;margin-bottom:.5rem;}
+.pn{font-family:'Playfair Display',serif;font-size:4rem;font-weight:700;color:var(--red);line-height:1;}
+.pu{font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);margin-top:.5rem;}
+.bfi{display:flex;align-items:center;justify-content:space-between;padding:.65rem 0;border-bottom:1px dashed var(--line-light);}
+.bfi:last-child{border-bottom:none;}
+.bfn{font-family:'Source Sans 3',sans-serif;font-size:.92rem;color:var(--ink);font-weight:600;min-width:130px;}
+.bfs{border:none;border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.83rem;color:var(--ink);padding:.2rem 1.3rem .2rem 0;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0;flex:1;max-width:160px;}
+/* EXPORT BUTTONS */
+.exb{border:none;padding:1.1rem 1.5rem;font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;cursor:pointer;border-radius:7px;letter-spacing:.08em;text-transform:uppercase;transition:all .2s;box-shadow:0 4px 10px rgba(0,0,0,.15);color:#fff;width:100%;margin-bottom:.9rem;text-align:left;}
+.exb:hover{transform:translateY(-2px);box-shadow:0 7px 18px rgba(0,0,0,.22);}
+.exb.reg{background:linear-gradient(135deg,#388e3c,#2d6a4f);}
+.exb.ben{background:linear-gradient(135deg,#e07800,#c85a00);}
+.exb.cis{background:linear-gradient(135deg,#7a5c3a,#5c3e22);}
+.fothumb{width:72px;height:72px;object-fit:cover;border:1.5px solid var(--line);border-radius:3px;}
+.dot-nd{color:var(--line);font-size:.75rem;font-style:italic;}
+
+/* CISTERNA */
+.cisterna-wrap{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;margin:1rem 0 1.5rem;}
+.cisterna-svg-wrap{position:relative;width:100%;max-width:320px;margin:0 auto;}
+.cisterna-label-top{font-family:‘Source Sans 3’,sans-serif;font-size:.72rem;color:var(–ink-faded);text-align:center;margin-bottom:.4rem;letter-spacing:.08em;text-transform:uppercase;}
+.cisterna-litri{font-family:‘Playfair Display’,serif;font-size:2.8rem;font-weight:700;line-height:1;transition:color .5s;}
+.cisterna-litri-wrap{text-align:center;margin-top:1rem;}
+.cisterna-unit{font-family:‘Source Sans 3’,sans-serif;font-size:.8rem;color:var(–ink-faded);margin-top:.2rem;}
+.cisterna-pct{font-family:‘Source Sans 3’,sans-serif;font-size:.75rem;color:var(–ink-faded);margin-top:.1rem;}
+.cisterna-stato{display:inline-block;font-family:‘Source Sans 3’,sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:.2rem .7rem;border-radius:20px;margin-top:.4rem;color:#fff;}
+.carico-box{position:relative;z-index:2;background:#f8f8f6;border:1.5px solid var(–line);border-radius:8px;padding:1rem 1.2rem;margin-bottom:1rem;}
+.carico-title{font-family:‘Playfair Display’,serif;font-size:.92rem;font-style:italic;color:var(–ink);margin-bottom:.7rem;border-bottom:1px solid var(–line-light);padding-bottom:.35rem;}
+.cisterna-storico{position:relative;z-index:2;}
+.csrow{display:flex;gap:.5rem;padding:.4rem 0;border-bottom:1px dashed var(–line-light);align-items:center;}
+.csrow:last-child{border-bottom:none;}
+.csd{font-family:‘Source Sans 3’,sans-serif;font-size:.72rem;color:var(–ink-faded);min-width:80px;}
+.cst{font-family:‘Source Sans 3’,sans-serif;font-size:.82rem;color:var(–ink);flex:1;}
+.csl{font-family:‘Playfair Display’,serif;font-size:.95rem;font-weight:700;}
+.csl.up{color:var(–green);}
+.csl.down{color:var(–red);}
+.csb{font-family:‘Source Sans 3’,sans-serif;font-size:.68rem;color:var(–ink-faded);min-width:55px;text-align:right;}
+
+/* SUPER ADMIN */
+.saph{position:relative;z-index:2;padding:1rem 0 .7rem;border-bottom:3px solid var(–purple);margin-bottom:1.4rem;display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:.4rem;}
+.sapt{font-family:‘Playfair Display’,serif;font-size:1.4rem;font-style:italic;color:var(–purple);}
+.sapb{display:inline-block;background:var(–purple);color:#fff;font-size:.58rem;font-weight:700;letter-spacing:.12em;padding:.25rem .6rem;border-radius:3px;vertical-align:middle;text-transform:uppercase;margin-left:.5rem;}
+.sas{margin-bottom:2rem;position:relative;z-index:2;}
+.sast{font-family:‘Playfair Display’,serif;font-size:1rem;font-style:italic;color:var(–purple-dark);border-bottom:1px solid rgba(107,63,160,.25);padding-bottom:.35rem;margin-bottom:.9rem;display:flex;align-items:center;gap:.5rem;}
+.sast::before{content:’’;display:inline-block;width:4px;height:14px;background:var(–purple);border-radius:2px;flex-shrink:0;}
+.ac{background:linear-gradient(135deg,#fafaf8,#f5f0fb);border:1.5px solid rgba(107,63,160,.2);border-radius:8px;padding:.85rem 1rem;margin-bottom:.7rem;transition:all .2s;}
+.ac:hover{border-color:rgba(107,63,160,.4);box-shadow:0 3px 12px rgba(107,63,160,.1);}
+.act{display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;}
+.acn{font-family:‘Source Sans 3’,sans-serif;font-size:.95rem;font-weight:600;color:var(–ink);}
+.acm{font-family:‘Source Sans 3’,sans-serif;font-size:.72rem;color:var(–ink-faded);margin-top:.25rem;line-height:1.5;}
+.asb{font-family:‘Source Sans 3’,sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.18rem .55rem;border-radius:3px;flex-shrink:0;}
+.asb.on{background:rgba(45,106,79,.12);color:var(–green);}
+.asb.off{background:rgba(192,57,43,.1);color:var(–red);}
+.aca{display:flex;gap:.4rem;margin-top:.6rem;flex-wrap:wrap;}
+/* AUDIT — tabella paginata */
+.auc{display:flex;gap:.8rem;margin-bottom:.8rem;flex-wrap:wrap;align-items:center;position:relative;z-index:2;}
+.audit-table-wrap{overflow-x:auto;position:relative;z-index:2;}
+.audit-table{width:100%;border-collapse:collapse;font-size:.78rem;}
+.audit-table thead tr{border-bottom:2px solid var(–ink);}
+.audit-table th{font-family:‘Source Sans 3’,sans-serif;font-size:.65rem;font-weight:600;color:var(–ink-faded);text-align:left;padding:.3rem .4rem;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;}
+.audit-table td{font-family:‘Source Sans 3’,sans-serif;font-size:.76rem;color:var(–ink);padding:.4rem .4rem;vertical-align:top;border-bottom:1px solid var(–line-light);}
+.audit-table tr:hover td{background:rgba(107,63,160,.04);}
+.audit-pager{display:flex;align-items:center;gap:.5rem;margin-top:.7rem;font-family:‘Source Sans 3’,sans-serif;font-size:.78rem;color:var(–ink-faded);flex-wrap:wrap;position:relative;z-index:2;}
+.audit-pager button{border:1px solid var(–line);background:none;padding:.2rem .65rem;cursor:pointer;font-size:.78rem;transition:all .12s;border-radius:3px;}
+.audit-pager button:hover{border-color:var(–purple);color:var(–purple);}
+.audit-pager button:disabled{opacity:.35;cursor:not-allowed;}
+.audit-pager .cur-page{font-weight:700;color:var(–purple);}
+.aur{padding:.55rem 0;border-bottom:1px solid var(–line-light);display:grid;grid-template-columns:130px 110px 1fr 90px;gap:.3rem .5rem;align-items:start;}
+.aur:last-child{border-bottom:none;}
+.auts{font-family:‘Source Sans 3’,sans-serif;font-size:.7rem;color:var(–ink-faded);white-space:nowrap;}
+.auac{font-family:‘Source Sans 3’,sans-serif;font-size:.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.auac.sa{color:var(–purple);}
+.auac.admin{color:var(–green);}
+.auac.driver{color:var(–blue);}
+.auds{font-family:‘Source Sans 3’,sans-serif;font-size:.82rem;color:var(–ink);}
+.auip{font-family:monospace;font-size:.65rem;color:var(–ink-faded);background:rgba(0,0,0,.04);padding:.1rem .3rem;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;justify-self:end;}
+.tag{display:inline-block;font-family:‘Source Sans 3’,sans-serif;font-size:.6rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:.1rem .4rem;border-radius:2px;margin-right:.3rem;}
+.tg-login{background:rgba(74,144,184,.12);color:var(–blue);}
+.tg-logout{background:rgba(200,133,74,.12);color:#c8854a;}
+.tg-save{background:rgba(45,106,79,.12);color:var(–green);}
+.tg-delete{background:rgba(192,57,43,.1);color:var(–red);}
+.tg-admin{background:rgba(107,63,160,.12);color:var(–purple);}
+.tg-settings{background:rgba(184,132,10,.12);color:var(–gold);}
+/* OTP */
+.otp-step{display:none;}
+.otp-step.active{display:block;}
+.otpd{display:flex;gap:.5rem;justify-content:center;margin:1rem 0;}
+.otpi{width:42px;height:52px;border:2px solid var(–line);border-radius:6px;font-family:‘Playfair Display’,serif;font-size:1.6rem;font-weight:700;text-align:center;outline:none;transition:border-color .2s;color:var(–purple);}
+.otpi:focus{border-color:var(–purple);}
+.otptimer{font-family:‘Source Sans 3’,sans-serif;font-size:.78rem;color:var(–ink-faded);text-align:center;margin-top:.3rem;}
+.otptimer span{color:var(–red);font-weight:600;}
+.otpcode{font-family:monospace;font-size:1.4rem;letter-spacing:.3em;font-weight:700;color:var(–purple);background:var(–purple-light);padding:.8rem 1.5rem;border-radius:6px;text-align:center;border:2px dashed rgba(107,63,160,.3);margin:1rem 0;}
+/* INFO BOXES */
+.ib{font-family:‘Source Sans 3’,sans-serif;font-size:.8rem;background:var(–purple-light);border-left:3px solid var(–purple);padding:.7rem .9rem;margin-bottom:1rem;color:var(–ink-faded);line-height:1.5;position:relative;z-index:2;}
+.wb{font-family:‘Source Sans 3’,sans-serif;font-size:.8rem;background:#fff8e1;border-left:3px solid var(–gold);padding:.7rem .9rem;margin-bottom:1rem;color:var(–ink-faded);line-height:1.5;position:relative;z-index:2;}
+.nab{margin-top:1.2rem;padding:1rem;border:1.5px dashed rgba(107,63,160,.3);border-radius:6px;position:relative;z-index:2;}
+.nab p{font-family:‘Playfair Display’,serif;font-size:.9rem;font-style:italic;color:var(–purple-dark);margin-bottom:.8rem;}
+.sab{text-align:center;margin-top:1rem;font-family:‘Source Sans 3’,sans-serif;font-size:.78rem;color:var(–ink-faded);}
+.sab a{color:var(–purple);cursor:pointer;text-decoration:underline;}
+.sacrown{text-align:center;font-size:2.5rem;margin-bottom:.5rem;line-height:1;}
+
+/* ATTENZIONE BUTTON */
+@keyframes attBlink{0%,100%{background:#c0392b;box-shadow:0 0 0 0 rgba(192,57,43,.5);}50%{background:#e74c3c;box-shadow:0 0 0 6px rgba(192,57,43,0);}}
+.att-btn{display:none;align-items:center;gap:.45rem;background:#c0392b;color:#fff;border:none;border-radius:5px;padding:.28rem .7rem;cursor:pointer;font-family:‘Source Sans 3’,sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.04em;animation:attBlink 1.4s infinite;flex-shrink:0;white-space:nowrap;}
+.att-btn.has-msgs{display:flex;}
+.att-badge{background:#fff;color:#c0392b;border-radius:50%;width:18px;height:18px;font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+/* ATTENZIONE MODAL */
+.att-mo{position:fixed;inset:0;background:rgba(28,20,10,.75);display:none;align-items:center;justify-content:center;z-index:400;padding:1.2rem;backdrop-filter:blur(2px);}
+.att-mo.show{display:flex;}
+.att-md{background:#fff;border:3px solid var(–red);max-width:460px;width:100%;box-shadow:0 20px 50px rgba(192,57,43,.3);animation:mIn .2s ease;border-radius:4px;}
+.att-mh{background:var(–red);color:#fff;padding:.85rem 1.1rem;font-family:‘Playfair Display’,serif;font-size:1.05rem;font-style:italic;display:flex;align-items:center;gap:.5rem;}
+.att-mb{padding:1.1rem;max-height:55vh;overflow-y:auto;}
+.att-msg{padding:.75rem .9rem;margin-bottom:.6rem;background:#fff9f9;border:1.5px solid rgba(192,57,43,.2);border-left:4px solid var(–red);border-radius:3px;}
+.att-msg-barca{font-family:‘Source Sans 3’,sans-serif;font-size:.65rem;font-weight:700;color:var(–red);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem;}
+.att-msg-text{font-family:‘Source Sans 3’,sans-serif;font-size:.92rem;color:var(–ink);line-height:1.55;}
+.att-mf{display:flex;justify-content:flex-end;padding:.65rem 1.1rem;border-top:1px solid var(–line);}
+/* ADMIN MESSAGGI */
+.amsg-row{display:flex;gap:.6rem;padding:.5rem 0;border-bottom:1px dashed var(–line-light);flex-wrap:wrap;align-items:flex-start;}
+.amsg-row:last-child{border-bottom:none;}
+.amsg-target{font-family:‘Source Sans 3’,sans-serif;font-size:.72rem;font-weight:700;color:var(–red);min-width:80px;padding-top:.15rem;text-transform:uppercase;}
+.amsg-text{font-family:‘Source Sans 3’,sans-serif;font-size:.85rem;color:var(–ink);flex:1;}
+/* EDIT MODAL */
+.edit-mo{position:fixed;inset:0;background:rgba(28,20,10,.78);display:none;align-items:center;justify-content:center;z-index:350;padding:1rem;backdrop-filter:blur(2px);}
+.edit-mo.show{display:flex;}
+.edit-md{background:#fff;max-width:520px;width:100%;max-height:88vh;overflow-y:auto;border-radius:4px;box-shadow:12px 12px 0 rgba(0,0,0,.18);border:2px solid var(–line);animation:mIn .2s ease;scrollbar-width:thin;}
+.edit-mh{font-family:‘Playfair Display’,serif;font-size:1.05rem;font-style:italic;color:var(–ink);padding:.9rem 1.1rem;border-bottom:2px solid var(–line);position:sticky;top:0;background:#fff;z-index:2;}
+.edit-mb{padding:1.1rem;}
+.edit-mf{display:flex;justify-content:flex-end;gap:.5rem;padding:.65rem 1.1rem;border-top:1px solid var(–line);position:sticky;bottom:0;background:#fff;}
+.edit-md input:disabled,.edit-md select:disabled,.edit-md textarea:disabled{opacity:.45;cursor:not-allowed;background:#f5f5f3;}
+/* CHECK FIELDS */
+.check-group{position:relative;z-index:2;margin-bottom:1.1rem;}
+.check-group-title{font-family:‘Source Sans 3’,sans-serif;font-size:.72rem;color:var(–ink-faded);display:block;margin-bottom:.55rem;letter-spacing:.04em;text-transform:uppercase;border-bottom:1px solid var(–line-light);padding-bottom:.3rem;}
+.check-row{display:flex;align-items:center;justify-content:space-between;padding:.38rem 0;border-bottom:1px dashed var(–line-light);}
+.check-row:last-child{border-bottom:none;}
+.check-label{font-family:‘Source Sans 3’,sans-serif;font-size:.9rem;color:var(–ink);}
+.check-btns{display:flex;gap:.35rem;}
+.chk-btn{border:1.5px solid var(–line);background:none;border-radius:4px;padding:.2rem .7rem;font-size:.8rem;cursor:pointer;transition:all .15s;font-family:‘Source Sans 3’,sans-serif;}
+.chk-btn.ok{border-color:#2d6a4f;background:rgba(45,106,79,.12);color:#2d6a4f;}
+.chk-btn.no{border-color:var(–red);background:rgba(192,57,43,.1);color:var(–red);}
+.fuel-level-row{display:flex;align-items:center;justify-content:space-between;padding:.38rem 0;}
+.fuel-level-btns{display:flex;gap:.3rem;flex-wrap:wrap;}
+.fuel-lvl-btn{border:1.5px solid var(–line);background:none;border-radius:4px;padding:.2rem .55rem;font-size:.8rem;cursor:pointer;transition:all .15s;font-family:‘Source Sans 3’,sans-serif;color:var(–ink-faded);}
+.fuel-lvl-btn.sel{border-color:var(–blue);background:rgba(74,144,184,.15);color:var(–blue);font-weight:700;}
+
+/* FLOATING ACTION BUTTONS (admin/SA) */
+.fab-container{position:fixed;bottom:1.5rem;right:1rem;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:.55rem;pointer-events:all;}
+.fab-main{width:48px;height:48px;border-radius:50%;border:none;background:var(--ink);color:#f5f0e6;font-size:1.4rem;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:all .25s;display:flex;align-items:center;justify-content:center;}
+.fab-main:hover{background:var(--red);transform:scale(1.08);}
+.fab-actions{display:flex;flex-direction:column;gap:.45rem;overflow:hidden;max-height:0;opacity:0;transition:max-height .35s ease,opacity .25s ease;pointer-events:none;}
+.fab-actions.open{max-height:400px;opacity:1;pointer-events:all;}
+.fab-action-btn{display:flex;align-items:center;gap:.55rem;background:#fff;border:1.5px solid var(--line);border-radius:24px;padding:.35rem .85rem .35rem .55rem;font-family:'Source Sans 3',sans-serif;font-size:.82rem;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.14);transition:all .18s;white-space:nowrap;}
+.fab-action-btn:hover{border-color:var(--ink);background:var(--ink);color:#f5f0e6;}
+.fab-action-btn .fab-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+@keyframes fabBlink{0%,100%{box-shadow:0 4px 16px rgba(0,0,0,.3);}50%{box-shadow:0 0 0 8px rgba(200,133,74,.25),0 4px 16px rgba(0,0,0,.2);}}
+.fab-action-btn.blink{animation:fabBlink 1.2s infinite;}
+
+/* DOTAZIONI PAGE */
+.dot-page-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-style:italic;color:var(--ink);}
+.dot-section{margin-bottom:1.8rem;position:relative;z-index:2;}
+.dot-section-title{font-family:'Playfair Display',serif;font-size:1rem;font-style:italic;color:var(--green);border-bottom:1px solid rgba(45,106,79,.25);padding-bottom:.35rem;margin-bottom:.9rem;display:flex;align-items:center;gap:.5rem;}
+.dot-item-row{display:flex;align-items:center;gap:.6rem;padding:.45rem 0;border-bottom:1px dashed var(--line-light);flex-wrap:wrap;}
+.dot-item-row:last-child{border-bottom:none;}
+.dot-item-name{font-family:'Source Sans 3',sans-serif;font-size:.92rem;font-weight:600;color:var(--ink);flex:1;min-width:100px;}
+.dot-item-qty{font-family:'Source Sans 3',sans-serif;font-size:.8rem;color:var(--ink-faded);min-width:60px;}
+.dot-item-exp{font-family:'Source Sans 3',sans-serif;font-size:.72rem;padding:.12rem .4rem;border-radius:10px;}
+.dot-item-exp.ok{background:rgba(45,106,79,.1);color:var(--green);}
+.dot-item-exp.warn{background:rgba(200,133,74,.15);color:var(--orange);}
+.dot-item-exp.expired{background:rgba(192,57,43,.1);color:var(--red);}
+@keyframes dotBlink{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* MANUTENZIONE PAGE */
+.man-section{margin-bottom:1.8rem;position:relative;z-index:2;}
+.man-section-title{font-family:'Playfair Display',serif;font-size:1rem;font-style:italic;color:var(--orange);border-bottom:1px solid rgba(200,133,74,.3);padding-bottom:.35rem;margin-bottom:.9rem;}
+body{padding:.8rem .3rem 3rem;}
+.cover{padding:1.5rem 1.2rem 1.5rem 2.5rem;}
+.cover-main{font-size:1.7rem;}
+.page,.lp{padding:0 1.2rem 2rem 3.2rem;}
+.lp{padding:2rem 1.2rem 2rem 3.2rem;}
+.ub{padding:.4rem 1rem .4rem 3.2rem;}
+.fr{flex-direction:column;gap:0;}
+.ss{gap:1.5rem;}
+.otpi{width:36px;height:44px;font-size:1.3rem;}
+.audit-table th,.audit-table td{padding:.25rem .3rem;font-size:.68rem;}
+.exb{padding:.85rem 1rem;font-size:.92rem;}
+}
+</style>
+
+</head>
+<body>
+<div class="book">
+  <div class="cover">
+    <div class="cover-spine"></div>
+    <div class="cover-title-wrap">
+      <div class="cover-label">Diario di Bordo</div>
+      <div class="cover-main">Flotta Navale<em>Como Classic Boats</em></div>
+      <div class="cover-ornament">❧ ✦ ❧</div>
+      <div class="cover-year">Anno 2026</div>
+    </div>
+  </div>
+  <div class="spirals">
+    <div class="spiral"></div><div class="spiral"></div><div class="spiral"></div>
+    <div class="spiral"></div><div class="spiral"></div><div class="spiral"></div>
+    <div class="spiral"></div><div class="spiral"></div><div class="spiral"></div>
+    <div class="spiral"></div><div class="spiral"></div><div class="spiral"></div>
+    <div class="spiral"></div>
+  </div>
+  <div class="tabs-side" id="tabsSide">
+    <div class="side-tab compila active" onclick="showPage('compila',this)">✏ Compila</div>
+    <div class="side-tab registro" onclick="showPage('registro',this)">📋 Registro</div>
+    <div class="side-tab carburanti" onclick="showPage('carburanti',this)" style="display:none">⛽ Fuel</div>
+  </div>
+
+  <!-- LOGIN NORMALE -->
+
+  <div class="lp normal" id="pageLogin">
+    <div class="li">
+      <div class="lt">Flotta Navale</div>
+      <div class="ls" id="loginSub">Diario di Bordo Como Classic Boats</div>
+      <div class="lf"><label class="ll">Nome e Cognome</label><input class="lin" id="loginName" type="text" placeholder="es. Mario Rossi" autocomplete="name"></div>
+      <div class="lf" id="pwField" style="display:none"><label class="ll">Password amministratore</label><input class="lin" id="loginPw" type="password" placeholder="••••••••"></div>
+      <div class="lf" id="driverPwField" style="display:none"><label class="ll">Password autista</label><input class="lin" id="driverPwInput" type="password" placeholder="••••••••"></div>
+      <button class="lb dark" onclick="doLogin()">Entra nell'agenda →</button>
+      <div class="lf" style="margin-top:.6rem;display:flex;align-items:center;gap:.5rem;position:relative;z-index:3">
+        <input type="checkbox" id="rememberMe" style="accent-color:var(--red);width:16px;height:16px;cursor:pointer">
+        <label for="rememberMe" style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);cursor:pointer">Resta connesso</label>
+      </div>
+      <div class="le" id="loginErr"></div>
+      <div class="lsw">
+        <a onclick="toggleAdmin()" id="switchLink">Accedi come amministratore</a>
+        &nbsp;·&nbsp;
+        <a class="sa-link" onclick="showSALogin()">👑 Super Admin</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGIN SUPER ADMIN -->
+
+  <div class="lp sa" id="pageSALogin">
+    <div class="li">
+      <div class="sacrown">👑</div>
+      <div class="lt purple">Super Amministratore</div>
+      <div class="ls">Accesso riservato — Como Classic Boats</div>
+      <div class="otp-step active" id="saStep1">
+        <div class="lf"><label class="ll" style="color:var(--purple-dark)">Password Super Admin</label><input class="lin" id="saPw" type="password" placeholder="••••••••••••" style="border-bottom-color:rgba(107,63,160,.3)"></div>
+        <button class="lb pur" onclick="saVerifyPw()">Continua →</button>
+        <div class="le" id="saErr1"></div>
+      </div>
+      <div class="otp-step" id="saStep2">
+        <div class="ib">🔐 Codice generato (simulato). In produzione verrebbe inviato via email/SMS al contatto registrato.</div>
+        <div class="otpcode" id="otpDisplay">——</div>
+        <p style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);text-align:center;margin-bottom:.3rem">Inserisci il codice a 6 cifre:</p>
+        <div class="otpd">
+          <input class="otpi" maxlength="1" id="otp0" oninput="otpNav('otp',0)" onkeydown="otpBack(event,'otp',0)">
+          <input class="otpi" maxlength="1" id="otp1" oninput="otpNav('otp',1)" onkeydown="otpBack(event,'otp',1)">
+          <input class="otpi" maxlength="1" id="otp2" oninput="otpNav('otp',2)" onkeydown="otpBack(event,'otp',2)">
+          <input class="otpi" maxlength="1" id="otp3" oninput="otpNav('otp',3)" onkeydown="otpBack(event,'otp',3)">
+          <input class="otpi" maxlength="1" id="otp4" oninput="otpNav('otp',4)" onkeydown="otpBack(event,'otp',4)">
+          <input class="otpi" maxlength="1" id="otp5" oninput="otpNav('otp',5)" onkeydown="otpBack(event,'otp',5)">
+        </div>
+        <div class="otptimer">Scade tra <span id="otpCd">120</span>s · <a href="#" style="color:var(--purple)" onclick="resendOTP(event)">Rinvia</a></div>
+        <button class="lb pur" style="margin-top:1rem" onclick="saVerifyOTP()">Accedi →</button>
+        <div class="lf" style="margin-top:.6rem;display:flex;align-items:center;gap:.5rem;position:relative;z-index:3">
+          <input type="checkbox" id="rememberMeSA" style="accent-color:var(--purple);width:16px;height:16px;cursor:pointer">
+          <label for="rememberMeSA" style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);cursor:pointer">Resta connesso</label>
+        </div>
+        <div class="le" id="saErr2"></div>
+      </div>
+      <div class="sab"><a onclick="hideSALogin()">← Torna al login normale</a></div>
+    </div>
+  </div>
+
+  <!-- USER BAR -->
+
+  <div class="ub" id="userBar" style="display:none">
+    <span class="un">Benvenuto, <strong id="userName"></strong><span id="userBadge"></span></span>
+    <button class="att-btn" id="attBtn" onclick="openAttModal()">⚠️ Attenzione<span class="att-badge" id="attBadge">0</span></button>
+    <button class="ul" onclick="doLogout()">⏎ Esci</button>
+  </div>
+
+  <div class="pages" id="pagesContainer">
+    <!-- COMPILA -->
+    <div class="page" id="pageCompila" style="display:none">
+      <div class="ph"><span class="ph-title">Nuova registrazione</span><span class="ph-date" id="todayDate"></span></div>
+      <div class="field"><label class="fl">Barca</label><select id="fMezzo"><option value="">— seleziona —</option></select></div>
+      <div class="field"><label class="fl">Data</label><input type="date" id="fData"></div>
+      <div class="fr">
+        <div class="field"><label class="fl">Ore motore</label><input type="number" id="fOre" placeholder="es. 8.5" step="0.5" min="0"></div>
+        <div class="field"><label class="fl">Autista</label><input type="text" id="fAutista" placeholder="Nome cognome"></div>
+      </div>
+      <div class="field">
+        <label class="fl">Tipo intervento</label>
+        <textarea id="fIntervento" rows="3" placeholder="es. aggiunta olio, controllo freni…" style="resize:none;min-height:70px;line-height:1.8;border:1px solid var(--line);padding:.45rem .7rem;background:#fafaf8;font-family:'Source Sans 3',sans-serif;font-size:1rem;width:100%;outline:none;border-radius:2px;"></textarea>
+      </div>
+      <div class="field">
+        <label class="fl">Note — 🎙 parla o scrivi</label>
+        <div class="nw"><textarea id="fNote" rows="5" placeholder="Descrivi attività, anomalie, osservazioni…"></textarea><button class="mb" id="micBtn">🎙️</button></div>
+      </div>
+      <div id="mediaUploadSection" style="display:none">
+        <div class="field" style="position:relative;z-index:2">
+          <label class="fl">📷 Foto</label>
+          <input type="file" id="fFoto" accept="image/*" multiple style="display:none" onchange="previewFotos(event)">
+          <button onclick="document.getElementById('fFoto').click()" style="background:none;border:1.5px dashed var(--line);padding:.55rem 1.1rem;font-family:'Source Sans 3',sans-serif;font-size:.85rem;color:var(--blue);cursor:pointer;width:100%;text-align:left;border-radius:2px;">📷 Scatta o scegli foto</button>
+          <div id="fotoPreview" style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.6rem"></div>
+        </div>
+        <div class="field" style="position:relative;z-index:2">
+          <label class="fl">📄 File PDF</label>
+          <input type="file" id="fPdf" accept="application/pdf" multiple style="display:none" onchange="previewPdfs(event)">
+          <button onclick="document.getElementById('fPdf').click()" style="background:none;border:1.5px dashed var(--line);padding:.55rem 1.1rem;font-family:'Source Sans 3',sans-serif;font-size:.85rem;color:#c0392b;cursor:pointer;width:100%;text-align:left;border-radius:2px;">📄 Allega file PDF</button>
+          <div id="pdfPreview" style="display:flex;flex-direction:column;gap:.35rem;margin-top:.6rem"></div>
+        </div>
+      </div>
+      <button class="sb" id="saveBtnCompila" onclick="submitForm()">✦ Salva nel registro</button>
+      <div class="sn" id="successNote">✓ Registrazione salvata!</div>
+      <div id="dotazioniSeraSection" style="display:none;margin-top:1.4rem">
+        <div style="border-top:2px solid var(--line);padding-top:1rem">
+          <p style="font-family:'Playfair Display',serif;font-size:1rem;font-style:italic;color:var(--ink);margin-bottom:.3rem">🌅 Dotazioni di oggi</p>
+          <p style="font-family:'Source Sans 3',sans-serif;font-size:.75rem;color:var(--ink-faded);margin-bottom:.9rem;line-height:1.5">Aggiorna le dotazioni sulle tue registrazioni di oggi.</p>
+          <div id="dotazioniSeraList"></div>
+        </div>
+      </div>
+    </div>
+
+```
+<!-- REGISTRO -->
+<div class="page" id="pageRegistro" style="display:none">
+  <div class="ph"><span class="ph-title">Registro</span></div>
+  <div class="dc">
+    <div class="frow">
+      <span class="flbl">Filtra:</span>
+      <select class="hs" id="filterMezzo" onchange="renderDash()"><option value="">Tutti i mezzi</option></select>
+      <select class="hs" id="filterMese" onchange="filterMeseChanged()"><option value="">Tutti i mesi</option></select>
+      <select class="hs" id="filterGiorno" onchange="renderDash()"><option value="">Tutti i giorni</option></select>
+    </div>
+  </div>
+  <div class="ss">
+    <div><span class="sn2" id="statReg">0</span><span class="sl">registrazioni</span></div>
+    <div><span class="sn2" id="statOre">0</span><span class="sl">ore motore (max)</span></div>
+  </div>
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+    <table class="at"><thead><tr><th>Barca</th><th>Data</th><th>Autista</th><th>Ore</th><th>Intervento</th><th>Note</th><th>🛟 Dotazioni</th><th>Foto</th><th>PDF</th><th></th></tr></thead><tbody id="tableBody"></tbody></table>
+  </div>
+</div>
+
+<!-- CARBURANTI -->
+<div class="page" id="pageCarburanti" style="display:none">
+  <div class="ph"><span class="ph-title">Rifornimento Carburante</span><span class="ph-date" id="carburantiDate"></span></div>
+  <div id="adminRegSec" style="display:none;position:relative;z-index:2;">
+    <div class="ph" style="margin-bottom:.6rem;border-bottom:1px solid var(--line);"><span class="ph-title" style="font-size:1.1rem">Registro carburanti</span></div>
+    <div style="display:flex;gap:.9rem;margin-bottom:1.1rem;flex-wrap:wrap;">
+      <select class="hs" id="filterFuelType" onchange="renderFuelHistory()" style="flex:1;min-width:120px;"><option value="">Tutti i carburanti</option><option value="diesel">DIESEL</option><option value="benzina">BENZINA</option><option value="elettrica">ELETTRICA</option></select>
+      <select class="hs" id="filterFuelBarca" onchange="renderFuelHistory()" style="flex:1;min-width:120px;"><option value="">Tutte le barche</option></select>
+    </div>
+    <div style="overflow-x:auto;margin-bottom:2rem;">
+      <table class="at"><thead><tr><th>Barca</th><th>Data</th><th>Tipo</th><th>Litri</th><th>Fornitori</th><th>Note</th><th></th></tr></thead><tbody id="fuelTableBody"></tbody></table>
+    </div>
+  </div>
+  <div id="autoristaFuel">
+    <div class="fs2">
+      <div class="fh">Scegli il carburante</div>
+      <div class="fsel">
+        <div class="ft diesel" onclick="selectFuel('diesel',this)"><div class="fi">⛽</div><div class="fn2">DIESEL</div></div>
+        <div class="ft benzina" onclick="selectFuel('benzina',this)"><div class="fi">⛽</div><div class="fn2">BENZINA</div></div>
+        <div class="ft elettrica" onclick="selectFuel('elettrica',this)"><div class="fi">⚡</div><div class="fn2">ELETTRICA</div></div>
+      </div>
+    </div>
+    <div id="fuelForm" style="display:none;position:relative;z-index:2;">
+      <div class="field"><label class="fl">Barca</label><select id="fBarcoFuel"><option value="">— seleziona —</option></select></div>
+      <div class="field"><label class="fl">Data e Ora</label><input type="datetime-local" id="fDataFuel"></div>
+      <div class="field"><label class="fl">Fornitori</label><select id="fFornitoreFuel"><option value="">— seleziona —</option></select></div>
+      <div class="fd"><div class="pc"><div class="pi">⛽</div><div class="pl" id="pumpLabel">DIESEL</div><div class="pn" id="litriDisplay">0</div><div class="pu">Litri</div></div></div>
+      <div class="field"><label class="fl">Quantità (litri)</label><input type="number" id="fLitri" placeholder="es. 50.5" step="0.5" min="0" oninput="updateDisplay()"></div>
+      <div class="field"><label class="fl">Note rifornimento</label><textarea id="fNoteFuel" rows="3" placeholder="Es. rifornimento completo…" style="resize:none;min-height:70px;line-height:1.8;border:1px solid var(--line);padding:.45rem .7rem;background:#fafaf8;font-family:'Source Sans 3',sans-serif;font-size:1rem;width:100%;outline:none;border-radius:2px;"></textarea></div>
+      <button class="sb" onclick="submitFuel()">✦ Salva rifornimento</button>
+      <div class="sn" id="successNoteFuel">✓ Rifornimento salvato!</div>
+    </div>
+  </div>
+</div>
+
+<!-- CISTERNA CCB -->
+<div class="page" id="pageCisterna" style="display:none">
+  <div class="ph"><span class="ph-title">Cisterna CCB</span><span class="ph-date" id="cisternaDate"></span></div>
+  <div class="cisterna-wrap">
+    <div class="cisterna-label-top">Livello attuale cisterna diesel</div>
+    <div style="display:flex;gap:1rem;align-items:center;justify-content:center;width:100%;flex-wrap:nowrap;">
+      <div class="cisterna-svg-wrap" style="flex:0 0 auto;width:55%;max-width:220px;">
+        <svg id="cisternaSvg" viewBox="0 0 280 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:260px">
+          <defs>
+            <linearGradient id="tankBodyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" style="stop-color:#8a7a6a;stop-opacity:1"/>
+              <stop offset="30%" style="stop-color:#b5a898;stop-opacity:1"/>
+              <stop offset="70%" style="stop-color:#9a8a7a;stop-opacity:1"/>
+              <stop offset="100%" style="stop-color:#6a5a4a;stop-opacity:1"/>
+            </linearGradient>
+            <linearGradient id="tankLiquidGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" id="liqTop" style="stop-color:#4a90b8;stop-opacity:0.9"/>
+              <stop offset="100%" id="liqBot" style="stop-color:#2a5a7a;stop-opacity:1"/>
+            </linearGradient>
+            <linearGradient id="tankShineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" style="stop-color:#fff;stop-opacity:0"/>
+              <stop offset="25%" style="stop-color:#fff;stop-opacity:0.15"/>
+              <stop offset="50%" style="stop-color:#fff;stop-opacity:0.05"/>
+              <stop offset="100%" style="stop-color:#fff;stop-opacity:0"/>
+            </linearGradient>
+            <clipPath id="tankClip">
+              <rect x="30" y="60" width="220" height="210" rx="20"/>
+            </clipPath>
+            <filter id="shadow">
+              <feDropShadow dx="3" dy="6" stdDeviation="8" flood-opacity="0.3"/>
+            </filter>
+          </defs>
+          <rect x="65" y="260" width="18" height="48" rx="4" fill="#6a5a4a"/>
+          <rect x="197" y="260" width="18" height="48" rx="4" fill="#6a5a4a"/>
+          <rect x="58" y="300" width="32" height="8" rx="3" fill="#5a4a3a"/>
+          <rect x="190" y="300" width="32" height="8" rx="3" fill="#5a4a3a"/>
+          <rect x="30" y="60" width="220" height="210" rx="20" fill="#3a2a1a" opacity="0.15" transform="translate(4,6)"/>
+          <g clip-path="url(#tankClip)">
+            <rect id="liquidRect" x="30" y="270" width="220" height="0" fill="url(#tankLiquidGrad)"/>
+            <ellipse id="waveEllipse" cx="140" cy="270" rx="110" ry="6" fill="url(#tankLiquidGrad)" opacity="0.6"/>
+          </g>
+          <rect x="30" y="60" width="220" height="210" rx="20" fill="url(#tankBodyGrad)" filter="url(#shadow)"/>
+          <rect x="30" y="60" width="220" height="210" rx="20" fill="url(#tankShineGrad)"/>
+          <rect x="30" y="60" width="220" height="210" rx="20" fill="none" stroke="#5a4a3a" stroke-width="3"/>
+          <ellipse cx="140" cy="60" rx="110" ry="14" fill="#a09080" stroke="#6a5a4a" stroke-width="2"/>
+          <ellipse cx="140" cy="270" rx="110" ry="14" fill="#7a6a5a" stroke="#5a4a3a" stroke-width="2"/>
+          <rect x="50" y="100" width="180" height="6" rx="3" fill="#6a5a4a" opacity="0.5"/>
+          <rect x="50" y="190" width="180" height="6" rx="3" fill="#6a5a4a" opacity="0.5"/>
+          <rect x="50" y="230" width="180" height="6" rx="3" fill="#6a5a4a" opacity="0.5"/>
+          <rect x="118" y="30" width="44" height="30" rx="6" fill="#8a7a6a" stroke="#5a4a3a" stroke-width="2"/>
+          <rect x="124" y="20" width="32" height="14" rx="4" fill="#9a8a7a" stroke="#5a4a3a" stroke-width="1.5"/>
+          <circle cx="140" cy="17" r="5" fill="#6a5a4a"/>
+          <rect x="240" y="200" width="24" height="14" rx="4" fill="#8a7a6a" stroke="#5a4a3a" stroke-width="1.5"/>
+          <rect x="260" y="204" width="14" height="6" rx="3" fill="#6a5a4a"/>
+          <line x1="28" y1="80" x2="22" y2="80" stroke="#8a7a6a" stroke-width="1.5"/>
+          <line x1="28" y1="113" x2="22" y2="113" stroke="#8a7a6a" stroke-width="1.5"/>
+          <line x1="28" y1="146" x2="22" y2="146" stroke="#8a7a6a" stroke-width="1.5"/>
+          <line x1="28" y1="180" x2="22" y2="180" stroke="#8a7a6a" stroke-width="1.5"/>
+          <line x1="28" y1="213" x2="22" y2="213" stroke="#8a7a6a" stroke-width="1.5"/>
+          <line x1="28" y1="246" x2="22" y2="246" stroke="#8a7a6a" stroke-width="1.5"/>
+          <line x1="28" y1="268" x2="22" y2="268" stroke="#8a7a6a" stroke-width="1.5"/>
+          <polygon id="levelArrow" points="16,165 8,160 8,170" fill="#c0392b"/>
+        </svg>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:.7rem;min-width:120px;">
+        <div class="cisterna-litri-wrap" style="text-align:left;margin-top:0;">
+          <div class="cisterna-litri" id="cisternaLitriNum" style="color:#2d6a4f;font-size:2.2rem;">860</div>
+          <div class="cisterna-unit" style="font-size:.72rem;">Litri disponibili</div>
+          <div class="cisterna-pct" id="cisternaPct" style="font-size:.7rem;">100% — max 860 L</div>
+          <div style="margin-top:.35rem;"><span class="cisterna-stato" id="cisternaStato" style="background:#2d6a4f;font-size:.58rem;">● LIVELLO OK</span></div>
+        </div>
+        <div style="border-top:1px dashed var(--line-light);padding-top:.6rem;">
+          <div style="font-family:'Source Sans 3',sans-serif;font-size:.62rem;color:var(--ink-faded);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.45rem;">Legenda</div>
+          <div style="display:flex;flex-direction:column;gap:.32rem;">
+            <div style="display:flex;align-items:center;gap:.5rem;"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#2d7a4f;flex-shrink:0;"></span><span style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink);">431 – 860 L</span><span style="font-family:'Source Sans 3',sans-serif;font-size:.66rem;color:var(--ink-faded);margin-left:auto;">OK</span></div>
+            <div style="display:flex;align-items:center;gap:.5rem;"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#d4a017;flex-shrink:0;"></span><span style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink);">216 – 430 L</span><span style="font-family:'Source Sans 3',sans-serif;font-size:.66rem;color:var(--ink-faded);margin-left:auto;">Medio</span></div>
+            <div style="display:flex;align-items:center;gap:.5rem;"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#c0392b;flex-shrink:0;"></span><span style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink);">61 – 215 L</span><span style="font-family:'Source Sans 3',sans-serif;font-size:.66rem;color:var(--ink-faded);margin-left:auto;">Basso</span></div>
+            <div style="display:flex;align-items:center;gap:.5rem;"><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#1a3a6b;flex-shrink:0;"></span><span style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink);">0 – 60 L</span><span style="font-family:'Source Sans 3',sans-serif;font-size:.66rem;color:var(--ink-faded);margin-left:auto;">Critico</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="carico-box">
+    <div class="carico-title">+ Carico manuale cisterna</div>
+    <div class="fr">
+      <div class="field"><label class="fl">Litri da aggiungere</label><input type="number" id="caricoLitri" placeholder="es. 400" step="10" min="1"></div>
+      <div class="field"><label class="fl">Data</label><input type="date" id="caricoData"></div>
+    </div>
+    <div class="field"><label class="fl">Note (es. fornitore esterno)</label><input type="text" id="caricoNote" placeholder="es. Rifornimento Agip"></div>
+    <button class="sb teal" onclick="addCaricoCisterna()" style="margin-top:.5rem">+ Aggiungi carico</button>
+    <div class="sn" id="caricoOk">✓ Carico registrato!</div>
+  </div>
+  <div class="cisterna-storico" style="position:relative;z-index:2;">
+    <div style="font-family:'Playfair Display',serif;font-size:.95rem;font-style:italic;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:.3rem;margin-bottom:.7rem;">Movimenti cisterna</div>
+    <div id="cisternaStorico"></div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="page" id="pageAdmin" style="display:none">
+  <div class="ph"><span class="ph-title">Amministrazione</span></div>
+  <div class="as">
+    <div class="ast">👥 Assegna autisti alle barche</div>
+    <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Seleziona un autista dalla lista globale e assegnagli le barche del tuo gruppo.</p>
+    <div id="driverList"></div>
+    <div class="ar" style="margin-top:.5rem">
+      <select class="hi" id="newDriverSelect" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;appearance:none;-webkit-appearance:none;cursor:pointer;margin-bottom:.5rem"><option value="">— Seleziona autista da aggiungere —</option></select>
+      <button class="ba" onclick="addDriverFromSelect()">+ Aggiungi al gruppo</button>
+    </div>
+  </div>
+  <!-- Barche del gruppo: solo visualizzazione, le gestisce il SA -->
+  <div class="as" id="adminMezziSection">
+    <div class="ast">🚤 Barche del tuo gruppo</div>
+    <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.6rem;position:relative;z-index:2;line-height:1.5">Barche assegnate a questo admin dal Super Admin.</p>
+    <div id="mezzoList"></div>
+  </div>
+  <div class="as">
+    <div class="ast">Permessi accesso Cisterna CCB</div>
+    <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Seleziona gli autisti che possono vedere la sezione Cisterna CCB.</p>
+    <div id="cisternaPermList" style="position:relative;z-index:2;"></div>
+  </div>
+  <div class="as">
+    <div class="ast">⚠️ Messaggi di Attenzione</div>
+    <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Inserisci messaggi per gli autisti. Scegli una barca specifica o tutte, e imposta durata o scadenza.</p>
+    <div id="attMsgAdminList" style="position:relative;z-index:2;margin-bottom:.8rem;"></div>
+    <div style="position:relative;z-index:2;border:1.5px dashed rgba(192,57,43,.3);border-radius:6px;padding:.9rem 1rem;">
+      <p style="font-family:'Playfair Display',serif;font-size:.9rem;font-style:italic;color:var(--red);margin-bottom:.7rem">+ Nuovo messaggio</p>
+      <div class="field"><label class="fl">Destinatari</label><select id="attMsgTarget" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;appearance:none;-webkit-appearance:none;cursor:pointer"><option value="__all__">— Tutte le barche —</option></select></div>
+      <div class="field"><label class="fl">Messaggio</label><textarea id="attMsgText" rows="3" style="resize:none;min-height:60px;line-height:1.8;border:1px solid var(--line);padding:.45rem .7rem;background:#fafaf8;font-family:'Source Sans 3',sans-serif;font-size:1rem;width:100%;outline:none;border-radius:2px;" placeholder="Es. Verificare cinghia motore prima della partenza…"></textarea></div>
+      <div class="field">
+        <label class="fl">Scadenza</label>
+        <select id="attMsgExpiry" onchange="toggleCustomExpiry()" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;appearance:none;-webkit-appearance:none;cursor:pointer">
+          <option value="permanent">♾️ Permanente</option>
+          <option value="12h">⏱ 12 ore</option>
+          <option value="24h">⏱ 24 ore</option>
+          <option value="custom">📅 Data e ora personalizzata…</option>
+        </select>
+      </div>
+      <div id="customExpiryRow" style="display:none">
+        <div style="display:flex;gap:.8rem;flex-wrap:wrap">
+          <div class="field" style="flex:1;min-width:130px"><label class="fl">Data</label><input type="date" id="attMsgExpDate" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+          <div class="field" style="flex:1;min-width:100px"><label class="fl">Ora</label><input type="time" id="attMsgExpTime" value="23:59" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+        </div>
+      </div>
+      <button class="ba" style="background:var(--red);margin-top:.4rem" onclick="addAttMsg()">⚠️ Pubblica messaggio</button>
+    </div>
+  </div>
+  
+  <!-- CSV Dotazioni e Manutenzione per admin -->
+  <div class="as" id="adminCsvSection">
+    <div class="ast">📊 Esporta dati</div>
+    <div style="display:flex;flex-direction:column;gap:.6rem;position:relative;z-index:2">
+      <button class="exb" style="background:linear-gradient(135deg,#2d6a4f,#1a4f38);font-size:.92rem;padding:.85rem 1.2rem" onclick="exportAllDotazioniCSV()">🛡️ CSV DOTAZIONI<br><span style="font-size:.62rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">Tutte le barche del gruppo</span></button>
+      <button class="exb" style="background:linear-gradient(135deg,#c8854a,#a0602a);font-size:.92rem;padding:.85rem 1.2rem" onclick="exportAllManutenzioneCSV()">🔧 CSV MANUTENZIONE<br><span style="font-size:.62rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">Tutti gli interventi del gruppo</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- SUPER ADMIN -->
+<div class="page" id="pageSuperadmin" style="display:none">
+  <div class="saph"><span class="sapt">Super Amministratore <span class="sapb">👑 Livello 0</span></span><span class="ph-date" id="saDate"></span></div>
+
+  <div class="sas">
+    <div class="sast">📊 Esporta → Numbers via Shortcut</div>
+    <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:1rem;position:relative;z-index:2;line-height:1.5">Copia il CSV negli appunti e avvia automaticamente la Shortcut su iPhone.</p>
+    <div style="display:flex;flex-direction:column;margin-bottom:.5rem;position:relative;z-index:2">
+      <button class="exb reg" onclick="exportCSV()">📋 REGISTRO<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">→ Shortcut: «Esporta Registro CCB»</span></button>
+      <button class="exb ben" onclick="exportBenzinaDiesel()">⛽ BENZINA / DIESEL<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">→ Shortcut: «Esporta Benzina CCB»</span></button>
+      <button class="exb cis" onclick="exportCisternaDiesel()">🛢️ CISTERNA CCB<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">→ Shortcut: «Esporta Cisterna CCB»</span></button>
+      <button class="exb" style="background:linear-gradient(135deg,#2d6a4f,#1a4f38)" onclick="exportAllDotazioniCSV()">🛡️ DOTAZIONI<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">CSV tutte le barche</span></button>
+      <button class="exb" style="background:linear-gradient(135deg,#c8854a,#a0602a)" onclick="exportAllManutenzioneCSV()">🔧 MANUTENZIONE<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">CSV tutti gli interventi</span></button>
+    </div>
+  </div>
+
+  <div class="sas">
+    <div class="sast">👥 Autisti — Lista Globale</div>
+    <div class="ib">Gli autisti creati qui sono disponibili per tutti gli admin. Ogni admin assegnerà i propri autisti alle barche. Un autista può lavorare con più admin contemporaneamente.</div>
+    <div id="saDriverList"></div>
+    <div class="nab">
+      <p>+ Aggiungi autista</p>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <input class="hi" id="saNewDriverName" type="text" placeholder="Nome e Cognome" style="border-bottom-color:rgba(107,63,160,.4)">
+        <input class="hi" id="saNewDriverPw" type="text" placeholder="Password autista (opzionale)" style="border-bottom-color:rgba(107,63,160,.4)">
+        <button class="ba" style="background:var(--purple)" onclick="saAddDriver()">+ Aggiungi autista</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sas">
+    <div class="sast">Gestione Amministratori</div>
+    <div class="ib">Crea, abilita/disabilita e resetta le password degli admin. Ogni azione viene tracciata nel log con IP e timestamp.</div>
+    <div id="saAdminList"></div>
+    <div class="nab">
+      <p>+ Nomina nuovo amministratore</p>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <input class="hi" id="saNewAdminName" type="text" placeholder="Nome e Cognome" style="border-bottom-color:rgba(107,63,160,.4)">
+        <input class="hi" id="saNewAdminPw" type="text" placeholder="Password iniziale" style="border-bottom-color:rgba(107,63,160,.4)">
+        <button class="ba" style="background:var(--purple)" onclick="saAddAdmin()">+ Crea Admin</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sas" id="saPwInfoBox" style="display:none">
+    <div class="sast">🔑 Password correnti (visibili solo qui)</div>
+    <div class="wb" id="saPwInfoContent" style="font-family:monospace;font-size:.85rem;line-height:2"></div>
+  </div>
+
+  <div class="sas">
+    <div class="sast">🚤 Gestione Barche — Lista Globale</div>
+    <div class="ib">Solo il Super Admin può creare ed eliminare barche. Le barche create qui vengono poi assegnate agli admin.</div>
+    <div id="saMezziList"></div>
+    <div class="nab" style="margin-top:.7rem">
+      <p>+ Aggiungi barca</p>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;position:relative;z-index:2">
+        <input class="hi" id="saNewMezzoName" type="text" placeholder="Nome barca (es. Lario, Bisbino…)" style="border-bottom-color:rgba(107,63,160,.4)">
+        <button class="ba" style="background:var(--purple)" onclick="saAddMezzo()">+ Aggiungi barca</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sas">
+    <div class="sast">🚤 Assegna barche agli admin</div>
+    <div class="ib">Per ogni admin, seleziona il gruppo di barche che potrà gestire.</div>
+    <div id="saAdminBoatsList"></div>
+  </div>
+
+  <!-- Fornitori carburante: SOLO SuperAdmin -->
+  <div class="sas">
+    <div class="sast">⛽ Fornitori Carburante</div>
+    <div class="ib">Solo il Super Admin può aggiungere e rimuovere i fornitori di carburante.</div>
+    <div id="sa-fornitori-list"></div>
+    <div class="ar">
+      <input class="hi" id="saNewFornitoreName" type="text" placeholder="Nome fornitori" style="border-bottom-color:rgba(107,63,160,.4)">
+      <button class="ba" style="background:var(--purple)" onclick="saAddFornitori()">+ Aggiungi</button>
+    </div>
+  </div>
+
+  <!-- Assegna carburante a barche: SOLO SuperAdmin -->
+  <div class="sas">
+    <div class="sast">⛽ Assegna carburante a barche</div>
+    <div class="ib">Solo il Super Admin può assegnare il tipo di carburante alle barche.</div>
+    <div id="saBarcoFuelList"></div>
+  </div>
+
+  <div class="sas">
+    <div class="sast">Cambia Password Super Admin</div>
+    <div class="wb">⚠️ Il cambio password richiede verifica OTP a 6 cifre. L'operazione viene registrata nel log di sicurezza.</div>
+    <div style="position:relative;z-index:2">
+      <div class="field"><label class="fl">Password attuale</label><input type="password" id="saOld" placeholder="Password corrente" style="border-bottom:1px solid rgba(107,63,160,.3)"></div>
+      <div class="field"><label class="fl">Nuova password (min. 10 caratteri)</label><input type="password" id="saNew" placeholder="Nuova password sicura" style="border-bottom:1px solid rgba(107,63,160,.3)"></div>
+      <div class="field"><label class="fl">Conferma nuova password</label><input type="password" id="saConf" placeholder="Ripeti la nuova password" style="border-bottom:1px solid rgba(107,63,160,.3)"></div>
+      <button class="sb pur" onclick="saRequestPwChange()">🔒 Richiedi cambio con OTP →</button>
+      <div class="sn pur" id="saPwOk">✓ Password Super Admin aggiornata con successo.</div>
+    </div>
+  </div>
+
+  <div class="sas">
+    <div class="sast">Registro Attività & Accessi</div>
+    <div class="auc">
+      <select class="hs" id="auditRole" onchange="renderAuditLog()"><option value="">Tutti i ruoli</option><option value="superadmin">Super Admin</option><option value="admin">Admin</option><option value="driver">Autista</option></select>
+      <select class="hs" id="auditType" onchange="renderAuditLog()"><option value="">Tutte le azioni</option><option value="login">Login</option><option value="logout">Logout</option><option value="save">Salvataggio</option><option value="delete">Eliminazione</option><option value="admin">Gestione admin</option><option value="settings">Impostazioni</option></select>
+      <select class="hs" id="auditPageSize" onchange="auditPage=0;renderAuditLog()">
+        <option value="20">20 righe</option>
+        <option value="50">50 righe</option>
+        <option value="100">100 righe</option>
+      </select>
+      <button class="cb" onclick="exportAuditCSV()">↓ CSV Log</button>
+      <button class="bh red" onclick="clearAuditLog()">🗑 Svuota</button>
+    </div>
+    <div class="audit-table-wrap">
+      <table class="audit-table">
+        <thead><tr><th>Timestamp</th><th>Utente</th><th>Ruolo</th><th>Azione</th><th>Descrizione</th><th>IP</th></tr></thead>
+        <tbody id="auditTableBody"></tbody>
+      </table>
+    </div>
+    <div class="audit-pager" id="auditPager"></div>
+  </div>
+
+  <div class="sas">
+    <div class="sast">Contatti per Verifica OTP</div>
+    <p style="font-family:'Source Sans 3',sans-serif;font-size:.8rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Email e telefono usati per ricevere il codice OTP in produzione.</p>
+    <div style="position:relative;z-index:2">
+      <div class="field"><label class="fl">Email di verifica</label><input type="email" id="saEmail" placeholder="es. admin@comoboats.it" style="border-bottom:1px solid rgba(107,63,160,.3)"></div>
+      <div class="field"><label class="fl">Numero telefono (SMS OTP)</label><input type="tel" id="saPhone" placeholder="+39 333 000 0000" style="border-bottom:1px solid rgba(107,63,160,.3)"></div>
+      <button class="sb pur" onclick="saUpdateContacts()">✦ Salva contatti</button>
+      <div class="sn pur" id="saContactOk">✓ Contatti aggiornati.</div>
+    </div>
+  </div>
+</div>
+```
+
+<!-- DOTAZIONI PAGE (admin + SA only) -->
+<div class="page" id="pageDotazioni" style="display:none">
+  <div class="ph"><span class="ph-title">🛡️ Dotazioni</span><span class="ph-date"></span></div>
+  
+  <!-- SA: crea lista oggetti -->
+  <div id="dotSASection" style="display:none">
+    <div class="as">
+      <div class="ast">📦 Crea oggetto dotazione (lista globale SA)</div>
+      <div style="position:relative;z-index:2;border:1.5px dashed rgba(107,63,160,.3);border-radius:6px;padding:.9rem 1rem;margin-bottom:1rem;">
+        <div class="field"><label class="fl">Nome oggetto</label><input type="text" id="dotNewName" placeholder="es. Estintore, Giubbotto salvagente…" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+        <button class="ba" style="background:var(--purple);margin-top:.4rem" onclick="saAddDotItem()">+ Aggiungi alla lista globale</button>
+      </div>
+      <div class="ast">📋 Lista oggetti globale</div>
+      <div id="dotGlobalList"></div>
+    </div>
+  </div>
+  
+  <!-- Admin: seleziona barca, aggiungi oggetti con quantità, scadenza, note -->
+  <div id="dotAdminSection">
+    <div class="as">
+      <div class="ast">🚤 Seleziona barca e gestisci dotazioni</div>
+      <div class="field"><label class="fl">Barca</label>
+        <select id="dotBarcaSelect" onchange="renderDotBarcaItems()" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;appearance:none;cursor:pointer;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right .3rem center;padding-right:1.5rem;">
+          <option value="">— seleziona barca —</option>
+        </select>
+      </div>
+      <div id="dotBarcaItemsSection" style="display:none">
+        <div style="border:1.5px dashed rgba(45,106,79,.3);border-radius:6px;padding:.9rem 1rem;margin-bottom:1rem;">
+          <p style="font-family:'Playfair Display',serif;font-size:.9rem;font-style:italic;color:var(--green);margin-bottom:.7rem">+ Aggiungi oggetti alla barca</p>
+          <div class="field"><label class="fl">Oggetto</label>
+            <select id="dotItemSelect" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;appearance:none;cursor:pointer;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right .3rem center;padding-right:1.5rem;">
+              <option value="">— seleziona oggetto —</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:.8rem;flex-wrap:wrap">
+            <div class="field" style="flex:1;min-width:80px"><label class="fl">Quantità</label><input type="number" id="dotItemQty" placeholder="1" min="1" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+            <div class="field" style="flex:2;min-width:130px"><label class="fl">Scadenza</label>
+              <select id="dotItemExp" onchange="toggleDotCustomExp()" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;appearance:none;cursor:pointer;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right .3rem center;padding-right:1.5rem;">
+                <option value="">— nessuna scadenza —</option>
+                <option value="custom">📅 Data personalizzata…</option>
+              </select>
+            </div>
+          </div>
+          <div id="dotCustomExpRow" style="display:none"><div class="field"><label class="fl">Data scadenza</label><input type="date" id="dotCustomExpDate" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div></div>
+          <div class="field"><label class="fl">Appunti / Note</label><input type="text" id="dotItemNote" placeholder="Note opzionali…" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem">
+            <button class="ba" style="background:var(--green)" onclick="addDotItemToBarca()">+ Aggiungi oggetto</button>
+            <button class="ba" style="background:var(--blue)" onclick="addMultipleDotItems()">++ Aggiungi più oggetti</button>
+          </div>
+        </div>
+        <div id="dotBarcaItemsList"></div>
+        
+        <!-- Report scadenze -->
+        <div id="dotExpReport" style="margin-top:1rem;display:none">
+          <div style="font-family:'Playfair Display',serif;font-size:.95rem;font-style:italic;color:var(--red);border-bottom:1px solid rgba(192,57,43,.2);padding-bottom:.3rem;margin-bottom:.7rem;">⚠️ Report Scadenze</div>
+          <div id="dotExpReportList"></div>
+        </div>
+        
+        <!-- CSV export -->
+        <button class="sb" style="background:var(--green);margin-top:1rem" onclick="exportDotazioniCSV()">↓ Scarica CSV dotazioni</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MANUTENZIONE PAGE (admin + SA only) -->
+<div class="page" id="pageManutenzione" style="display:none">
+  <div class="ph"><span class="ph-title">🔧 Manutenzione</span><span class="ph-date"></span></div>
+  <div class="as">
+    <div class="ast">🚤 Nuova registrazione manutenzione</div>
+    <div class="field"><label class="fl">Barca</label>
+      <select id="manBarcaSelect" onchange="loadManHistory()" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;appearance:none;cursor:pointer;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right .3rem center;padding-right:1.5rem;">
+        <option value="">— seleziona barca —</option>
+      </select>
+    </div>
+    <div class="field"><label class="fl">Data intervento</label><input type="date" id="manData" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+    <div class="field"><label class="fl">Tipo intervento</label><input type="text" id="manTipo" placeholder="es. Tagliando, controllo motore…" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+    <div class="field"><label class="fl">Ore motore attuali</label><input type="number" id="manOreAttuali" placeholder="es. 200" step="1" min="0" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+    <div class="field"><label class="fl">Note</label><textarea id="manNote" rows="3" placeholder="Descrizione intervento…" style="resize:none;min-height:70px;line-height:1.8;border:1px solid var(--line);padding:.45rem .7rem;background:#fafaf8;font-family:'Source Sans 3',sans-serif;font-size:1rem;width:100%;outline:none;border-radius:2px;"></textarea></div>
+    
+    <!-- Allegati con compressione foto -->
+    <div class="field" style="position:relative;z-index:2">
+      <label class="fl">📷 Foto</label>
+      <input type="file" id="manFoto" accept="image/*" multiple style="display:none" onchange="previewManFotos(event)">
+      <button onclick="document.getElementById('manFoto').click()" style="background:none;border:1.5px dashed var(--line);padding:.55rem 1.1rem;font-family:'Source Sans 3',sans-serif;font-size:.85rem;color:var(--blue);cursor:pointer;width:100%;text-align:left;border-radius:2px;">📷 Allega foto</button>
+      <div id="manFotoPreview" style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.6rem"></div>
+    </div>
+    <div class="field" style="position:relative;z-index:2">
+      <label class="fl">📄 File</label>
+      <input type="file" id="manFile" accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple style="display:none" onchange="previewManFiles(event)">
+      <button onclick="document.getElementById('manFile').click()" style="background:none;border:1.5px dashed var(--line);padding:.55rem 1.1rem;font-family:'Source Sans 3',sans-serif;font-size:.85rem;color:#c0392b;cursor:pointer;width:100%;text-align:left;border-radius:2px;">📄 Allega file</button>
+      <div id="manFilePreview" style="display:flex;flex-direction:column;gap:.35rem;margin-top:.6rem"></div>
+    </div>
+    
+    <!-- Avviso ore motore -->
+    <div style="border:1.5px dashed rgba(200,133,74,.4);border-radius:6px;padding:.9rem 1rem;margin-top:.6rem">
+      <p style="font-family:'Playfair Display',serif;font-size:.88rem;font-style:italic;color:var(--orange);margin-bottom:.6rem">⏰ Imposta avviso ore motore</p>
+      <div style="display:flex;gap:.8rem;flex-wrap:wrap">
+        <div class="field" style="flex:1;min-width:120px"><label class="fl">Avviso alle ore</label><input type="number" id="manAvvisoOre" placeholder="es. 400" step="10" min="0" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+        <div class="field" style="flex:1;min-width:120px"><label class="fl">Tipo avviso</label>
+          <select id="manAvvisoTipo" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;appearance:none;cursor:pointer;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right .3rem center;padding-right:1.5rem;">
+            <option value="">— nessun avviso —</option>
+            <option value="tagliando">🔧 Tagliando</option>
+            <option value="controllo">🔍 Controllo</option>
+            <option value="revisione">📋 Revisione</option>
+            <option value="altro">📌 Altro</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <button class="sb" style="background:var(--orange);margin-top:1rem" onclick="saveManRecord()">✦ Salva intervento</button>
+    <div class="sn" id="manSuccessNote" style="border-left-color:var(--orange);color:var(--orange)">✓ Intervento salvato!</div>
+  </div>
+  
+  <!-- Storico manutenzione -->
+  <div class="as" id="manStorico" style="display:none">
+    <div class="ast">📋 Storico manutenzione barca</div>
+    <div id="manStoricoList"></div>
+    <!-- Report avvisi -->
+    <div id="manAvvisoReport" style="margin-top:1rem;display:none">
+      <div style="font-family:'Playfair Display',serif;font-size:.95rem;font-style:italic;color:var(--orange);border-bottom:1px solid rgba(200,133,74,.3);padding-bottom:.3rem;margin-bottom:.7rem;">⏰ Report Avvisi</div>
+      <div id="manAvvisoReportList"></div>
+    </div>
+    <button class="sb" style="background:var(--ink);margin-top:1rem" onclick="exportManutenzioneCSV()">↓ Scarica CSV manutenzione</button>
+  </div>
+</div>
+
+  </div><!-- /pages -->
+</div><!-- /book -->
+
+<!-- FAB: bottoni admin/SA a cascata (visibile solo dopo login) -->
+<div class="fab-container" id="fabContainer" style="display:none">
+  <div class="fab-actions" id="fabActions">
+    <button class="fab-action-btn" id="fabDotBtn" onclick="showPage('dotazioni',null);closeFab()" style="display:none">
+      <span class="fab-icon" style="background:rgba(45,106,79,.1)">🛡️</span>Dotazioni
+    </button>
+    <button class="fab-action-btn" id="fabManBtn" onclick="showPage('manutenzione',null);closeFab()" style="display:none">
+      <span class="fab-icon" style="background:rgba(200,133,74,.1)">🔧</span>Manutenzione
+    </button>
+  </div>
+  <button class="fab-main" id="fabMain" onclick="toggleFab()">☰</button>
+</div>
+
+<!-- MODAL: aggiunta multipla dotazioni -->
+<div class="mo" id="dotMultiModal">
+  <div class="md" style="max-width:500px">
+    <div class="mh">📦 Aggiungi più oggetti</div>
+    <div class="mb2">
+      <p style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);margin-bottom:.9rem;line-height:1.5">Seleziona più oggetti da aggiungere contemporaneamente alla barca.</p>
+      <div id="dotMultiList" style="max-height:260px;overflow-y:auto"></div>
+    </div>
+    <div class="mf">
+      <button class="bh" onclick="document.getElementById('dotMultiModal').classList.remove('show')">Annulla</button>
+      <button class="bh" style="background:var(--green);color:#fff;border-color:var(--green)" onclick="confirmMultiDot()">✓ Aggiungi selezionati</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Attenzione messaggi -->
+
+<div class="att-mo" id="attModal">
+  <div class="att-md">
+    <div class="att-mh">⚠️ Messaggi di Attenzione</div>
+    <div class="att-mb" id="attMsgList"><p style="font-family:'Source Sans 3',sans-serif;font-style:italic;color:var(--ink-faded);text-align:center;padding:1.5rem 0">Nessun messaggio</p></div>
+    <div class="att-mf"><button class="bh" style="background:var(--red);color:#fff;border-color:var(--red)" onclick="closeAttModal()">✓ Ho letto</button></div>
+  </div>
+</div>
+
+<!-- MODAL: Modifica registrazione -->
+
+<div class="edit-mo" id="editModal">
+  <div class="edit-md">
+    <div class="edit-mh" id="editModalTitle">✏ Modifica registrazione</div>
+    <div class="edit-mb">
+      <div class="field"><label class="fl">Barca</label><select id="eMezzo"><option value="">— seleziona —</option></select></div>
+      <div class="field"><label class="fl">Data</label><input type="date" id="eData"></div>
+      <div style="display:flex;gap:1.5rem"><div class="field" style="flex:1"><label class="fl">Ore motore</label><input type="number" id="eOre" placeholder="es. 8.5" step="0.5" min="0"></div><div class="field" style="flex:1"><label class="fl">Autista</label><input type="text" id="eAutista" placeholder="Nome cognome"></div></div>
+      <div class="field"><label class="fl">Tipo intervento</label><textarea id="eIntervento" rows="3" style="resize:none;min-height:70px;line-height:1.8;border:1px solid var(--line);padding:.45rem .7rem;background:#fafaf8;font-family:'Source Sans 3',sans-serif;font-size:1rem;width:100%;outline:none;border-radius:2px;"></textarea></div>
+      <div class="field"><label class="fl">Note</label><textarea id="eNote" rows="4"></textarea></div>
+      <div class="field" style="margin-top:.5rem">
+        <label class="fl">📷 Foto</label>
+        <div id="eFotoPreview" style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.5rem"></div>
+        <input type="file" id="eFoto" accept="image/*" multiple style="display:none" onchange="ePreviewFotos(event)">
+        <button onclick="document.getElementById('eFoto').click()" style="background:none;border:1.5px dashed var(--line);padding:.45rem 1rem;font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--blue);cursor:pointer;width:100%;text-align:left;border-radius:2px;">📷 Aggiungi foto</button>
+      </div>
+      <div class="field" style="margin-top:.4rem">
+        <label class="fl">📄 File PDF</label>
+        <div id="ePdfPreview" style="display:flex;flex-direction:column;gap:.35rem;margin-bottom:.5rem"></div>
+        <input type="file" id="ePdf" accept="application/pdf" multiple style="display:none" onchange="ePreviewPdfs(event)">
+        <button onclick="document.getElementById('ePdf').click()" style="background:none;border:1.5px dashed var(--line);padding:.45rem 1rem;font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:#c0392b;cursor:pointer;width:100%;text-align:left;border-radius:2px;">📄 Aggiungi PDF</button>
+      </div>
+    </div>
+    <div class="edit-mf">
+      <button class="bh" onclick="closeEditModal()">Annulla</button>
+      <button class="bh" style="background:var(--ink);color:#f5f0e6;border-color:var(--ink)" onclick="saveEditRecord()">✓ Salva modifiche</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: assegna barche -->
+
+<div class="mo" id="assignModal">
+  <div class="md">
+    <div class="mh" id="modalTitle">Assegna mezzi</div>
+    <div class="mb2"><div class="mmz" id="modalMezzi"></div></div>
+    <div class="mf">
+      <button class="bh" onclick="closeModal()">Annulla</button>
+      <button class="bh" style="background:var(--ink);color:#f5f0e6;border-color:var(--ink)" onclick="saveAssignment()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: OTP cambio password SA -->
+
+<div class="mo" id="otpModal">
+  <div class="md">
+    <div class="mh">🔐 Verifica OTP — Cambio Password</div>
+    <div class="mb2">
+      <div class="ib" style="margin-bottom:.8rem">Codice mostrato qui (simulato). In produzione inviato via email/SMS.</div>
+      <div class="otpcode" id="otpModalCode">——</div>
+      <p style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);text-align:center;margin-bottom:.3rem">Inserisci il codice:</p>
+      <div class="otpd">
+        <input class="otpi" maxlength="1" id="md0" oninput="otpNav('md',0)" onkeydown="otpBack(event,'md',0)">
+        <input class="otpi" maxlength="1" id="md1" oninput="otpNav('md',1)" onkeydown="otpBack(event,'md',1)">
+        <input class="otpi" maxlength="1" id="md2" oninput="otpNav('md',2)" onkeydown="otpBack(event,'md',2)">
+        <input class="otpi" maxlength="1" id="md3" oninput="otpNav('md',3)" onkeydown="otpBack(event,'md',3)">
+        <input class="otpi" maxlength="1" id="md4" oninput="otpNav('md',4)" onkeydown="otpBack(event,'md',4)">
+        <input class="otpi" maxlength="1" id="md5" oninput="otpNav('md',5)" onkeydown="otpBack(event,'md',5)">
+      </div>
+      <div class="otptimer">Scade tra <span id="otpModalCd">120</span>s</div>
+      <div class="le" id="otpModalErr"></div>
+    </div>
+    <div class="mf">
+      <button class="bh" onclick="document.getElementById('otpModal').classList.remove('show')">Annulla</button>
+      <button class="bh pur" onclick="saConfirmPwChange()">✓ Conferma cambio</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: reset password admin -->
+
+<div class="mo" id="resetPwModal">
+  <div class="md">
+    <div class="mh" id="resetPwTitle">Reset password admin</div>
+    <div class="mb2">
+      <p style="font-family:'Source Sans 3',sans-serif;font-size:.85rem;color:var(--ink-faded);margin-bottom:1rem;line-height:1.5">Imposta una nuova password temporanea per questo amministratore.</p>
+      <div class="field"><label class="fl">Nuova password</label><input type="text" id="resetPwInput" placeholder="es. TempPass2026!"></div>
+    </div>
+    <div class="mf">
+      <button class="bh" onclick="document.getElementById('resetPwModal').classList.remove('show')">Annulla</button>
+      <button class="bh pur" onclick="saConfirmResetPw()">✓ Salva password</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PAGE_IDS=['pageCompila','pageRegistro','pageCarburanti','pageCisterna','pageAdmin','pageSuperadmin','pageDotazioni','pageManutenzione'];
+
+const SB_URL='https://psgxyjtsgthctvntbgnf.supabase.co';
+const SB_KEY='sb_publishable_bq_M1RIzGgxPR-ieGL-b1g_gKPT088P';
+const TABLE='agenda';
+const CL_CLOUD='dhhyn0esw';
+const CL_PRESET='Agenda Flotta';
+const CISTERNA_MAX=860;
+
+async function dbGet(k){try{const r=await fetch(`${SB_URL}/rest/v1/${encodeURIComponent(TABLE)}?key=eq.${encodeURIComponent(k)}&select=value`,{cache:'no-store',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Cache-Control':'no-cache'}});const d=await r.json();if(!Array.isArray(d)||!d.length)return null;const raw=d[0].value;try{return JSON.parse(raw);}catch{return raw;}}catch{return null;}}
+async function dbSet(k,v){try{await fetch(`${SB_URL}/rest/v1/${encodeURIComponent(TABLE)}`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:k,value:JSON.stringify(v)})});}catch(e){console.error(e);}}
+async function uploadPhoto(file){
+  // Comprimi lato client (max 1600px, qualità 0.82 — stile WhatsApp)
+  const compressed=await compressImageWhatsApp(file);
+  const fd=new FormData();fd.append('file',compressed);fd.append('upload_preset',CL_PRESET);
+  const r=await fetch(`https://api.cloudinary.com/v1_1/${CL_CLOUD}/image/upload`,{method:'POST',body:fd});
+  const j=await r.json();
+  // Inserisce trasformazione Cloudinary nell'URL: c_limit,w_1600/q_82/f_auto
+  // → leggera ma ben visibile, ottimizzata come WhatsApp
+  const url=j.secure_url||'';
+  return url.replace('/image/upload/','/image/upload/c_limit,w_1600/f_auto/q_82/');
+}
+
+function compressImageWhatsApp(file){
+  return new Promise((resolve)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const MAX=1600;let w=img.width,h=img.height;
+        if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+        const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+        const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,w,h);
+        canvas.toBlob(blob=>resolve(new File([blob],file.name,{type:'image/jpeg',lastModified:Date.now()})),'image/jpeg',0.82);
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+async function uploadFile(file){const fd=new FormData();fd.append('file',file);fd.append('upload_preset',CL_PRESET);fd.append('resource_type','raw');const r=await fetch(`https://api.cloudinary.com/v1_1/${CL_CLOUD}/auto/upload`,{method:'POST',body:fd});const j=await r.json();return j.secure_url||'';}
+
+// =============================================
+// STATE
+// =============================================
+let records=[],drivers=[],allMezzi=[],fuelRecords=[],fornitori=[],selectedFuelType=null;
+let barcoFuel={},cisternaDiesel={litriAttuali:0,storico:[]},benzinaDieselDati=[];
+let auditLog=[],adminAccounts=[],saContacts={email:'',phone:''};
+let cisternaPerms={};
+let ADMIN_PW='',SA_PW='';
+let currentUser=null,assigningDriver=null,isAdminMode=false;
+let currentOTP=null,otpTimer=null,pendingPwChange=null,resetPwTarget=null;
+let dotItems=[],dotBarcaDotazioni={};  // dotazioni globali
+let manRecords=[];  // manutenzione
+let fabTimer=null;
+
+// Audit pagination
+let auditPage=0;
+
+// =============================================
+// INIT
+// =============================================
+async function init(){
+  const r=await dbGet('fleet-records');if(r)records=r;
+  const d=await dbGet('fleet-drivers');if(d)drivers=d;
+  const m=await dbGet('fleet-mezzi');if(m)allMezzi=m;
+  const f=await dbGet('fleet-fuel-records');if(f)fuelRecords=f;
+  const s=await dbGet('fleet-fornitori');if(s)fornitori=s;
+  const bf=await dbGet('fleet-barco-fuel');if(bf)barcoFuel=bf;
+  const cd=await dbGet('fleet-cisterna-diesel');if(cd)cisternaDiesel=cd;
+  const bd=await dbGet('fleet-benzina-diesel-dati');if(bd)benzinaDieselDati=bd;
+  const al=await dbGet('fleet-audit-log');if(al)auditLog=al;
+  const aa=await dbGet('fleet-admin-accounts');if(aa)adminAccounts=aa;
+  const sc=await dbGet('fleet-sa-contacts');if(sc)saContacts=sc;
+  const cp=await dbGet('fleet-cisterna-perms');if(cp)cisternaPerms=cp;
+  const apw=await dbGet('fleet-admin-pw');if(apw)ADMIN_PW=apw;
+  const spw=await dbGet('fleet-sa-pw');if(spw)SA_PW=spw;
+  const di=await dbGet('fleet-dot-items');if(di)dotItems=di;
+  const dbd=await dbGet('fleet-dot-barca');if(dbd)dotBarcaDotazioni=dbd;
+  const mr=await dbGet('fleet-man-records');if(mr)manRecords=mr;
+  const now=new Date();
+  const ds=now.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('todayDate').textContent=ds;
+  document.getElementById('carburantiDate').textContent=ds;
+  document.getElementById('cisternaDate').textContent=ds;
+  document.getElementById('saDate').textContent=ds;
+  document.getElementById('fData').value=now.toISOString().slice(0,10);
+  document.getElementById('fDataFuel').value=now.toISOString().slice(0,16);
+  document.getElementById('caricoData').value=now.toISOString().slice(0,10);
+  if(saContacts.email)document.getElementById('saEmail').value=saContacts.email;
+  if(saContacts.phone)document.getElementById('saPhone').value=saContacts.phone;
+  syncCisternaFromFuel();
+  await loadAttMessages();
+}
+init().then(async()=>{
+  // Tenta auto-login da sessione salvata
+  try{
+    const saved=localStorage.getItem('ccb_session');
+    if(saved){
+      const sess=JSON.parse(saved);
+      // Sessione valida per 30 giorni
+      if(sess&&sess.ts&&(Date.now()-sess.ts)<30*24*60*60*1000){
+        if(sess.isSA){currentUser={name:'Super Admin',isAdmin:true,isSA:true};enterApp();}
+        else if(sess.isAdmin){
+          const acc=adminAccounts.find(a=>a.name===sess.name);
+          if(acc&&acc.active){currentUser={name:acc.name,isAdmin:true,isSA:false,accIdx:adminAccounts.indexOf(acc)};enterApp();}
+          else localStorage.removeItem('ccb_session');
+        }else{
+          const d=drivers.find(dr=>dr.name===sess.name);
+          if(d){currentUser={name:d.name,isAdmin:false,isSA:false};enterApp();}
+          else localStorage.removeItem('ccb_session');
+        }
+      }else localStorage.removeItem('ccb_session');
+    }
+  }catch(e){localStorage.removeItem('ccb_session');}
+});
+
+const sv={
+  records:()=>dbSet('fleet-records',records),
+  drivers:()=>dbSet('fleet-drivers',drivers),
+  mezzi:()=>dbSet('fleet-mezzi',allMezzi),
+  fuel:()=>dbSet('fleet-fuel-records',fuelRecords),
+  fornitori:()=>dbSet('fleet-fornitori',fornitori),
+  barcoFuel:()=>dbSet('fleet-barco-fuel',barcoFuel),
+  cisternaDiesel:()=>dbSet('fleet-cisterna-diesel',cisternaDiesel),
+  benzinaDiesel:()=>dbSet('fleet-benzina-diesel-dati',benzinaDieselDati),
+  audit:()=>dbSet('fleet-audit-log',auditLog),
+  adminAcc:()=>dbSet('fleet-admin-accounts',adminAccounts),
+  saContacts:()=>dbSet('fleet-sa-contacts',saContacts),
+  cisternaPerms:()=>dbSet('fleet-cisterna-perms',cisternaPerms),
+  adminPw:()=>dbSet('fleet-admin-pw',ADMIN_PW),
+  saPw:()=>dbSet('fleet-sa-pw',SA_PW),
+  dotItems:()=>dbSet('fleet-dot-items',dotItems),
+  dotBarca:()=>dbSet('fleet-dot-barca',dotBarcaDotazioni),
+  manRecords:()=>dbSet('fleet-man-records',manRecords),
+};
+
+async function getIP(){try{const r=await fetch('https://api.ipify.org?format=json');return(await r.json()).ip;}catch{return'N/D';}}
+async function addAudit(actor,role,action,desc){
+  const ip=await getIP();
+  auditLog.unshift({id:Date.now(),ts:new Date().toISOString(),actor,role,action,desc,ip,ua:navigator.userAgent.slice(0,80)});
+  if(auditLog.length>2000)auditLog=auditLog.slice(0,2000);
+  await sv.audit();
+}
+
+// =============================================
+// LOGIN / LOGOUT
+// =============================================
+function toggleAdmin(){
+  isAdminMode=!isAdminMode;
+  document.getElementById('pwField').style.display=isAdminMode?'block':'none';
+  document.getElementById('loginSub').textContent=isAdminMode?'Accesso amministratore':'Diario di Bordo Como Classic Boats';
+  document.getElementById('switchLink').textContent=isAdminMode?'Accedi come autista':'Accedi come amministratore';
+  document.getElementById('loginErr').classList.remove('show');
+}
+
+async function doLogin(){
+  const name=document.getElementById('loginName').value.trim();
+  if(!name)return;
+  if(isAdminMode){
+    const pw=document.getElementById('loginPw').value;
+    const acc=adminAccounts.find(a=>a.name.toLowerCase()===name.toLowerCase());
+    if(acc){
+      if(!acc.active){showLoginErr('Account disabilitato. Contatta il Super Admin.');return;}
+      if(pw!==acc.pw){showLoginErr('Password errata.');return;}
+      acc.lastLogin=new Date().toISOString();acc.lastLoginIP=await getIP();await sv.adminAcc();
+      currentUser={name:acc.name,isAdmin:true,isSA:false,accIdx:adminAccounts.indexOf(acc)};
+    }else if(adminAccounts.length===0&&pw===ADMIN_PW){currentUser={name,isAdmin:true,isSA:false};}
+    else{showLoginErr('Password errata.');return;}
+  }else{
+    // autista: cerca nella lista globale; se ha password la richiede
+    const d=drivers.find(d=>d.name.toLowerCase()===name.toLowerCase());
+    if(!d){showLoginErr("Nome non riconosciuto. Contatta l'amministratore.");return;}
+    if(d.pw){
+      // ha una password: mostra campo se non già visibile
+      const driverPwField=document.getElementById('driverPwField');
+      if(driverPwField&&driverPwField.style.display==='none'){
+        driverPwField.style.display='block';
+        showLoginErr('Inserisci la tua password per continuare.');return;
+      }
+      const enteredPw=document.getElementById('driverPwInput')?document.getElementById('driverPwInput').value:'';
+      if(enteredPw!==d.pw){showLoginErr('Password non corretta.');return;}
+    }
+    currentUser={name:d.name,isAdmin:false,isSA:false};
+  }
+  await addAudit(currentUser.name,isAdminMode?'admin':'driver','login',`Login ${isAdminMode?'admin':'autista'}`);
+  enterApp();
+}
+
+function showLoginErr(msg){const e=document.getElementById('loginErr');e.textContent=msg;e.classList.add('show');}
+
+function canAccessCisterna(){
+  if(!currentUser)return false;
+  if(currentUser.isAdmin||currentUser.isSA)return true;
+  return cisternaPerms[currentUser.name]===true;
+}
+
+async function enterApp(){
+  // Salva sessione se "Resta connesso" è selezionato
+  const rememberNormal=document.getElementById('rememberMe')?.checked;
+  const rememberSA=document.getElementById('rememberMeSA')?.checked;
+  if(rememberNormal||rememberSA){
+    try{localStorage.setItem('ccb_session',JSON.stringify({
+      name:currentUser.name,isAdmin:currentUser.isAdmin,isSA:currentUser.isSA,accIdx:currentUser.accIdx,ts:Date.now()
+    }));}catch(e){}
+  }
+  document.getElementById('pageLogin').style.display='none';
+  document.getElementById('pageSALogin').style.display='none';
+  document.getElementById('userBar').style.display='flex';
+  const badge=document.getElementById('userBadge');
+  badge.innerHTML=currentUser.isSA?'<span class="bsa">👑 SUPER ADMIN</span>':currentUser.isAdmin?'<span class="badm">ADMIN</span>':'';
+  document.getElementById('userName').textContent=currentUser.name;
+  document.getElementById('tabsSide').style.display='flex';
+  document.getElementById('fData').value=new Date().toISOString().slice(0,10);
+  document.getElementById('fDataFuel').value=new Date().toISOString().slice(0,16);
+  if(!currentUser.isAdmin&&!currentUser.isSA)document.getElementById('fAutista').value=currentUser.name;
+  document.getElementById('mediaUploadSection').style.display=(currentUser.isAdmin||currentUser.isSA)?'block':'none';
+  document.querySelector('.side-tab.carburanti').style.display='flex';
+  if(canAccessCisterna()&&!document.getElementById('tabCisterna')){
+    const t=document.createElement('div');t.className='side-tab cisterna';t.id='tabCisterna';t.textContent='🛢 Cisterna';t.onclick=function(){showPage('cisterna',this);};document.getElementById('tabsSide').appendChild(t);
+  }
+  if((currentUser.isAdmin||currentUser.isSA)&&!document.getElementById('tabAdmin')){
+    const t=document.createElement('div');t.className='side-tab admin';t.id='tabAdmin';t.textContent='⚙ Admin';t.onclick=function(){showPage('admin',this);};document.getElementById('tabsSide').appendChild(t);
+  }
+  if((currentUser.isAdmin||currentUser.isSA)&&!document.getElementById('tabDotazioni')){
+    const t=document.createElement('div');t.className='side-tab';t.id='tabDotazioni';t.style.cssText='background:#2d6a4f;color:#fff';t.textContent='🛡 Dotazioni';t.onclick=function(){showPage('dotazioni',this);};document.getElementById('tabsSide').appendChild(t);
+  }
+  if((currentUser.isAdmin||currentUser.isSA)&&!document.getElementById('tabManutenzione')){
+    const t=document.createElement('div');t.className='side-tab';t.id='tabManutenzione';t.style.cssText='background:#c8854a;color:#fff';t.textContent='🔧 Manuten.';t.onclick=function(){showPage('manutenzione',this);};document.getElementById('tabsSide').appendChild(t);
+  }
+  if(currentUser.isSA&&!document.getElementById('tabSA')){
+    const t=document.createElement('div');t.className='side-tab superadmin';t.id='tabSA';t.textContent='👑 SA';t.onclick=function(){showPage('superadmin',this);};document.getElementById('tabsSide').appendChild(t);
+  }
+  populateMezzoSelect();populateFuelFornitori();setupMic();
+  await loadAttMessages();updateAttBtn();
+  // Mostra FAB solo per admin/SA
+  if(currentUser.isAdmin||currentUser.isSA){
+    const fab=document.getElementById('fabContainer');if(fab)fab.style.display='flex';
+    const dotBtn=document.getElementById('fabDotBtn');if(dotBtn)dotBtn.style.display='flex';
+    const manBtn=document.getElementById('fabManBtn');if(manBtn)manBtn.style.display='flex';
+  }
+  showPage('compila',document.querySelector('.side-tab.compila'));
+  renderDotazioniSera();
+}
+
+async function doLogout(){
+  try{localStorage.removeItem('ccb_session');}catch(e){}
+  if(currentUser)await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'logout','Logout');
+  currentUser=null;isAdminMode=false;
+  document.getElementById('pageLogin').style.display='flex';document.getElementById('pageSALogin').style.display='none';
+  document.getElementById('userBar').style.display='none';document.getElementById('tabsSide').style.display='none';
+  document.getElementById('loginName').value='';document.getElementById('loginPw').value='';
+  if(document.getElementById('driverPwInput'))document.getElementById('driverPwInput').value='';
+  if(document.getElementById('driverPwField'))document.getElementById('driverPwField').style.display='none';
+  document.getElementById('loginErr').classList.remove('show');document.getElementById('pwField').style.display='none';
+  document.getElementById('loginSub').textContent='Diario di Bordo Como Classic Boats';
+  document.getElementById('switchLink').textContent='Accedi come amministratore';
+  const fab=document.getElementById('fabContainer');if(fab)fab.style.display='none';
+  ['tabAdmin','tabSA','tabCisterna','tabDotazioni','tabManutenzione'].forEach(id=>{const el=document.getElementById(id);if(el)el.remove();});
+  document.querySelector('.side-tab.carburanti').style.display='none';
+  PAGE_IDS.forEach(id=>{const el=document.getElementById(id);if(el){el.classList.remove('active');el.style.display='none';}});
+}
+
+function showPage(name,btn){
+  PAGE_IDS.forEach(id=>{const el=document.getElementById(id);if(el){el.classList.remove('active');el.style.display='none';}});
+  document.querySelectorAll('.side-tab').forEach(t=>t.classList.remove('active'));
+  const pg=document.getElementById('page'+name.charAt(0).toUpperCase()+name.slice(1));
+  if(pg){pg.style.display='block';pg.classList.add('active');}
+  if(btn)btn.classList.add('active');
+  if(name==='registro'){populateDashFilters();renderDash();}
+  if(name==='compila')renderDotazioniSera();
+  if(name==='admin'){renderAdmin();renderAttMsgAdmin();populateAttMsgTarget();}
+  if(name==='superadmin')renderSA();
+  if(name==='dotazioni'){renderDotazioniPage();}
+  if(name==='manutenzione'){renderManutenzioneSelects();}
+  if(name==='cisterna'){syncCisternaFromFuel();renderCisterna();}
+  if(name==='carburanti'){
+    if(currentUser.isAdmin||currentUser.isSA){document.getElementById('adminRegSec').style.display='block';document.getElementById('autoristaFuel').style.display='none';populateFuelBarcoFilter();renderFuelHistory();}
+    else{document.getElementById('adminRegSec').style.display='none';document.getElementById('autoristaFuel').style.display='block';}
+  }
+}
+
+// =============================================
+// SA LOGIN / OTP
+// =============================================
+function showSALogin(){document.getElementById('pageLogin').style.display='none';document.getElementById('pageSALogin').style.display='flex';showOtpStep(1);}
+function hideSALogin(){document.getElementById('pageSALogin').style.display='none';document.getElementById('pageLogin').style.display='flex';clearOtpTimer();}
+function showOtpStep(n){document.querySelectorAll('.otp-step').forEach(s=>s.classList.remove('active'));document.getElementById('saStep'+n).classList.add('active');}
+
+async function saVerifyPw(){
+  const pw=document.getElementById('saPw').value;
+  const err=document.getElementById('saErr1');
+  if(pw!==SA_PW){err.textContent='Password non corretta.';err.classList.add('show');await addAudit('Sconosciuto','superadmin','login','Tentativo SA fallito — password errata');return;}
+  err.classList.remove('show');
+  genOTP();document.getElementById('otpDisplay').textContent=currentOTP.code;
+  showOtpStep(2);startCountdown('otpCd',120);
+}
+
+function genOTP(){clearOtpTimer();currentOTP={code:String(Math.floor(100000+Math.random()*900000)),expires:Date.now()+120000};}
+function startCountdown(elId,s){clearOtpTimer();document.getElementById(elId).textContent=s;otpTimer=setInterval(()=>{s--;const el=document.getElementById(elId);if(el)el.textContent=s;if(s<=0){clearOtpTimer();currentOTP=null;}},1000);}
+function clearOtpTimer(){if(otpTimer){clearInterval(otpTimer);otpTimer=null;}}
+function resendOTP(e){e.preventDefault();saVerifyPw();}
+function otpNav(p,i){if(document.getElementById(p+i).value)document.getElementById(p+(i+1))?.focus();}
+function otpBack(e,p,i){if(e.key==='Backspace'&&!document.getElementById(p+i).value)document.getElementById(p+(i-1))?.focus();}
+function getOtpVal(p){return[0,1,2,3,4,5].map(i=>document.getElementById(p+i).value).join('');}
+
+async function saVerifyOTP(){
+  const v=getOtpVal('otp');const err=document.getElementById('saErr2');
+  if(!currentOTP||Date.now()>currentOTP.expires){err.textContent='Codice scaduto. Richiedi un nuovo OTP.';err.classList.add('show');return;}
+  if(v!==currentOTP.code){err.textContent='Codice non corretto.';err.classList.add('show');return;}
+  clearOtpTimer();currentOTP=null;
+  currentUser={name:'Super Admin',isAdmin:true,isSA:true};
+  await addAudit('Super Admin','superadmin','login','Accesso SA completato (OTP verificato)');
+  enterApp();
+}
+
+// =============================================
+// SUPER ADMIN RENDER
+// =============================================
+function renderSA(){
+  renderSAAdminList();
+  renderSaDriverList();
+  renderSaMezziList();
+  renderSaAdminBoats();
+  renderSaFornitori();
+  renderSaBarcoFuel();
+  renderAuditLog();
+  const box=document.getElementById('saPwInfoBox');
+  const cnt=document.getElementById('saPwInfoContent');
+  if(box&&cnt){
+    cnt.innerHTML=`🔐 Password Admin: <strong>${ADMIN_PW}</strong><br>👑 Password Super Admin: <strong>${SA_PW}</strong><br><span style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink-faded)">Queste password sono salvate solo su Supabase, non nel codice sorgente.</span>`;
+    box.style.display='block';
+  }
+}
+
+function renderSaMezziList(){
+  const c=document.getElementById('saMezziList');
+  if(!c)return;
+  if(!allMezzi.length){c.innerHTML='<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessuna barca in flotta. Aggiungine una.</p>';return;}
+  c.innerHTML=allMezzi.map((m,i)=>{
+    // Mostra a quale admin è assegnata
+    const admins=adminAccounts.filter(a=>(a.mezziGroup||[]).includes(m)).map(a=>a.name).join(', ')||'Non assegnata';
+    return`<div class="dr"><div style="flex:1"><div class="dn">🚤 ${m}</div><span style="font-size:.7rem;color:var(--ink-faded)">Admin: ${admins}</span></div><button class="bh red" onclick="saRemoveMezzo(${i})">× elimina</button></div>`;
+  }).join('');
+}
+
+async function saAddMezzo(){
+  const n=document.getElementById('saNewMezzoName').value.trim();
+  if(!n){alert('Inserisci il nome della barca');return;}
+  if(allMezzi.find(m=>m.toLowerCase()===n.toLowerCase())){alert('Barca già presente.');return;}
+  allMezzi.push(n);
+  await sv.mezzi();
+  await addAudit(currentUser.name,'superadmin','admin',`Barca aggiunta: ${n}`);
+  document.getElementById('saNewMezzoName').value='';
+  renderSA();
+  populateMezzoSelect();
+}
+
+async function saRemoveMezzo(i){
+  const nome=allMezzi[i];
+  if(!confirm(`Eliminare la barca "${nome}"?\n\nVerrà rimossa anche da tutti gli admin e autisti assegnati.`))return;
+  allMezzi.splice(i,1);
+  // Rimuovi da mezziGroup degli admin
+  adminAccounts.forEach(a=>{if(a.mezziGroup)a.mezziGroup=a.mezziGroup.filter(m=>m!==nome);});
+  // Rimuovi da mezzi degli autisti
+  drivers.forEach(d=>{d.mezzi=(d.mezzi||[]).filter(m=>m!==nome);});
+  // Rimuovi carburante assegnato
+  delete barcoFuel[nome];
+  await sv.mezzi();await sv.adminAcc();await sv.drivers();await sv.barcoFuel();
+  await addAudit(currentUser.name,'superadmin','delete',`Barca eliminata: ${nome}`);
+  renderSA();populateMezzoSelect();
+}
+
+function renderSAAdminList(){
+  const c=document.getElementById('saAdminList');
+  if(!adminAccounts.length){c.innerHTML='<p style="font-family:\'Source Sans 3\',sans-serif;font-style:italic;font-size:.85rem;color:var(--ink-faded);padding:.5rem 0">Nessun admin creato via Super Admin. I login usano la password master.</p>';return;}
+  c.innerHTML=adminAccounts.map((a,i)=>{
+    const ll=a.lastLogin?new Date(a.lastLogin).toLocaleString('it-IT'):'Mai';
+    return `<div class="ac"><div class="act"><div><div class="acn">${a.name}</div><div class="acm">Creato il ${new Date(a.createdAt).toLocaleDateString('it-IT')} · Ultimo accesso: ${ll}<br>IP: <code style="font-size:.65rem;background:rgba(0,0,0,.05);padding:.05rem .3rem">${a.lastLoginIP||'N/D'}</code></div></div><span class="asb ${a.active?'on':'off'}">${a.active?'✓ Attivo':'✗ Disabilitato'}</span></div><div class="aca"><button class="bh ${a.active?'red':'grn'}" onclick="saToggleAdmin(${i})">${a.active?'🚫 Disabilita':'✓ Abilita'}</button><button class="bh pur" onclick="saOpenResetPw(${i})">🔑 Reset Password</button><button class="bh red" onclick="saDeleteAdmin(${i})">× Rimuovi</button></div></div>`;
+  }).join('');
+}
+
+function renderSaDriverList(){
+  const c=document.getElementById('saDriverList');
+  if(!c)return;
+  if(!drivers.length){c.innerHTML='<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessun autista aggiunto.</p>';return;}
+  c.innerHTML=drivers.map((d,i)=>{
+    const adminsOf=(d.adminOwners||[]).join(', ')||'Non assegnato';
+    const hasPw=d.pw?'🔑 Password impostata':'🔓 Nessuna password';
+    return `<div class="dr"><div style="flex:1"><div class="dn">${d.name}</div><span style="font-size:.7rem;color:var(--ink-faded)">Gruppi: ${adminsOf} · ${hasPw}</span></div>
+    <button class="bh pur" onclick="saEditDriverPw(${i})" style="font-size:.68rem">🔑 Password</button>
+    <button class="bh red" onclick="saRemoveDriver(${i})">× rimuovi</button></div>`;
+  }).join('');
+}
+
+function renderSaAdminBoats(){
+  const c=document.getElementById('saAdminBoatsList');
+  if(!c)return;
+  if(!adminAccounts.length){c.innerHTML='<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessun admin creato.</p>';return;}
+  c.innerHTML=adminAccounts.map((a,i)=>{
+    const assigned=a.mezziGroup||[];
+    const boats=allMezzi.map(m=>`<label class="mck" style="margin:.2rem .4rem .2rem 0"><input type="checkbox" value="${m}" ${assigned.includes(m)?'checked':''} onchange="toggleAdminBoat(${i},'${m}',this.checked)" style="accent-color:var(--purple)"><span style="font-size:.85rem">${m}</span></label>`).join('');
+    return `<div class="ac"><div class="act"><div><div class="acn">${a.name}</div><div class="acm">${assigned.length?assigned.join(', '):'Nessuna barca assegnata'}</div></div></div><div style="display:flex;flex-wrap:wrap;padding:.5rem 0">${boats||'<p style="font-size:.8rem;color:#ccc;font-style:italic">Nessuna barca in flotta</p>'}</div></div>`;
+  }).join('');
+}
+
+// MODIFICA: Fornitori solo SA
+function renderSaFornitori(){
+  const c=document.getElementById('sa-fornitori-list');
+  if(!c)return;
+  if(!fornitori.length){c.innerHTML='<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessun fornitore.</p>';return;}
+  c.innerHTML=fornitori.map((f,i)=>`<div class="dr"><div class="dn">${f}</div><button class="bh red" onclick="saRemoveFornitori(${i})">× rimuovi</button></div>`).join('');
+}
+async function saAddFornitori(){
+  const n=document.getElementById('saNewFornitoreName').value.trim();
+  if(!n)return;
+  if(fornitori.includes(n)){alert('Già presente.');return;}
+  fornitori.push(n);await sv.fornitori();
+  document.getElementById('saNewFornitoreName').value='';
+  renderSaFornitori();populateFuelFornitori();
+  await addAudit('Super Admin','superadmin','admin',`Fornitore aggiunto: ${n}`);
+}
+async function saRemoveFornitori(i){
+  if(!confirm(`Rimuovere "${fornitori[i]}"?`))return;
+  const n=fornitori[i];fornitori.splice(i,1);await sv.fornitori();
+  renderSaFornitori();populateFuelFornitori();
+  await addAudit('Super Admin','superadmin','delete',`Fornitore rimosso: ${n}`);
+}
+
+// MODIFICA: Assegna carburante a barche solo SA
+function renderSaBarcoFuel(){
+  const c=document.getElementById('saBarcoFuelList');
+  if(!c)return;
+  if(!allMezzi.length){c.innerHTML='<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessuna barca in flotta.</p>';return;}
+  c.innerHTML=allMezzi.map(b=>{
+    const cf=barcoFuel[b]||'';
+    return`<div class="bfi"><div class="bfn">${b}</div><select class="bfs" onchange="updateBarcoFuel('${b}',this.value)"><option value="">— non assegnato —</option><option value="diesel" ${cf==='diesel'?'selected':''}>DIESEL</option><option value="benzina" ${cf==='benzina'?'selected':''}>BENZINA</option><option value="elettrica" ${cf==='elettrica'?'selected':''}>ELETTRICA</option></select></div>`;
+  }).join('');
+}
+
+async function toggleAdminBoat(adminIdx,barca,checked){
+  const a=adminAccounts[adminIdx];
+  if(!a.mezziGroup)a.mezziGroup=[];
+  if(checked){if(!a.mezziGroup.includes(barca))a.mezziGroup.push(barca);}
+  else{a.mezziGroup=a.mezziGroup.filter(m=>m!==barca);}
+  await sv.adminAcc();renderSaAdminBoats();
+}
+
+async function saAddAdmin(){
+  const name=document.getElementById('saNewAdminName').value.trim();
+  const pw=document.getElementById('saNewAdminPw').value.trim();
+  if(!name||!pw){alert('Inserisci nome e password.');return;}
+  if(adminAccounts.find(a=>a.name.toLowerCase()===name.toLowerCase())){alert('Già presente.');return;}
+  adminAccounts.push({name,pw,active:true,createdAt:new Date().toISOString(),lastLogin:null,lastLoginIP:null});
+  await sv.adminAcc();await addAudit('Super Admin','superadmin','admin',`Creato admin: ${name}`);
+  document.getElementById('saNewAdminName').value='';document.getElementById('saNewAdminPw').value='';
+  renderSAAdminList();
+}
+async function saToggleAdmin(i){adminAccounts[i].active=!adminAccounts[i].active;await sv.adminAcc();await addAudit('Super Admin','superadmin','admin',`Admin "${adminAccounts[i].name}" ${adminAccounts[i].active?'abilitato':'disabilitato'}`);renderSAAdminList();}
+function saOpenResetPw(i){resetPwTarget=i;document.getElementById('resetPwTitle').textContent=`Reset password — ${adminAccounts[i].name}`;document.getElementById('resetPwInput').value='';document.getElementById('resetPwModal').classList.add('show');}
+async function saConfirmResetPw(){
+  const pw=document.getElementById('resetPwInput').value.trim();
+  if(!pw){alert('Inserisci la nuova password.');return;}
+  adminAccounts[resetPwTarget].pw=pw;await sv.adminAcc();
+  await addAudit('Super Admin','superadmin','admin',`Password admin "${adminAccounts[resetPwTarget].name}" resettata`);
+  document.getElementById('resetPwModal').classList.remove('show');
+  alert(`✓ Password di ${adminAccounts[resetPwTarget].name} aggiornata.`);renderSAAdminList();
+}
+async function saDeleteAdmin(i){
+  if(!confirm(`Rimuovere "${adminAccounts[i].name}"?`))return;
+  const n=adminAccounts[i].name;adminAccounts.splice(i,1);await sv.adminAcc();
+  await addAudit('Super Admin','superadmin','admin',`Admin "${n}" rimosso`);renderSAAdminList();
+}
+
+function saRequestPwChange(){
+  const old=document.getElementById('saOld').value;
+  const nw=document.getElementById('saNew').value;
+  const conf=document.getElementById('saConf').value;
+  if(old!==SA_PW){alert('Password attuale non corretta.');return;}
+  if(nw.length<10){alert('La nuova password deve avere almeno 10 caratteri.');return;}
+  if(nw!==conf){alert('Le password non coincidono.');return;}
+  pendingPwChange={nw};genOTP();
+  document.getElementById('otpModalCode').textContent=currentOTP.code;
+  document.getElementById('otpModal').classList.add('show');
+  startCountdown('otpModalCd',120);
+  document.getElementById('md0').focus();
+}
+async function saConfirmPwChange(){
+  const v=getOtpVal('md');const err=document.getElementById('otpModalErr');err.classList.remove('show');
+  if(!currentOTP||Date.now()>currentOTP.expires){err.textContent='Codice scaduto.';err.classList.add('show');return;}
+  if(v!==currentOTP.code){err.textContent='Codice non corretto.';err.classList.add('show');return;}
+  SA_PW=pendingPwChange.nw;await sv.saPw();
+  clearOtpTimer();currentOTP=null;pendingPwChange=null;
+  document.getElementById('otpModal').classList.remove('show');
+  ['saOld','saNew','saConf'].forEach(id=>document.getElementById(id).value='');
+  [0,1,2,3,4,5].forEach(i=>document.getElementById('md'+i).value='');
+  await addAudit('Super Admin','superadmin','settings','Password SA cambiata (OTP verificato)');
+  const n=document.getElementById('saPwOk');n.classList.add('show');setTimeout(()=>n.classList.remove('show'),3000);
+}
+
+async function saUpdateContacts(){
+  saContacts.email=document.getElementById('saEmail').value.trim();
+  saContacts.phone=document.getElementById('saPhone').value.trim();
+  await sv.saContacts();await addAudit('Super Admin','superadmin','settings','Contatti OTP aggiornati');
+  const n=document.getElementById('saContactOk');n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2500);
+}
+
+// =============================================
+// AUDIT LOG — tabella paginata
+// =============================================
+function renderAuditLog(){
+  const rF=document.getElementById('auditRole').value;
+  const tF=document.getElementById('auditType').value;
+  const pgSz=parseInt(document.getElementById('auditPageSize').value)||20;
+  const data=auditLog.filter(e=>(!rF||e.role===rF)&&(!tF||e.action===tF));
+  const totalPages=Math.max(1,Math.ceil(data.length/pgSz));
+  if(auditPage>=totalPages)auditPage=totalPages-1;
+  const slice=data.slice(auditPage*pgSz,(auditPage+1)*pgSz);
+
+  const tb=document.getElementById('auditTableBody');
+  const tc={login:'tg-login',logout:'tg-logout',save:'tg-save',delete:'tg-delete',admin:'tg-admin',settings:'tg-settings'};
+  const rc={superadmin:'sa',admin:'admin',driver:'driver'};
+
+  if(!data.length){
+    tb.innerHTML=`<tr><td colspan="6" class="el">— nessuna attività registrata —</td></tr>`;
+    document.getElementById('auditPager').innerHTML='';
+    return;
+  }
+
+  tb.innerHTML=slice.map(e=>{
+    const ts=new Date(e.ts).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return `<tr>
+      <td style="white-space:nowrap;font-size:.7rem;color:var(--ink-faded)">${ts}</td>
+      <td style="font-weight:600;color:var(--ink);white-space:nowrap" class="${rc[e.role]||'driver'}">${e.actor}</td>
+      <td><span style="font-size:.62rem;background:rgba(0,0,0,.05);padding:.1rem .35rem;border-radius:3px;text-transform:uppercase;letter-spacing:.06em">${e.role||''}</span></td>
+      <td><span class="tag ${tc[e.action]||'tg-login'}">${e.action}</span></td>
+      <td style="font-size:.78rem">${e.desc}</td>
+      <td style="font-family:monospace;font-size:.65rem;color:var(--ink-faded);white-space:nowrap">${e.ip||''}</td>
+    </tr>`;
+  }).join('');
+
+  // Paginazione
+  const pager=document.getElementById('auditPager');
+  const start=auditPage*pgSz+1;
+  const end=Math.min((auditPage+1)*pgSz,data.length);
+  pager.innerHTML=`
+    <button onclick="auditPage=0;renderAuditLog()" ${auditPage===0?'disabled':''}>«</button>
+    <button onclick="auditPage--;renderAuditLog()" ${auditPage===0?'disabled':''}>‹</button>
+    <span>Righe <span class="cur-page">${start}–${end}</span> di <strong>${data.length}</strong></span>
+    <button onclick="auditPage++;renderAuditLog()" ${auditPage>=totalPages-1?'disabled':''}>›</button>
+    <button onclick="auditPage=totalPages-1;renderAuditLog()" ${auditPage>=totalPages-1?'disabled':''}>»</button>
+  `;
+}
+
+async function clearAuditLog(){if(!confirm('Svuotare tutto il log?'))return;auditLog=[];await sv.audit();renderAuditLog();}
+function exportAuditCSV(){
+  if(!auditLog.length){alert('Log vuoto.');return;}
+  const rows=auditLog.map(e=>[new Date(e.ts).toLocaleString('it-IT'),e.actor,e.role,e.action,e.desc,e.ip,e.ua||''].join('\t'));
+  downloadCSV('\uFEFF'+rows.join('\n'),'Audit Log CCB');
+}
+
+// =============================================
+// MEZZI / AUTISTI
+// =============================================
+function populateMezzoSelect(){
+  let mezzi;
+  if(currentUser.isSA)mezzi=allMezzi;
+  else if(currentUser.isAdmin)mezzi=getAdminMezzi();
+  else mezzi=getDriverMezzi(currentUser.name);
+  document.getElementById('fMezzo').innerHTML='<option value="">— seleziona —</option>'+mezzi.map(m=>`<option>${m}</option>`).join('');
+}
+
+// MODIFICA: autista può lavorare con più admin — le sue barche sono l'unione di tutte le assegnazioni
+function getDriverMezzi(name){
+  const d=drivers.find(dr=>dr.name===name);
+  return d?d.mezzi||[]:[];
+}
+
+let pendingFotos=[];
+let pendingPdfs=[];
+function previewFotos(e){
+  pendingFotos=[...pendingFotos,...Array.from(e.target.files)];
+  const pv=document.getElementById('fotoPreview');pv.innerHTML='';
+  pendingFotos.forEach((f,i)=>{const url=URL.createObjectURL(f);const div=document.createElement('div');div.style.cssText='position:relative;display:inline-block';div.innerHTML=`<img src="${url}" class="fothumb"><button onclick="removeFoto(${i})" style="position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:.72rem;cursor:pointer;line-height:1">×</button>`;pv.appendChild(div);});
+}
+function removeFoto(i){pendingFotos.splice(i,1);document.getElementById('fFoto').value='';previewFotos({target:{files:pendingFotos}});}
+function previewPdfs(e){
+  pendingPdfs=[...pendingPdfs,...Array.from(e.target.files)];
+  const pv=document.getElementById('pdfPreview');pv.innerHTML='';
+  pendingPdfs.forEach((f,i)=>{
+    const div=document.createElement('div');
+    div.style.cssText='display:flex;align-items:center;gap:.5rem;background:#fafaf8;border:1px solid var(--line);padding:.35rem .7rem;border-radius:3px;';
+    div.innerHTML=`<span style="font-size:1.1rem">📄</span><span style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span><button onclick="removePdf(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.9rem;flex-shrink:0">×</button>`;
+    pv.appendChild(div);
+  });
+}
+function removePdf(i){pendingPdfs.splice(i,1);document.getElementById('fPdf').value='';previewPdfs({target:{files:pendingPdfs}});}
+
+async function submitForm(){
+  const mezzo=document.getElementById('fMezzo').value;
+  const data=document.getElementById('fData').value;
+  if(!mezzo){alert('Seleziona il mezzo');return;}if(!data){alert('Inserisci la data');return;}
+  const btn=document.getElementById('saveBtnCompila');
+  const totalFiles=pendingFotos.length+pendingPdfs.length;
+  btn.textContent=totalFiles?'⏳ Caricamento...':'⏳ Salvataggio...';btn.disabled=true;
+  const fotoUrls=[];for(const file of pendingFotos){try{fotoUrls.push(await uploadPhoto(file));}catch(e){console.error(e);}}
+  const pdfUrls=[];for(const file of pendingPdfs){try{pdfUrls.push(await uploadFile(file));}catch(e){console.error(e);}}
+  records.unshift({id:Date.now(),mezzo,data,autista:document.getElementById('fAutista').value.trim(),ore:document.getElementById('fOre').value||'',intervento:document.getElementById('fIntervento').value.trim(),note:document.getElementById('fNote').value.trim(),foto:fotoUrls,pdf:pdfUrls,salvato:new Date().toISOString(),dotazioni:{prosecco:chkState.Prosecco,bicchieri:chkState.Bicchieri,acqua:chkState.Acqua,carburante:fuelLvlState}});
+  await sv.records();
+  await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'save',`Registrazione "${mezzo}" del ${data}`);
+  document.getElementById('fOre').value='';document.getElementById('fIntervento').value='';document.getElementById('fNote').value='';
+  document.getElementById('fFoto').value='';document.getElementById('fotoPreview').innerHTML='';pendingFotos=[];
+  document.getElementById('fPdf').value='';document.getElementById('pdfPreview').innerHTML='';pendingPdfs=[];
+  if(!currentUser.isAdmin&&!currentUser.isSA)document.getElementById('fAutista').value=currentUser.name;
+  btn.textContent='✦ Salva nel registro';btn.disabled=false;
+  renderDotazioniSera();
+  const n=document.getElementById('successNote');n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2500);
+}
+
+function setupMic(){
+  const btn=document.getElementById('micBtn');const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){btn.style.opacity='.3';return;}let sr=null,on=false;
+  btn.onclick=()=>{if(on){on=false;sr.stop();btn.classList.remove('rec');btn.textContent='🎙️';}else{sr=new SR();sr.lang='it-IT';sr.continuous=true;sr.interimResults=true;let base=document.getElementById('fNote').value;sr.onresult=e=>{let t='',fin=base;for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)fin+=e.results[i][0].transcript+' ';else t=e.results[i][0].transcript;}document.getElementById('fNote').value=fin+t;};sr.onend=()=>{if(on)sr.start();};sr.start();on=true;btn.classList.add('rec');btn.textContent='⏹';}};
+}
+
+// =============================================
+// REGISTRO / DASH
+// =============================================
+function myRecs(){
+  if(currentUser.isSA)return records;
+  if(currentUser.isAdmin){const m=getAdminMezzi();return records.filter(r=>m.includes(r.mezzo));}
+  // MODIFICA: autista vede le sue registrazioni (dove è autista) su qualsiasi barca abbia assegnata
+  const m=getDriverMezzi(currentUser.name);
+  return records.filter(r=>m.includes(r.mezzo));
+}
+function filterMeseChanged(){const mese=document.getElementById('filterMese').value;const gEl=document.getElementById('filterGiorno');gEl.value='';if(mese){const g=[...new Set(myRecs().filter(r=>r.data.startsWith(mese)).map(r=>r.data))].sort();gEl.innerHTML='<option value="">Tutti i giorni</option>'+g.map(d=>`<option value="${d}">${new Date(d+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</option>`).join('');}else{gEl.innerHTML='<option value="">Tutti i giorni</option>';}renderDash();}
+function filtered(){const fm=document.getElementById('filterMezzo').value,fme=document.getElementById('filterMese').value,fg=document.getElementById('filterGiorno').value;return myRecs().filter(r=>(!fm||r.mezzo===fm)&&(!fme||r.data.startsWith(fme))&&(!fg||r.data===fg));}
+function populateDashFilters(){const b=myRecs();const mz=[...new Set(b.map(r=>r.mezzo))].sort();const ms=[...new Set(b.map(r=>r.data.slice(0,7)))].sort().reverse();document.getElementById('filterMezzo').innerHTML='<option value="">Tutti i mezzi</option>'+mz.map(m=>`<option>${m}</option>`).join('');document.getElementById('filterMese').innerHTML='<option value="">Tutti i mesi</option>'+ms.map(m=>{const[y,mo]=m.split('-');const l=new Date(+y,+mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return`<option value="${m}">${l.charAt(0).toUpperCase()+l.slice(1)}</option>`;}).join('');}
+function renderDash(){
+  const data=filtered();document.getElementById('statReg').textContent=data.length;
+  const ov=data.filter(r=>r.ore&&r.ore!=='').map(r=>parseFloat(r.ore));
+  document.getElementById('statOre').textContent=ov.length?Math.max(...ov).toFixed(1):'0';
+  const tb=document.getElementById('tableBody');
+  if(!data.length){tb.innerHTML='<tr><td colspan="9" class="el">— nessuna registrazione —</td></tr>';return;}
+  tb.innerHTML=data.map(r=>{
+    const d=r.data?new Date(r.data+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'2-digit'}):'—';
+    const fo=(r.foto||[]).map(u=>`<a href="${u}" target="_blank"><img src="${u}" class="fothumb" style="width:42px;height:42px;margin:1px"></a>`).join('');
+    const pd=(r.pdf||[]).map((u,i)=>{const nm=decodeURIComponent(u.split('/').pop()).replace(/\.[^.]+$/,'').slice(0,22)||`PDF ${i+1}`;const viewUrl=u.includes('cloudinary.com')?u.replace('/upload/','/upload/fl_attachment/'):u;return`<a href="${viewUrl}" target="_blank" style="display:flex;align-items:center;gap:.3rem;font-family:'Source Sans 3',sans-serif;font-size:.75rem;color:var(--red);text-decoration:none;padding:.2rem .4rem;border:1px solid rgba(192,57,43,.2);border-radius:3px;white-space:nowrap;background:#fff9f9">📄 ${nm}</a>`;}).join('');
+    let actBtns='';
+    if(currentUser.isAdmin||currentUser.isSA){actBtns=`<button class="dx" title="Modifica" onclick="openEditRecord(${r.id})" style="margin-right:.3rem">✏</button><button class="dx" onclick="delRec(${r.id})">×</button>`;}
+    const dot=r.dotazioni||{};
+    function dIcon(v){return v==='ok'?'✅':v==='no'?'❌':'—';}
+    const fuelIcon=dot.carburante?`<span style="font-size:.75rem;font-weight:700;color:var(--blue)">${dot.carburante}</span>`:'—';
+    const dotCell=`<div style="font-size:.78rem;line-height:1.7;white-space:nowrap">🥂 ${dIcon(dot.prosecco)} &nbsp;🫙 ${dIcon(dot.bicchieri)}<br>💧 ${dIcon(dot.acqua)} &nbsp;⛽ ${fuelIcon}</div>`;
+    return`<tr><td class="tm">${r.mezzo}</td><td class="td">${d}</td><td>${r.autista||'—'}</td><td>${r.ore?r.ore+'h':'—'}</td><td>${r.intervento||'—'}</td><td class="tn">${r.note||''}</td><td>${dotCell}</td><td>${fo}</td><td><div style="display:flex;flex-direction:column;gap:.25rem">${pd}</div></td><td style="white-space:nowrap">${actBtns}</td></tr>`;
+  }).join('');
+}
+async function delRec(id){if(!confirm('Eliminare?'))return;const rec=records.find(r=>r.id===id);records=records.filter(r=>r.id!==id);await sv.records();await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','delete',`Eliminata registrazione "${rec?.mezzo||id}"`);populateDashFilters();renderDash();}
+
+function getAdminMezzi(){
+  if(currentUser.isSA)return allMezzi;
+  const acc=adminAccounts.find(a=>a.name===currentUser.name);
+  return(acc&&acc.mezziGroup)?acc.mezziGroup:[];
+}
+
+// MODIFICA: autista visibile a un admin = drivers che hanno questo admin in adminOwners[]
+function getAdminDrivers(){
+  if(currentUser.isSA)return drivers;
+  return drivers.filter(d=>(d.adminOwners||[]).includes(currentUser.name));
+}
+
+// =============================================
+// ADMIN PAGE
+// =============================================
+function renderAdmin(){
+  const myMezzi=getAdminMezzi();
+  const myDrivers=getAdminDrivers();
+
+  // Driver list
+  document.getElementById('driverList').innerHTML=!myDrivers.length
+    ?'<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessun autista nel tuo gruppo. Aggiungine uno dalla lista globale.</p>'
+    :myDrivers.map((d,i)=>{
+        const gi=drivers.indexOf(d);
+        const barche=d.mezzi.filter(m=>myMezzi.includes(m)).join(', ')||'nessuna barca';
+        return`<div class="dr"><div class="dn">${d.name}</div><div class="dm">${barche}</div><div class="da"><button class="bh" onclick="openAssign(${gi})">Barche</button><button class="bh red" onclick="removeDriverFromAdmin(${gi})">×</button></div></div>`;
+      }).join('');
+
+  // MODIFICA: dropdown mostra TUTTI gli autisti globali (non solo quelli liberi)
+  // Un autista può stare in più gruppi admin contemporaneamente
+  const sel=document.getElementById('newDriverSelect');
+  if(sel){
+    // mostra tutti tranne quelli già nel mio gruppo
+    const alreadyMine=myDrivers.map(d=>d.name);
+    const available=drivers.filter(d=>!alreadyMine.includes(d.name));
+    sel.innerHTML='<option value="">— Seleziona autista da aggiungere —</option>'
+      +available.map(d=>`<option value="${d.name}">${d.name}${(d.adminOwners||[]).length?' (già in '+d.adminOwners.join(', ')+')':''}</option>`).join('');
+  }
+
+  document.getElementById('mezzoList').innerHTML=!myMezzi.length
+    ?'<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessuna barca assegnata dal Super Admin.</p>'
+    :myMezzi.map(m=>`<div class="dr"><div class="dn">${m}</div></div>`).join('');
+
+  renderCisternaPerms();
+}
+
+function renderCisternaPerms(){
+  const c=document.getElementById('cisternaPermList');
+  const list=getAdminDrivers();
+  if(!list.length){c.innerHTML='<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessun autista nel tuo gruppo.</p>';return;}
+  c.innerHTML=list.map(d=>`<div class="dr"><div class="dn">${d.name}</div><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded)"><input type="checkbox" ${cisternaPerms[d.name]?'checked':''} onchange="toggleCisternaPerm('${d.name}',this.checked)" style="accent-color:#1a6b8a;width:16px;height:16px;cursor:pointer">Accesso Cisterna CCB</label></div>`).join('');
+}
+async function toggleCisternaPerm(name,val){if(val)cisternaPerms[name]=true;else delete cisternaPerms[name];await sv.cisternaPerms();}
+
+// MODIFICA: aggiunge autista al gruppo di questo admin senza rimuoverlo dagli altri
+async function addDriverFromSelect(){
+  const sel=document.getElementById('newDriverSelect');
+  const name=sel.value;
+  if(!name){alert('Seleziona un autista dalla lista');return;}
+  const d=drivers.find(dr=>dr.name===name);
+  if(!d){alert('Autista non trovato');return;}
+  if(!d.adminOwners)d.adminOwners=[];
+  if(!d.adminOwners.includes(currentUser.name))d.adminOwners.push(currentUser.name);
+  await sv.drivers();
+  await addAudit(currentUser.name,'admin','admin',`Autista aggiunto al gruppo: ${name}`);
+  renderAdmin();populateMezzoSelect();
+}
+
+// MODIFICA: rimuove autista solo dal gruppo di questo admin (non da altri)
+async function removeDriverFromAdmin(i){
+  const d=drivers[i];
+  if(!d)return;
+  if(!confirm(`Rimuovere ${d.name} dal tuo gruppo?`))return;
+  if(!d.adminOwners)d.adminOwners=[];
+  d.adminOwners=d.adminOwners.filter(a=>a!==currentUser.name);
+  // Le barche rimangono: l'autista potrebbe averle anche da un altro admin
+  await sv.drivers();
+  await addAudit(currentUser.name,'admin','admin',`Autista rimosso dal gruppo: ${d.name}`);
+  renderAdmin();
+}
+
+// SA aggiunge autista globale
+async function saAddDriver(){
+  const n=document.getElementById('saNewDriverName').value.trim();
+  const pw=document.getElementById('saNewDriverPw')?document.getElementById('saNewDriverPw').value.trim():'';
+  if(!n)return;
+  if(drivers.find(d=>d.name.toLowerCase()===n.toLowerCase())){alert('Già presente.');return;}
+  drivers.push({name:n,mezzi:[],adminOwners:[],pw:pw||''});
+  await sv.drivers();
+  await addAudit(currentUser.name,'superadmin','admin',`Autista globale aggiunto: ${n}`);
+  document.getElementById('saNewDriverName').value='';
+  if(document.getElementById('saNewDriverPw'))document.getElementById('saNewDriverPw').value='';
+  renderSA();
+}
+
+function saEditDriverPw(i){
+  const d=drivers[i];
+  const np=prompt(`Password per ${d.name} (lascia vuoto per nessuna password):`,d.pw||'');
+  if(np===null)return;
+  drivers[i].pw=np.trim();
+  sv.drivers();
+  addAudit(currentUser.name,'superadmin','admin',`Password autista "${d.name}" ${np.trim()?'impostata':'rimossa'}`);
+  renderSaDriverList();
+}
+async function saRemoveDriver(i){
+  if(!confirm(`Rimuovere definitivamente ${drivers[i].name}?`))return;
+  const n=drivers[i].name;drivers.splice(i,1);await sv.drivers();
+  await addAudit(currentUser.name,'superadmin','delete',`Autista eliminato: ${n}`);
+  renderSA();
+}
+
+async function removeMezzo(i){
+  // Gestita solo da SA tramite saRemoveMezzo
+  alert('Solo il Super Admin può eliminare barche.');
+}
+
+function openAssign(i){
+  assigningDriver=i;
+  document.getElementById('modalTitle').textContent=`Barche di ${drivers[i].name}`;
+  const myMezzi=getAdminMezzi();
+  document.getElementById('modalMezzi').innerHTML=myMezzi.map(m=>`<label class="mck"><input type="checkbox" value="${m}" ${drivers[i].mezzi.includes(m)?'checked':''}><span>${m}</span></label>`).join('');
+  document.getElementById('assignModal').classList.add('show');
+}
+function closeModal(){document.getElementById('assignModal').classList.remove('show');assigningDriver=null;}
+async function saveAssignment(){
+  if(assigningDriver===null)return;
+  const checked=[...document.querySelectorAll('#modalMezzi input:checked')].map(c=>c.value);
+  // Mantieni le barche di altri admin, aggiorna solo quelle di questo admin
+  const myMezzi=getAdminMezzi();
+  const otherMezzi=drivers[assigningDriver].mezzi.filter(m=>!myMezzi.includes(m));
+  drivers[assigningDriver].mezzi=[...new Set([...otherMezzi,...checked])];
+  await sv.drivers();closeModal();renderAdmin();
+  if(currentUser&&!currentUser.isAdmin&&!currentUser.isSA)populateMezzoSelect();
+}
+
+// =============================================
+// CARBURANTI
+// =============================================
+function selectFuel(type,el){
+  if(!currentUser.isAdmin&&!currentUser.isSA){const b=getDriverMezzi(currentUser.name);if(!b.length){alert('Non hai barche assegnate');return;}}
+  selectedFuelType=type;document.querySelectorAll('.ft').forEach(e=>e.classList.remove('active'));el.classList.add('active');
+  document.getElementById('pumpLabel').textContent=type.toUpperCase();document.getElementById('fuelForm').style.display='block';
+  populateFuelBarcos();renderFuelHistory();
+}
+function populateFuelBarcos(){
+  let b;
+  if(currentUser.isSA)b=allMezzi;
+  else if(currentUser.isAdmin)b=getAdminMezzi();
+  else b=getDriverMezzi(currentUser.name);
+  const sel=document.getElementById('fBarcoFuel');
+  if(sel)sel.innerHTML='<option value="">— seleziona —</option>'+b.map(x=>`<option>${x}</option>`).join('');
+}
+function updateDisplay(){document.getElementById('litriDisplay').textContent=document.getElementById('fLitri').value||'0';}
+function populateFuelFornitori(){document.getElementById('fFornitoreFuel').innerHTML='<option value="">— seleziona —</option>'+fornitori.map(f=>`<option>${f}</option>`).join('');}
+function populateFuelBarcoFilter(){document.getElementById('filterFuelBarca').innerHTML='<option value="">Tutte le barche</option>'+allMezzi.map(b=>`<option>${b}</option>`).join('');}
+function isCisternaCCB(forn){const f=forn.toLowerCase();return f.includes('cisterna')&&f.includes('ccb');}
+
+async function submitFuel(){
+  const barca=document.getElementById('fBarcoFuel').value;const data=document.getElementById('fDataFuel').value;
+  const forn=document.getElementById('fFornitoreFuel').value;const litri=parseFloat(document.getElementById('fLitri').value);
+  if(!barca||!data||!forn||!litri||litri<=0){alert('Compila tutti i campi');return;}
+  const ca=barcoFuel[barca];
+  if(ca&&ca!==selectedFuelType){alert(`❌ La barca "${barca}" richiede ${ca.toUpperCase()}\nHai selezionato ${selectedFuelType.toUpperCase()}`);return;}
+  if(selectedFuelType==='diesel'&&isCisternaCCB(forn)){
+    if(litri>cisternaDiesel.litriAttuali){alert(`❌ Cisterna insufficiente!\nDisponibili: ${cisternaDiesel.litriAttuali.toFixed(0)} L\nRichiesti: ${litri} L`);return;}
+  }
+  const rec={id:Date.now(),barca,data,tipo:selectedFuelType,litri,fornitori:forn,note:document.getElementById('fNoteFuel').value.trim(),salvato:new Date().toISOString()};
+  fuelRecords.unshift(rec);await sv.fuel();
+  await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'save',`Rifornimento ${selectedFuelType.toUpperCase()} ${litri}L — ${barca}`);
+  if(selectedFuelType==='diesel'&&isCisternaCCB(forn)){
+    cisternaDiesel.litriAttuali=Math.max(0,cisternaDiesel.litriAttuali-litri);
+    if(!cisternaDiesel.storico)cisternaDiesel.storico=[];
+    cisternaDiesel.storico.unshift({id:Date.now(),tipo:'scarico',data:data.slice(0,10),barca,litri,livelloAfter:cisternaDiesel.litriAttuali,nota:'Scarico automatico da rifornimento',salvato:new Date().toISOString()});
+    await sv.cisternaDiesel();
+  }
+  benzinaDieselDati.unshift({id:rec.id,data:data.slice(0,10),ora:data.includes('T')?data.slice(11,16):'',barca,tipo:selectedFuelType,litri,fornitori:forn,note:rec.note,salvato:new Date().toISOString()});await sv.benzinaDiesel();
+  document.getElementById('fLitri').value='';document.getElementById('fNoteFuel').value='';document.getElementById('litriDisplay').textContent='0';
+  const n=document.getElementById('successNoteFuel');n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2500);
+  renderFuelHistory();
+}
+
+function renderFuelHistory(){
+  let data=fuelRecords;
+  if((currentUser.isAdmin||currentUser.isSA)&&document.getElementById('filterFuelType')){const ft=document.getElementById('filterFuelType').value;const fb=document.getElementById('filterFuelBarca').value;data=fuelRecords.filter(r=>(!ft||r.tipo===ft)&&(!fb||r.barca===fb));}
+  else{data=fuelRecords.filter(r=>selectedFuelType?r.tipo===selectedFuelType:false).slice(0,20);}
+  const tb=document.getElementById('fuelTableBody');
+  if(!data.length){tb.innerHTML='<tr><td colspan="7" class="el">— nessun rifornimento —</td></tr>';return;}
+  tb.innerHTML=data.map(r=>{const d=new Date(r.data).toLocaleDateString('it-IT');return`<tr><td class="tm">${r.barca}</td><td class="td">${d}</td><td><strong>${r.tipo.toUpperCase()}</strong></td><td>${r.litri}L</td><td>${r.fornitori}</td><td class="tn">${r.note||'—'}</td><td>${(currentUser.isAdmin||currentUser.isSA)?`<button class="dx" onclick="delFuelRec(${r.id})">×</button>`:''}</td></tr>`;}).join('');
+}
+async function delFuelRec(id){if(!confirm('Eliminare rifornimento?'))return;fuelRecords=fuelRecords.filter(r=>r.id!==id);await sv.fuel();await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','delete',`Rifornimento ID ${id} eliminato`);renderFuelHistory();}
+
+// MODIFICA: solo SA può aggiungere/rimuovere fornitori → queste funzioni ora solo in renderSaFornitori
+async function updateBarcoFuel(b,t){if(t)barcoFuel[b]=t;else delete barcoFuel[b];await sv.barcoFuel();}
+
+// =============================================
+// CISTERNA
+// =============================================
+function syncCisternaFromFuel(){
+  if(!cisternaDiesel.storico)cisternaDiesel.storico=[];
+  if(cisternaDiesel.litriAttuali===undefined||cisternaDiesel.litriAttuali===null){cisternaDiesel.litriAttuali=0;}
+}
+
+function getCisternaColor(litri){
+  if(litri>430)return{fill:'#2d7a4f',color:'#2d6a4f',stato:'LIVELLO OK',wave1:'#3a9a60',wave2:'#1f5a38'};
+  if(litri>215)return{fill:'#d4a017',color:'#b8840a',stato:'LIVELLO MEDIO',wave1:'#e8b830',wave2:'#b07010'};
+  if(litri>60)return{fill:'#c0392b',color:'#c0392b',stato:'LIVELLO BASSO',wave1:'#e04030',wave2:'#901f18'};
+  return{fill:'#1a3a6b',color:'#1a3a6b',stato:'CRITICO',wave1:'#244a8b',wave2:'#102040'};
+}
+
+function renderCisterna(){
+  const litri=Math.max(0,Math.min(CISTERNA_MAX,cisternaDiesel.litriAttuali||0));
+  const pct=litri/CISTERNA_MAX;
+  const col=getCisternaColor(litri);
+  const tankH=210;const fillH=tankH*pct;const fillY=270-fillH;
+  const liquidRect=document.getElementById('liquidRect');const waveEllipse=document.getElementById('waveEllipse');const levelArrow=document.getElementById('levelArrow');
+  if(liquidRect){liquidRect.setAttribute('y',fillY);liquidRect.setAttribute('height',fillH);liquidRect.setAttribute('fill',col.fill);}
+  if(waveEllipse){waveEllipse.setAttribute('cy',fillY);waveEllipse.setAttribute('fill',col.wave1);}
+  const arrowY=80+(268-80)*(1-pct);
+  if(levelArrow){levelArrow.setAttribute('points',`16,${arrowY} 8,${arrowY-5} 8,${arrowY+5}`);levelArrow.setAttribute('fill',col.color);}
+  const liqTop=document.getElementById('liqTop');const liqBot=document.getElementById('liqBot');
+  if(liqTop)liqTop.style.stopColor=col.wave1;if(liqBot)liqBot.style.stopColor=col.fill;
+  const numEl=document.getElementById('cisternaLitriNum');const pctEl=document.getElementById('cisternaPct');const statoEl=document.getElementById('cisternaStato');
+  if(numEl){numEl.textContent=litri.toFixed(0);numEl.style.color=col.color;}
+  if(pctEl)pctEl.textContent=Math.round(pct*100)+'%';
+  if(statoEl){statoEl.textContent='● '+col.stato;statoEl.style.background=col.fill;}
+  renderCisternaStorico();
+}
+
+function renderCisternaStorico(){
+  const c=document.getElementById('cisternaStorico');
+  const stor=cisternaDiesel.storico||[];
+  if(!stor.length){c.innerHTML='<p class="el">— nessun movimento registrato —</p>';return;}
+  c.innerHTML=stor.slice(0,50).map(s=>{
+    const isCarico=s.tipo==='carico';
+    const d=s.data?new Date(s.data+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'}):'—';
+    const segno=isCarico?'+':'-';
+    const after=typeof s.livelloAfter!=='undefined'?` → ${s.livelloAfter.toFixed(0)}L`:'';
+    return`<div class="csrow"><div class="csd">${d}</div><div class="cst">${isCarico?'📥 Carico':'📤 Scarico'} ${s.barca?'→ '+s.barca:''}<br><span style="font-size:.7rem;color:var(--ink-faded)">${s.nota||''}</span></div><div class="csl ${isCarico?'up':'down'}">${segno}${s.litri}L</div><div class="csb" style="font-size:.68rem">${after}</div></div>`;
+  }).join('');
+}
+
+async function addCaricoCisterna(){
+  const litriVal=parseFloat(document.getElementById('caricoLitri').value);
+  const data=document.getElementById('caricoData').value;
+  const nota=document.getElementById('caricoNote').value.trim();
+  if(!litriVal||litriVal<=0){alert('Inserisci i litri da aggiungere');return;}
+  if(!data){alert('Inserisci la data');return;}
+  const nuovoLivello=Math.min(CISTERNA_MAX,(cisternaDiesel.litriAttuali||0)+litriVal);
+  cisternaDiesel.litriAttuali=nuovoLivello;
+  if(!cisternaDiesel.storico)cisternaDiesel.storico=[];
+  cisternaDiesel.storico.unshift({id:Date.now(),tipo:'carico',data,litri:litriVal,livelloAfter:nuovoLivello,nota:nota||'Carico manuale',salvato:new Date().toISOString()});
+  await sv.cisternaDiesel();
+  await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'save',`Carico cisterna +${litriVal}L → livello ${nuovoLivello.toFixed(0)}L`);
+  document.getElementById('caricoLitri').value='';document.getElementById('caricoNote').value='';
+  const n=document.getElementById('caricoOk');n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2500);
+  renderCisterna();
+}
+
+// =============================================
+// EXPORT
+// =============================================
+function exportCSV(){
+  const data=filtered();if(!data.length){alert('Nessun dato');return;}
+  const mesi=[...new Set(data.map(r=>r.data.substring(0,7)))].sort().reverse();
+  const lista=mesi.map(m=>{const[a,mo]=m.split('-');const n=new Date(a,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return`${m} - ${n.charAt(0).toUpperCase()+n.slice(1)}`;}).join('\n');
+  const sc=prompt(`Scegli il mese:\n\n${lista}`,mesi[0]);if(!sc)return;
+  const mese=sc.split(' - ')[0];const d=data.filter(r=>r.data.startsWith(mese));if(!d.length){alert('Nessun dato');return;}
+  const rows=[...d].sort((a,b)=>new Date(a.data)-new Date(b.data)).map(r=>[r.data||'',r.mezzo||'',r.autista||'',r.ore||'',r.intervento||'',r.note||'',(r.foto&&r.foto.length)?r.foto.join(' | '):'',r.salvato?new Date(r.salvato).toLocaleString('it-IT'):'',(r.pdf&&r.pdf.length)?r.pdf.join(' | '):''
+  ].join('\t'));
+  downloadCSV('\uFEFF'+rows.join('\n'),`Esporta Registro ${mese}`);
+}
+function exportCisternaDiesel(){
+  const stor=cisternaDiesel.storico||[];
+  if(!stor.length){alert('Nessun dato cisterna');return;}
+  const mesi=[...new Set(stor.map(s=>s.data.substring(0,7)))].sort().reverse();
+  const lista=mesi.map(m=>{const[a,mo]=m.split('-');const n=new Date(a,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return`${m} - ${n.charAt(0).toUpperCase()+n.slice(1)}`;}).join('\n');
+  const sc=prompt(`Scegli il mese:\n\n${lista}`,mesi[0]);if(!sc)return;
+  const mese=sc.split(' - ')[0];
+  const rows=stor.filter(s=>s.data.startsWith(mese)).map(s=>[s.data,s.tipo==='carico'?'CARICO':'SCARICO',s.barca||'',s.litri,(s.livelloAfter||0).toFixed(0),s.nota||''].join('\t'));
+  downloadCSV('\uFEFF'+rows.join('\n'),`Esporta Cisterna CCB ${mese}`);
+}
+function exportBenzinaDiesel(){
+  if(!fuelRecords.length){alert('Nessun dato');return;}
+  const mesi=[...new Set(fuelRecords.map(r=>r.data.substring(0,7)))].sort().reverse();
+  const lista=mesi.map(m=>{const[a,mo]=m.split('-');const n=new Date(a,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return`${m} - ${n.charAt(0).toUpperCase()+n.slice(1)}`;}).join('\n');
+  const sc=prompt(`Scegli il mese:\n\n${lista}`,mesi[0]);if(!sc)return;
+  const mese=sc.split(' - ')[0];const d=fuelRecords.filter(r=>r.data.startsWith(mese));if(!d.length){alert('Nessun dato');return;}
+  const rows=[...d].sort((a,b)=>new Date(a.data)-new Date(b.data)).map(r=>[r.data.slice(0,10),r.data.includes('T')?r.data.slice(11,16):'',r.barca,r.tipo.toUpperCase(),r.litri,r.fornitori,r.note||''].join('\t'));
+  downloadCSV('\uFEFF'+rows.join('\n'),`Esporta Benzina ${mese}`);
+}
+
+async function downloadCSV(csv,name){
+  const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent);
+  if(isIOS){let ok=false;
+    try{await navigator.clipboard.writeText(csv);ok=true;}catch{
+      try{const ta=document.createElement('textarea');ta.value=csv;ta.style.cssText='position:fixed;top:-9999px;left:-9999px;opacity:0';document.body.appendChild(ta);ta.focus();ta.select();ok=document.execCommand('copy');document.body.removeChild(ta);}catch{}
+    }
+    if(!ok){alert('⚠️ Impossibile copiare. Riprova.');return;}
+    setTimeout(()=>{window.location.href='shortcuts://run-shortcut?name='+encodeURIComponent(name);},300);
+  }else{
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');
+    a.href=url;a.download=name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9\-]/g,'')+'.csv';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  }
+}
+
+// =============================================
+// ATTENZIONE MESSAGGI
+// =============================================
+let attMessages=[];
+
+async function loadAttMessages(){
+  const d=await dbGet('fleet-att-messages');
+  if(d)attMessages=d;
+  purgeExpiredMessages();
+}
+async function saveAttMessages(){await dbSet('fleet-att-messages',attMessages);}
+function purgeExpiredMessages(){
+  const now=Date.now();const before=attMessages.length;
+  attMessages=attMessages.filter(m=>{if(!m.expiresAt)return true;return m.expiresAt>now;});
+  if(attMessages.length!==before)saveAttMessages();
+}
+function getMyAttMessages(){
+  if(!currentUser)return[];
+  purgeExpiredMessages();
+  const barca_utente=(currentUser.isAdmin||currentUser.isSA)?null:getDriverMezzi(currentUser.name);
+  return attMessages.filter(m=>{
+    if(currentUser.isAdmin||currentUser.isSA)return true;
+    if(m.target==='__all__')return true;
+    return barca_utente&&barca_utente.includes(m.target);
+  });
+}
+function updateAttBtn(){
+  const msgs=getMyAttMessages();const btn=document.getElementById('attBtn');const badge=document.getElementById('attBadge');
+  if(!btn)return;
+  if(msgs.length>0){btn.classList.add('has-msgs');badge.textContent=msgs.length;}
+  else{btn.classList.remove('has-msgs');badge.textContent=0;}
+}
+function formatExpiry(expiresAt){
+  if(!expiresAt)return'♾️ Permanente';
+  const d=new Date(expiresAt);return'⏱ Scade: '+d.toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+function openAttModal(){
+  const msgs=getMyAttMessages();const list=document.getElementById('attMsgList');
+  if(!msgs.length){list.innerHTML="<p style='font-family:Source Sans 3,sans-serif;font-style:italic;color:var(--ink-faded);text-align:center;padding:1.5rem 0'>Nessun messaggio</p>";}
+  else{list.innerHTML=msgs.map(m=>{const expLabel=m.expiresAt?'<div style="font-size:.65rem;color:var(--ink-faded);margin-top:.25rem">'+formatExpiry(m.expiresAt)+'</div>':'';return'<div class="att-msg"><div class="att-msg-barca">'+(m.target==='__all__'?'🚢 Tutte le barche':'🚤 '+m.target)+'</div><div class="att-msg-text">'+m.text+'</div>'+expLabel+'</div>';}).join('');}
+  document.getElementById('attModal').classList.add('show');
+}
+function closeAttModal(){document.getElementById('attModal').classList.remove('show');}
+document.getElementById('attModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeAttModal();});
+function toggleCustomExpiry(){
+  const val=document.getElementById('attMsgExpiry').value;
+  const row=document.getElementById('customExpiryRow');
+  if(row)row.style.display=val==='custom'?'block':'none';
+}
+async function addAttMsg(){
+  const target=document.getElementById('attMsgTarget').value;const text=document.getElementById('attMsgText').value.trim();
+  if(!text){alert('Inserisci il messaggio');return;}
+  const expiryVal=document.getElementById('attMsgExpiry').value;let expiresAt=null;
+  if(expiryVal==='12h')expiresAt=Date.now()+12*60*60*1000;
+  else if(expiryVal==='24h')expiresAt=Date.now()+24*60*60*1000;
+  else if(expiryVal==='custom'){const dt=document.getElementById('attMsgExpDate').value;const tm=document.getElementById('attMsgExpTime').value||'23:59';if(!dt){alert('Seleziona una data di scadenza');return;}expiresAt=new Date(dt+'T'+tm+':00').getTime();if(expiresAt<=Date.now()){alert('La data di scadenza deve essere nel futuro');return;}}
+  attMessages.push({id:Date.now(),target,text,expiresAt,createdAt:Date.now()});
+  await saveAttMessages();document.getElementById('attMsgText').value='';document.getElementById('attMsgExpiry').value='permanent';toggleCustomExpiry();
+  renderAttMsgAdmin();updateAttBtn();
+}
+async function delAttMsg(id){if(!confirm('Eliminare messaggio?'))return;attMessages=attMessages.filter(m=>m.id!==id);await saveAttMessages();renderAttMsgAdmin();updateAttBtn();}
+function renderAttMsgAdmin(){
+  const c=document.getElementById('attMsgAdminList');if(!c)return;purgeExpiredMessages();
+  if(!attMessages.length){c.innerHTML="<p style='font-style:italic;font-size:.85rem;color:var(--ink-faded);padding:.4rem 0'>Nessun messaggio pubblicato.</p>";return;}
+  c.innerHTML=attMessages.map(m=>{const tgt=m.target==='__all__'?'Tutte':m.target;const exp=formatExpiry(m.expiresAt);return'<div class="amsg-row"><div style="flex:1"><div class="amsg-target">'+tgt+'</div><div class="amsg-text">'+m.text+'</div><div style="font-size:.65rem;color:var(--ink-faded);margin-top:.2rem">'+exp+'</div></div><button class="bh red" onclick="delAttMsg('+m.id+')">× rimuovi</button></div>';}).join('');
+}
+function populateAttMsgTarget(){
+  const sel=document.getElementById('attMsgTarget');if(!sel)return;
+  const myMezzi=currentUser.isSA?allMezzi:getAdminMezzi();
+  const allOpt=currentUser.isSA?'<option value="__all__">— Tutte le barche —</option>':'<option value="__all__">— Tutte le mie barche —</option>';
+  sel.innerHTML=allOpt+myMezzi.map(m=>'<option value="'+m+'">'+m+'</option>').join('');
+}
+
+// =============================================
+// CHECK FIELDS
+// =============================================
+const chkState={Prosecco:null,Bicchieri:null,Acqua:null};
+let fuelLvlState=null;
+function setChk(item,val){chkState[item]=val;const okBtn=document.getElementById('chk'+item+'Ok');const noBtn=document.getElementById('chk'+item+'No');if(okBtn&&noBtn){okBtn.className='chk-btn'+(val==='ok'?' ok':'');noBtn.className='chk-btn'+(val==='no'?' no':'');}}
+function setFuelLvl(lvl){fuelLvlState=lvl;['44','34','38','24','38b','14','18'].forEach(k=>{const btn=document.getElementById('fuelLvl'+k);if(btn)btn.className='fuel-lvl-btn'+(('_'+k).replace('_','')===lvl.replace(/\//g,'').replace('b','b')?' sel':'');});
+  // Approccio più robusto: confronto valori
+  const mapToId={
+    '4/4':'44','3/4':'34','3/8':'38','2/4':'24','3/8b':'38b','1/4':'14','1/8':'18'
+  };
+  ['44','34','38','24','38b','14','18'].forEach(k=>{const btn=document.getElementById('fuelLvl'+k);if(!btn)return;const v=Object.keys(mapToId).find(key=>mapToId[key]===k);btn.className='fuel-lvl-btn'+(v===lvl?' sel':'');});
+}
+function resetChkFields(){Object.keys(chkState).forEach(k=>{chkState[k]=null;});fuelLvlState=null;['Prosecco','Bicchieri','Acqua'].forEach(item=>{const o=document.getElementById('chk'+item+'Ok');if(o)o.className='chk-btn';const n=document.getElementById('chk'+item+'No');if(n)n.className='chk-btn';});['44','34','38','24','38b','14','18'].forEach(k=>{const b=document.getElementById('fuelLvl'+k);if(b)b.className='fuel-lvl-btn';});}
+
+// =============================================
+// MODIFICA REGISTRAZIONE
+// =============================================
+let editingRecordId=null;let ePendingFotos=[];let ePendingPdfs=[];
+
+function ePreviewFotos(e){ePendingFotos=[...ePendingFotos,...Array.from(e.target.files)];renderEFotoPreview();document.getElementById('eFoto').value='';}
+function renderEFotoPreview(){
+  const pv=document.getElementById('eFotoPreview');if(!pv)return;
+  const rec=records.find(r=>r.id===editingRecordId);
+  const saved=(rec?.foto||[]).map((url,i)=>`<div style="position:relative;display:inline-block"><img src="${url}" class="fothumb"><button onclick="eRemoveSavedFoto(${i})" style="position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:.72rem;cursor:pointer;line-height:1">×</button></div>`).join('');
+  const pending=ePendingFotos.map((f,i)=>{const url=URL.createObjectURL(f);return`<div style="position:relative;display:inline-block"><img src="${url}" class="fothumb" style="opacity:.7"><button onclick="eRemovePendingFoto(${i})" style="position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:.72rem;cursor:pointer;line-height:1">×</button></div>`;}).join('');
+  pv.innerHTML=saved+pending;
+}
+function eRemoveSavedFoto(i){const rec=records.find(r=>r.id===editingRecordId);if(rec?.foto)rec.foto.splice(i,1);renderEFotoPreview();}
+function eRemovePendingFoto(i){ePendingFotos.splice(i,1);renderEFotoPreview();}
+function ePreviewPdfs(e){ePendingPdfs=[...ePendingPdfs,...Array.from(e.target.files)];renderEPdfPreview();document.getElementById('ePdf').value='';}
+function renderEPdfPreview(){
+  const pv=document.getElementById('ePdfPreview');if(!pv)return;
+  const rec=records.find(r=>r.id===editingRecordId);
+  const saved=(rec?.pdf||[]).map((url,i)=>{const name=url.split('/').pop().split('?')[0];return`<div style="display:flex;align-items:center;gap:.5rem;padding:.3rem .5rem;background:#f5f0e6;border-radius:3px;font-size:.8rem"><a href="${url}" target="_blank" style="flex:1;color:var(--ink);text-decoration:none">📄 ${name}</a><button onclick="eRemoveSavedPdf(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.9rem">×</button></div>`;}).join('');
+  const pending=ePendingPdfs.map((f,i)=>`<div style="display:flex;align-items:center;gap:.5rem;padding:.3rem .5rem;background:#e8f0e8;border-radius:3px;font-size:.8rem"><span style="flex:1">📄 ${f.name}</span><button onclick="eRemovePendingPdf(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.9rem">×</button></div>`).join('');
+  pv.innerHTML=saved+pending;
+}
+function eRemoveSavedPdf(i){const rec=records.find(r=>r.id===editingRecordId);if(rec?.pdf)rec.pdf.splice(i,1);renderEPdfPreview();}
+function eRemovePendingPdf(i){ePendingPdfs.splice(i,1);renderEPdfPreview();}
+
+function openEditRecord(id){
+  const rec=records.find(r=>r.id===id);if(!rec){alert('Registrazione non trovata');return;}
+  editingRecordId=id;const isAdmin=currentUser.isAdmin||currentUser.isSA;
+  const mezzi=allMezzi;const mezzoSel=document.getElementById('eMezzo');
+  mezzoSel.innerHTML='<option value="">— seleziona —</option>'+mezzi.map(m=>`<option ${m===rec.mezzo?'selected':''}>${m}</option>`).join('');
+  mezzoSel.disabled=!isAdmin;
+  const eData=document.getElementById('eData');eData.value=rec.data||'';eData.disabled=!isAdmin;
+  const eOre=document.getElementById('eOre');eOre.value=rec.ore||'';eOre.disabled=!isAdmin;
+  const eAut=document.getElementById('eAutista');eAut.value=rec.autista||'';eAut.disabled=!isAdmin;
+  document.getElementById('eIntervento').value=rec.intervento||'';
+  document.getElementById('eNote').value=rec.note||'';
+  ePendingFotos=[];ePendingPdfs=[];
+  renderEFotoPreview();renderEPdfPreview();
+  document.getElementById('editModalTitle').textContent=isAdmin?'✏ Modifica registrazione':'✏ Riprendi la tua registrazione';
+  document.getElementById('editModal').classList.add('show');
+}
+function closeEditModal(){document.getElementById('editModal').classList.remove('show');editingRecordId=null;ePendingFotos=[];ePendingPdfs=[];}
+document.getElementById('editModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeEditModal();});
+async function saveEditRecord(){
+  if(!editingRecordId)return;const rec=records.find(r=>r.id===editingRecordId);
+  if(!rec){alert('Errore: registrazione non trovata');return;}
+  rec.mezzo=document.getElementById('eMezzo').value||rec.mezzo;rec.data=document.getElementById('eData').value||rec.data;
+  rec.ore=document.getElementById('eOre').value;rec.autista=document.getElementById('eAutista').value.trim();
+  rec.intervento=document.getElementById('eIntervento').value.trim();rec.note=document.getElementById('eNote').value.trim();rec.modificato=new Date().toISOString();
+  if(ePendingFotos.length){const btn=document.querySelector('.edit-mf button:last-child');if(btn){btn.textContent='⏳ Caricamento...';btn.disabled=true;}if(!rec.foto)rec.foto=[];for(const file of ePendingFotos){try{rec.foto.push(await uploadPhoto(file));}catch(e){console.error(e);}}ePendingFotos=[];if(btn){btn.textContent='✓ Salva modifiche';btn.disabled=false;}}
+  if(ePendingPdfs.length){if(!rec.pdf)rec.pdf=[];for(const file of ePendingPdfs){try{rec.pdf.push(await uploadFile(file));}catch(e){console.error(e);}}ePendingPdfs=[];}
+  await sv.records();await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','save',`Modificata registrazione "${rec.mezzo}" del ${rec.data}`);
+  closeEditModal();populateDashFilters();renderDash();
+}
+
+document.getElementById('assignModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+// =============================================
+// DOTAZIONI SERA
+// =============================================
+function renderDotazioniSera(){
+  const sec=document.getElementById('dotazioniSeraSection');if(!sec)return;
+  if(currentUser.isAdmin||currentUser.isSA){sec.style.display='none';return;}
+  const now=new Date();
+  const refDate=(now.getHours()<5)?new Date(now.getFullYear(),now.getMonth(),now.getDate()-1).toISOString().slice(0,10):now.toISOString().slice(0,10);
+  const myName=currentUser.name.toLowerCase();
+  const mine=records.filter(r=>r.data===refDate&&r.autista&&r.autista.toLowerCase()===myName);
+  if(!mine.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  const list=document.getElementById('dotazioniSeraList');
+  list.innerHTML=mine.map(r=>{
+    const dot=r.dotazioni||{};
+    function dCls(v,type){return v===type?(type==='ok'?' ok':' no'):'';}
+    const fuel=r.dotazioni?.carburante||null;
+    return`<div style="border:1.5px solid var(--line);border-radius:4px;padding:.8rem .9rem;margin-bottom:.8rem;background:#fafaf8">
+      <div style="font-family:'Playfair Display',serif;font-size:.9rem;font-style:italic;color:var(--ink);margin-bottom:.65rem">🚤 ${r.mezzo}</div>
+      <div class="check-row"><span class="check-label">🥂 Prosecco</span><div class="check-btns">
+        <button class="chk-btn${dCls(dot.prosecco,'ok')}" onclick='setDot(${r.id},"prosecco","ok",this)'>✅ Ok</button>
+        <button class="chk-btn${dCls(dot.prosecco,'no')}" onclick='setDot(${r.id},"prosecco","no",this)'>❌ No</button>
+      </div></div>
+      <div class="check-row"><span class="check-label">🫙 Bicchieri</span><div class="check-btns">
+        <button class="chk-btn${dCls(dot.bicchieri,'ok')}" onclick='setDot(${r.id},"bicchieri","ok",this)'>✅ Ok</button>
+        <button class="chk-btn${dCls(dot.bicchieri,'no')}" onclick='setDot(${r.id},"bicchieri","no",this)'>❌ No</button>
+      </div></div>
+      <div class="check-row"><span class="check-label">💧 Acqua</span><div class="check-btns">
+        <button class="chk-btn${dCls(dot.acqua,'ok')}" onclick='setDot(${r.id},"acqua","ok",this)'>✅ Ok</button>
+        <button class="chk-btn${dCls(dot.acqua,'no')}" onclick='setDot(${r.id},"acqua","no",this)'>❌ No</button>
+      </div></div>
+      <div class="fuel-level-row" style="margin-top:.35rem"><span class="check-label">⛽ Carburante</span><div class="fuel-level-btns">
+        <button class="fuel-lvl-btn${fuel==='4/4'?' sel':''}" onclick='setDotFuel(${r.id},"4/4",this)'>4/4</button>
+        <button class="fuel-lvl-btn${fuel==='3/4'?' sel':''}" onclick='setDotFuel(${r.id},"3/4",this)'>3/4</button>
+        <button class="fuel-lvl-btn${fuel==='3/8'?' sel':''}" onclick='setDotFuel(${r.id},"3/8",this)'>3/4½</button>
+        <button class="fuel-lvl-btn${fuel==='2/4'?' sel':''}" onclick='setDotFuel(${r.id},"2/4",this)'>2/4</button>
+        <button class="fuel-lvl-btn${fuel==='3/8b'?' sel':''}" onclick='setDotFuel(${r.id},"3/8b",this)'>1/2½</button>
+        <button class="fuel-lvl-btn${fuel==='1/4'?' sel':''}" onclick='setDotFuel(${r.id},"1/4",this)'>1/4</button>
+        <button class="fuel-lvl-btn${fuel==='1/8'?' sel':''}" onclick='setDotFuel(${r.id},"1/8",this)'>1/4½</button>
+      </div></div>
+    </div>`;
+  }).join('');
+}
+async function setDot(recId,field,val,btn){
+  const rec=records.find(r=>r.id===recId);if(!rec)return;if(!rec.dotazioni)rec.dotazioni={};rec.dotazioni[field]=val;await sv.records();
+  const row=btn.closest('.check-btns');row.querySelectorAll('.chk-btn').forEach(b=>{b.className='chk-btn';});btn.className='chk-btn '+(val==='ok'?'ok':'no');
+}
+async function setDotFuel(recId,lvl,btn){
+  const rec=records.find(r=>r.id===recId);if(!rec)return;if(!rec.dotazioni)rec.dotazioni={};rec.dotazioni.carburante=lvl;await sv.records();
+  const row=btn.closest('.fuel-level-btns');row.querySelectorAll('.fuel-lvl-btn').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');
+}
+
+// =============================================
+// INTERVAL / LISTENERS
+// =============================================
+// =============================================
+// FAB MENU (bottoni a cascata admin/SA)
+// =============================================
+function toggleFab(){
+  const actions=document.getElementById('fabActions');
+  const mainBtn=document.getElementById('fabMain');
+  const isOpen=actions.classList.contains('open');
+  if(isOpen){closeFab();}
+  else{
+    actions.classList.add('open');
+    mainBtn.textContent='✕';
+    checkDotBlink();checkManBlink();
+    if(fabTimer)clearTimeout(fabTimer);
+    fabTimer=setTimeout(()=>closeFab(),5000);
+  }
+}
+function closeFab(){
+  const actions=document.getElementById('fabActions');
+  const mainBtn=document.getElementById('fabMain');
+  actions.classList.remove('open');
+  mainBtn.textContent='☰';
+  if(fabTimer){clearTimeout(fabTimer);fabTimer=null;}
+}
+function checkDotBlink(){
+  const btn=document.getElementById('fabDotBtn');
+  const tab=document.getElementById('tabDotazioni');
+  const now=new Date();const in2months=new Date(now);in2months.setMonth(in2months.getMonth()+2);
+  let hasSoon=false;
+  Object.values(dotBarcaDotazioni).forEach(barcaItems=>{
+    (barcaItems||[]).forEach(it=>{
+      if(it.expDate){const d=new Date(it.expDate);if(d<=in2months)hasSoon=true;}
+    });
+  });
+  if(btn)btn.classList.toggle('blink',hasSoon);
+  if(tab){
+    if(hasSoon){tab.style.animation='attBlink 1.4s infinite';}
+    else{tab.style.animation='';}
+  }
+}
+function checkManBlink(){
+  const btn=document.getElementById('fabManBtn');
+  const tab=document.getElementById('tabManutenzione');
+  let hasPending=false;
+  manRecords.forEach(r=>{
+    if(r.avviso&&!r.avvisoSpento){hasPending=true;}
+  });
+  if(btn)btn.classList.toggle('blink',hasPending);
+  if(tab){
+    if(hasPending){tab.style.animation='attBlink 1.4s infinite';}
+    else{tab.style.animation='';}
+  }
+}
+
+// =============================================
+// DOTAZIONI
+// =============================================
+function renderDotazioniPage(){
+  // SA section
+  const saSec=document.getElementById('dotSASection');
+  if(saSec)saSec.style.display=currentUser.isSA?'block':'none';
+  if(currentUser.isSA)renderDotGlobalList();
+  // Admin section - popola seleziona barca
+  const sel=document.getElementById('dotBarcaSelect');
+  if(sel){
+    const mezzi=currentUser.isSA?allMezzi:getAdminMezzi();
+    sel.innerHTML='<option value="">— seleziona barca —</option>'+mezzi.map(m=>`<option>${m}</option>`).join('');
+  }
+  // Popola oggetti disponibili dal SA
+  const itemSel=document.getElementById('dotItemSelect');
+  if(itemSel){
+    itemSel.innerHTML='<option value="">— seleziona oggetto —</option>'+dotItems.map(it=>`<option value="${it.id}">${it.name}</option>`).join('');
+  }
+  document.getElementById('dotBarcaItemsSection').style.display='none';
+  renderDotBarcaItems();
+}
+
+function renderDotGlobalList(){
+  const c=document.getElementById('dotGlobalList');if(!c)return;
+  if(!dotItems.length){c.innerHTML='<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessun oggetto nella lista globale.</p>';return;}
+  c.innerHTML=dotItems.map((it,i)=>`<div class="dot-item-row"><div class="dot-item-name">${it.name}</div><button class="bh red" onclick="saRemoveDotItem(${i})">× rimuovi</button></div>`).join('');
+}
+
+async function saAddDotItem(){
+  const n=document.getElementById('dotNewName').value.trim();
+  if(!n){alert('Inserisci il nome oggetto');return;}
+  if(dotItems.find(it=>it.name.toLowerCase()===n.toLowerCase())){alert('Già presente.');return;}
+  dotItems.push({id:Date.now(),name:n,createdAt:new Date().toISOString()});
+  await sv.dotItems();
+  document.getElementById('dotNewName').value='';
+  renderDotGlobalList();
+  // Aggiorna select
+  const itemSel=document.getElementById('dotItemSelect');
+  if(itemSel)itemSel.innerHTML='<option value="">— seleziona oggetto —</option>'+dotItems.map(it=>`<option value="${it.id}">${it.name}</option>`).join('');
+}
+async function saRemoveDotItem(i){
+  if(!confirm(`Rimuovere "${dotItems[i].name}"?`))return;
+  dotItems.splice(i,1);await sv.dotItems();renderDotGlobalList();
+}
+
+function toggleDotCustomExp(){
+  const val=document.getElementById('dotItemExp').value;
+  const row=document.getElementById('dotCustomExpRow');
+  if(row)row.style.display=val==='custom'?'block':'none';
+}
+
+function renderDotBarcaItems(){
+  const barca=document.getElementById('dotBarcaSelect').value;
+  const sec=document.getElementById('dotBarcaItemsSection');
+  if(!barca){if(sec)sec.style.display='none';return;}
+  if(sec)sec.style.display='block';
+  const items=dotBarcaDotazioni[barca]||[];
+  const now=new Date();const in2months=new Date(now);in2months.setMonth(in2months.getMonth()+2);
+  const c=document.getElementById('dotBarcaItemsList');
+  if(!items.length){c.innerHTML='<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.6rem 0">Nessun oggetto per questa barca.</p>';renderDotExpReport(barca);return;}
+  c.innerHTML=`<div style="font-family:'Playfair Display',serif;font-size:.95rem;font-style:italic;color:var(--green);border-bottom:1px solid rgba(45,106,79,.2);padding-bottom:.3rem;margin-bottom:.6rem;">📦 Oggetti barca</div>`
+    +items.map((it,i)=>{
+    let expHtml='';
+    if(it.expDate){
+      const d=new Date(it.expDate);const diff=d-now;
+      const cls=diff<0?'expired':diff<in2months-now?'warn':'ok';
+      const label=diff<0?'⚠️ SCADUTO':d.toLocaleDateString('it-IT');
+      expHtml=`<span class="dot-item-exp ${cls}">📅 ${label}</span>`;
+    }
+    return`<div class="dot-item-row">
+      <div class="dot-item-name">${it.name}</div>
+      <div class="dot-item-qty">× ${it.qty||1}</div>
+      ${expHtml}
+      ${it.note?`<div style="font-size:.72rem;color:var(--ink-faded);width:100%">📝 ${it.note}</div>`:''}
+      <button class="bh red" onclick="removeDotItemFromBarca('${barca}',${i})">× rimuovi</button>
+    </div>`;
+  }).join('');
+  renderDotExpReport(barca);
+}
+
+function renderDotExpReport(barca){
+  const items=dotBarcaDotazioni[barca]||[];
+  const now=new Date();const in2months=new Date(now);in2months.setMonth(in2months.getMonth()+2);
+  const soon=items.filter(it=>{if(!it.expDate)return false;const d=new Date(it.expDate);return d<=in2months;});
+  const rep=document.getElementById('dotExpReport');const repList=document.getElementById('dotExpReportList');
+  if(!rep||!repList)return;
+  if(!soon.length){rep.style.display='none';return;}
+  rep.style.display='block';
+  repList.innerHTML=soon.map((it,i)=>{
+    const d=new Date(it.expDate);const diff=d-now;
+    const expired=diff<0;
+    return`<div style="display:flex;align-items:center;gap:.6rem;padding:.4rem 0;border-bottom:1px dashed var(--line-light);">
+      <span class="dot-item-exp ${expired?'expired':'warn'}">${expired?'⚠️ SCADUTO':'⏰ IN SCADENZA'}</span>
+      <span style="font-family:'Source Sans 3',sans-serif;font-size:.88rem;color:var(--ink);flex:1">${it.name}</span>
+      <span style="font-size:.78rem;color:var(--ink-faded)">${d.toLocaleDateString('it-IT')}</span>
+      <button class="bh red" style="font-size:.68rem" onclick="dismissDotExp('${barca}',${items.indexOf(it)})">× Cancella avviso</button>
+    </div>`;
+  }).join('');
+}
+
+async function addDotItemToBarca(){
+  const barca=document.getElementById('dotBarcaSelect').value;
+  const itemId=parseInt(document.getElementById('dotItemSelect').value);
+  const qty=parseInt(document.getElementById('dotItemQty').value)||1;
+  const expVal=document.getElementById('dotItemExp').value;
+  const note=document.getElementById('dotItemNote').value.trim();
+  if(!barca||!itemId){alert('Seleziona barca e oggetto');return;}
+  const item=dotItems.find(it=>it.id===itemId);
+  if(!item){alert('Oggetto non trovato');return;}
+  let expDate=null;
+  if(expVal==='custom'){expDate=document.getElementById('dotCustomExpDate').value;if(!expDate){alert('Inserisci data scadenza');return;}}
+  if(!dotBarcaDotazioni[barca])dotBarcaDotazioni[barca]=[];
+  dotBarcaDotazioni[barca].push({name:item.name,qty,expDate,note,addedAt:new Date().toISOString()});
+  await sv.dotBarca();
+  document.getElementById('dotItemSelect').value='';document.getElementById('dotItemQty').value='';
+  document.getElementById('dotItemExp').value='';document.getElementById('dotItemNote').value='';
+  document.getElementById('dotCustomExpRow').style.display='none';
+  renderDotBarcaItems();checkDotBlink();
+}
+
+async function removeDotItemFromBarca(barca,i){
+  if(!confirm('Rimuovere oggetto?'))return;
+  dotBarcaDotazioni[barca].splice(i,1);await sv.dotBarca();renderDotBarcaItems();checkDotBlink();
+}
+
+async function dismissDotExp(barca,i){
+  if(!confirm('Cancellare avviso di scadenza per questo oggetto?'))return;
+  if(dotBarcaDotazioni[barca]&&dotBarcaDotazioni[barca][i])dotBarcaDotazioni[barca][i].expDate=null;
+  await sv.dotBarca();renderDotBarcaItems();checkDotBlink();
+}
+
+function addMultipleDotItems(){
+  const barca=document.getElementById('dotBarcaSelect').value;
+  if(!barca){alert('Seleziona una barca prima');return;}
+  const list=document.getElementById('dotMultiList');
+  if(!list)return;
+  if(!dotItems.length){list.innerHTML='<p style="font-style:italic;font-size:.85rem;color:var(--ink-faded)">Nessun oggetto disponibile. Il Super Admin deve prima creare la lista globale.</p>';}
+  else{list.innerHTML=dotItems.map(it=>`<label class="mck"><input type="checkbox" value="${it.id}"><span>${it.name}</span></label>`).join('');}
+  document.getElementById('dotMultiModal').classList.add('show');
+}
+async function confirmMultiDot(){
+  const barca=document.getElementById('dotBarcaSelect').value;
+  const checked=[...document.querySelectorAll('#dotMultiList input:checked')];
+  if(!checked.length){document.getElementById('dotMultiModal').classList.remove('show');return;}
+  if(!dotBarcaDotazioni[barca])dotBarcaDotazioni[barca]=[];
+  checked.forEach(cb=>{
+    const item=dotItems.find(it=>it.id===parseInt(cb.value));
+    if(item)dotBarcaDotazioni[barca].push({name:item.name,qty:1,expDate:null,note:'',addedAt:new Date().toISOString()});
+  });
+  await sv.dotBarca();
+  document.getElementById('dotMultiModal').classList.remove('show');
+  renderDotBarcaItems();checkDotBlink();
+}
+
+function exportDotazioniCSV(){
+  const barca=document.getElementById('dotBarcaSelect').value;
+  const items=dotBarcaDotazioni[barca]||[];
+  if(!items.length){alert('Nessun oggetto');return;}
+  const rows=items.map(it=>[barca,it.name,it.qty||1,it.expDate||'',it.note||'',it.addedAt?new Date(it.addedAt).toLocaleDateString('it-IT'):''].join('\t'));
+  downloadCSV('\uFEFFBarca\tOggetto\tQuantità\tScadenza\tNote\tAggiunto\n'+rows.join('\n'),`Dotazioni_${barca}`);
+}
+
+// =============================================
+// MANUTENZIONE
+// =============================================
+let manPendingFotos=[];let manPendingFiles=[];
+
+function renderManutenzioneSelects(){
+  const mezzi=currentUser.isSA?allMezzi:getAdminMezzi();
+  const sel=document.getElementById('manBarcaSelect');
+  if(sel){sel.innerHTML='<option value="">— seleziona barca —</option>'+mezzi.map(m=>`<option>${m}</option>`).join('');}
+  document.getElementById('manData').value=new Date().toISOString().slice(0,10);
+  document.getElementById('manStorico').style.display='none';
+}
+
+function previewManFotos(e){
+  manPendingFotos=[...manPendingFotos,...Array.from(e.target.files)];
+  const pv=document.getElementById('manFotoPreview');pv.innerHTML='';
+  manPendingFotos.forEach((f,i)=>{const url=URL.createObjectURL(f);const div=document.createElement('div');div.style.cssText='position:relative;display:inline-block';div.innerHTML=`<img src="${url}" class="fothumb"><button onclick="removeManFoto(${i})" style="position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:.72rem;cursor:pointer;line-height:1">×</button>`;pv.appendChild(div);});
+}
+function removeManFoto(i){manPendingFotos.splice(i,1);document.getElementById('manFoto').value='';previewManFotos({target:{files:manPendingFotos}});}
+function previewManFiles(e){
+  manPendingFiles=[...manPendingFiles,...Array.from(e.target.files)];
+  const pv=document.getElementById('manFilePreview');pv.innerHTML='';
+  manPendingFiles.forEach((f,i)=>{const div=document.createElement('div');div.style.cssText='display:flex;align-items:center;gap:.5rem;background:#fafaf8;border:1px solid var(--line);padding:.35rem .7rem;border-radius:3px;';div.innerHTML=`<span style="font-size:1.1rem">📄</span><span style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span><button onclick="removeManFile(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.9rem;flex-shrink:0">×</button>`;pv.appendChild(div);});
+}
+function removeManFile(i){manPendingFiles.splice(i,1);document.getElementById('manFile').value='';previewManFiles({target:{files:manPendingFiles}});}
+
+async function saveManRecord(){
+  const barca=document.getElementById('manBarcaSelect').value;
+  const data=document.getElementById('manData').value;
+  const tipo=document.getElementById('manTipo').value.trim();
+  const oreAttuali=parseFloat(document.getElementById('manOreAttuali').value)||0;
+  const note=document.getElementById('manNote').value.trim();
+  const avvisoOre=parseFloat(document.getElementById('manAvvisoOre').value)||0;
+  const avvisoTipo=document.getElementById('manAvvisoTipo').value;
+  if(!barca||!tipo){alert('Seleziona barca e tipo intervento');return;}
+  const btn=document.querySelector('#pageManutenzione .sb');
+  if(btn){btn.textContent='⏳ Salvataggio...';btn.disabled=true;}
+  const fotoUrls=[];for(const f of manPendingFotos){try{fotoUrls.push(await uploadPhoto(f));}catch(e){console.error(e);}}
+  const fileUrls=[];for(const f of manPendingFiles){try{fileUrls.push(await uploadFile(f));}catch(e){console.error(e);}}
+  const rec={id:Date.now(),barca,data,tipo,oreAttuali,note,foto:fotoUrls,files:fileUrls,
+    avviso:avvisoOre>0?{ore:avvisoOre,tipo:avvisoTipo,attivato:true}:null,
+    avvisoSpento:false,salvato:new Date().toISOString(),autore:currentUser.name};
+  manRecords.unshift(rec);await sv.manRecords();
+  await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','save',`Manutenzione "${tipo}" — ${barca}`);
+  // Reset form
+  document.getElementById('manTipo').value='';document.getElementById('manOreAttuali').value='';
+  document.getElementById('manNote').value='';document.getElementById('manAvvisoOre').value='';document.getElementById('manAvvisoTipo').value='';
+  document.getElementById('manFoto').value='';document.getElementById('manFotoPreview').innerHTML='';manPendingFotos=[];
+  document.getElementById('manFile').value='';document.getElementById('manFilePreview').innerHTML='';manPendingFiles=[];
+  if(btn){btn.textContent='✦ Salva intervento';btn.disabled=false;}
+  const n=document.getElementById('manSuccessNote');n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2500);
+  loadManHistory();checkManBlink();
+}
+
+function loadManHistory(){
+  const barca=document.getElementById('manBarcaSelect').value;
+  const storico=document.getElementById('manStorico');
+  if(!barca){storico.style.display='none';return;}
+  storico.style.display='block';
+  const recs=manRecords.filter(r=>r.barca===barca);
+  const list=document.getElementById('manStoricoList');
+  if(!recs.length){list.innerHTML='<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessun intervento registrato per questa barca.</p>';renderManAvvisoReport(barca);return;}
+  list.innerHTML=recs.map(r=>{
+    const d=r.data?new Date(r.data+'T12:00:00').toLocaleDateString('it-IT'):'—';
+    const fo=(r.foto||[]).map(u=>`<a href="${u}" target="_blank"><img src="${u}" class="fothumb" style="width:36px;height:36px"></a>`).join('');
+    const fi=(r.files||[]).map(u=>`<a href="${u}" target="_blank" style="font-size:.75rem;color:var(--red)">📄 ${u.split('/').pop().slice(0,18)}</a>`).join(' ');
+    let avvHtml='';
+    if(r.avviso){
+      const stato=r.avvisoSpento?'🔕 Spento':r.avviso.attivato?'🔔 Attivo':'';
+      avvHtml=`<div style="font-size:.72rem;color:var(--orange);margin-top:.25rem">⏰ Avviso a ${r.avviso.ore}h (${r.avviso.tipo||'—'}) — ${stato} <button class="bh" style="font-size:.65rem;margin-left:.3rem" onclick="toggleManAvviso(${r.id})">${r.avvisoSpento?'Riattiva':'Spegni'}</button></div>`;
+    }
+    return`<div style="border:1.5px solid var(--line);border-radius:4px;padding:.75rem .9rem;margin-bottom:.7rem;background:#fafaf8">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem">
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:.88rem;font-style:italic;color:var(--orange)">${r.tipo}</div>
+          <div style="font-size:.72rem;color:var(--ink-faded);margin-top:.1rem">${d} · ${r.oreAttuali}h motore · di ${r.autore||'—'}</div>
+          ${r.note?`<div style="font-size:.82rem;color:var(--ink);margin-top:.3rem">${r.note}</div>`:''}
+          ${avvHtml}
+          <div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.4rem">${fo}${fi}</div>
+        </div>
+        <button class="dx" onclick="delManRecord(${r.id})">×</button>
+      </div>
+    </div>`;
+  }).join('');
+  renderManAvvisoReport(barca);
+}
+
+async function toggleManAvviso(id){
+  const r=manRecords.find(x=>x.id===id);if(!r)return;
+  r.avvisoSpento=!r.avvisoSpento;
+  if(!r.avvisoSpento&&r.avviso){r.avviso.attivato=true;}
+  await sv.manRecords();loadManHistory();checkManBlink();
+}
+
+async function delManRecord(id){
+  if(!confirm('Eliminare intervento?'))return;
+  manRecords=manRecords.filter(r=>r.id!==id);await sv.manRecords();
+  await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','delete',`Intervento manutenzione ID ${id} eliminato`);
+  loadManHistory();checkManBlink();
+}
+
+function renderManAvvisoReport(barca){
+  const recs=manRecords.filter(r=>r.barca===barca&&r.avviso&&!r.avvisoSpento);
+  const rep=document.getElementById('manAvvisoReport');const repList=document.getElementById('manAvvisoReportList');
+  if(!rep||!repList)return;
+  if(!recs.length){rep.style.display='none';return;}
+  rep.style.display='block';
+  repList.innerHTML=recs.map(r=>`<div style="display:flex;align-items:center;gap:.6rem;padding:.4rem 0;border-bottom:1px dashed var(--line-light);">
+    <span style="font-size:.85rem;font-weight:600;color:var(--orange)">${r.tipo}</span>
+    <span style="font-size:.78rem;color:var(--ink-faded);flex:1">Avviso a ${r.avviso.ore}h (${r.avviso.tipo||'—'})</span>
+    <button class="bh" style="font-size:.68rem" onclick="toggleManAvviso(${r.id})">🔕 Spegni</button>
+  </div>`).join('');
+}
+
+function exportManutenzioneCSV(){
+  const barca=document.getElementById('manBarcaSelect').value;
+  const recs=manRecords.filter(r=>r.barca===barca);
+  if(!recs.length){alert('Nessun dato');return;}
+  const rows=recs.map(r=>[r.barca,r.data,r.tipo,r.oreAttuali,r.note||'',r.autore||'',r.avviso?r.avviso.ore:'',r.avviso?r.avviso.tipo:'',r.avvisoSpento?'Spento':'Attivo'].join('\t'));
+  downloadCSV('\uFEFFBarca\tData\tIntervento\tOre motore\tNote\tAutore\tAvviso a ore\tTipo avviso\tStato\n'+rows.join('\n'),`Manutenzione_${barca}`);
+}
+
+function exportAllDotazioniCSV(){
+  const mezzi=currentUser.isSA?allMezzi:getAdminMezzi();
+  const rows=[];
+  mezzi.forEach(barca=>{
+    const items=dotBarcaDotazioni[barca]||[];
+    items.forEach(it=>{rows.push([barca,it.name,it.qty||1,it.expDate||'',it.note||'',it.addedAt?new Date(it.addedAt).toLocaleDateString('it-IT'):''].join('\t'));});
+  });
+  if(!rows.length){alert('Nessun dato dotazioni');return;}
+  downloadCSV('\uFEFFBarca\tOggetto\tQuantità\tScadenza\tNote\tAggiunto\n'+rows.join('\n'),'Dotazioni_CCB');
+}
+function exportAllManutenzioneCSV(){
+  const mezzi=currentUser.isSA?allMezzi:getAdminMezzi();
+  const recs=manRecords.filter(r=>mezzi.includes(r.barca));
+  if(!recs.length){alert('Nessun dato manutenzione');return;}
+  const rows=recs.map(r=>[r.barca,r.data,r.tipo,r.oreAttuali,r.note||'',r.autore||'',r.avviso?r.avviso.ore:'',r.avviso?r.avviso.tipo:'',r.avvisoSpento?'Spento':'Attivo'].join('\t'));
+  downloadCSV('\uFEFFBarca\tData\tIntervento\tOre motore\tNote\tAutore\tAvviso a ore\tTipo avviso\tStato\n'+rows.join('\n'),'Manutenzione_CCB');
+}
+
+
+// =============================================
+// INTERVAL / LISTENERS
+// =============================================
+setInterval(()=>{
+  purgeExpiredMessages();updateAttBtn();
+  if(document.getElementById('attMsgAdminList'))renderAttMsgAdmin();
+  if(currentUser&&(currentUser.isAdmin||currentUser.isSA)){checkDotBlink();checkManBlink();}
+},60000);
+
+document.getElementById('loginName').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('loginPw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('saPw').addEventListener('keydown',e=>{if(e.key==='Enter')saVerifyPw();});
+// Chiudi FAB cliccando fuori
+document.addEventListener('click',e=>{
+  const fab=document.getElementById('fabContainer');
+  if(fab&&!fab.contains(e.target)){closeFab();}
+});
+</script>
+
+</body>
+</html>

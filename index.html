@@ -321,17 +321,7 @@ body{background:#e8e0d0;background-image:radial-gradient(ellipse at 20% 50%,rgba
 .fuel-lvl-btn{border:1.5px solid var(–line);background:none;border-radius:4px;padding:.2rem .55rem;font-size:.8rem;cursor:pointer;transition:all .15s;font-family:‘Source Sans 3’,sans-serif;color:var(–ink-faded);}
 .fuel-lvl-btn.sel{border-color:var(–blue);background:rgba(74,144,184,.15);color:var(–blue);font-weight:700;}
 
-/* FLOATING ACTION BUTTONS (admin/SA) */
-.fab-container{position:fixed;bottom:1.5rem;right:1rem;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:.55rem;pointer-events:all;}
-.fab-main{width:48px;height:48px;border-radius:50%;border:none;background:var(--ink);color:#f5f0e6;font-size:1.4rem;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:all .25s;display:flex;align-items:center;justify-content:center;}
-.fab-main:hover{background:var(--red);transform:scale(1.08);}
-.fab-actions{display:flex;flex-direction:column;gap:.45rem;overflow:hidden;max-height:0;opacity:0;transition:max-height .35s ease,opacity .25s ease;pointer-events:none;}
-.fab-actions.open{max-height:400px;opacity:1;pointer-events:all;}
-.fab-action-btn{display:flex;align-items:center;gap:.55rem;background:#fff;border:1.5px solid var(--line);border-radius:24px;padding:.35rem .85rem .35rem .55rem;font-family:'Source Sans 3',sans-serif;font-size:.82rem;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.14);transition:all .18s;white-space:nowrap;}
-.fab-action-btn:hover{border-color:var(--ink);background:var(--ink);color:#f5f0e6;}
-.fab-action-btn .fab-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
-@keyframes fabBlink{0%,100%{box-shadow:0 4px 16px rgba(0,0,0,.3);}50%{box-shadow:0 0 0 8px rgba(200,133,74,.25),0 4px 16px rgba(0,0,0,.2);}}
-.fab-action-btn.blink{animation:fabBlink 1.2s infinite;}
+/* FAB rimosso */
 
 /* DOTAZIONI PAGE */
 .dot-page-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-style:italic;color:var(--ink);}
@@ -553,6 +543,26 @@ body{padding:.8rem .3rem 3rem;}
       <div class="sn" id="successNoteFuel">✓ Rifornimento salvato!</div>
     </div>
   </div>
+
+  <!-- TESSERE PREPAGATE: sezione autista (solo scarichi propri) -->
+  <div id="tessereAutistaSection" style="display:none;position:relative;z-index:2;margin-top:1.5rem;">
+    <div style="border-top:2px solid var(--line);padding-top:1rem;margin-bottom:.5rem;">
+      <p style="font-family:'Playfair Display',serif;font-size:1rem;font-style:italic;color:var(--ink);margin-bottom:.2rem">💳 La mia Tessera Prepagata</p>
+      <p style="font-family:'Source Sans 3',sans-serif;font-size:.75rem;color:var(--ink-faded);margin-bottom:.9rem;line-height:1.5">Rifornimenti effettuati con tessera prepagata assegnata.</p>
+      <div id="tessereAutistaList"></div>
+    </div>
+  </div>
+
+  <!-- TESSERE PREPAGATE: sezione admin -->
+  <div id="tessereAdminSection" style="display:none;position:relative;z-index:2;margin-top:1.5rem;">
+    <div style="border-top:2px solid var(--line);padding-top:1rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;flex-wrap:wrap;gap:.4rem;">
+        <p style="font-family:'Playfair Display',serif;font-size:1rem;font-style:italic;color:var(--ink);margin:0">💳 Tessere Prepagate</p>
+        <button class="cb" style="font-size:.75rem;border-color:var(--orange);color:var(--orange)" onclick="exportTessereCSV()">↓ CSV Tessere</button>
+      </div>
+      <div id="tessereAdminList"></div>
+    </div>
+  </div>
 </div>
 
 <!-- CISTERNA CCB -->
@@ -677,6 +687,27 @@ body{padding:.8rem .3rem 3rem;}
     <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Seleziona gli autisti che possono vedere la sezione Cisterna CCB.</p>
     <div id="cisternaPermList" style="position:relative;z-index:2;"></div>
   </div>
+  <div class="as" id="adminTessereSection" style="display:none">
+    <div class="ast">💳 Tessere Prepagate — Gestione Ricariche</div>
+    <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Inserisci ricariche sulle tessere prepagate del tuo gruppo. Vedi anche i rifornimenti (scarichi) effettuati dagli autisti.</p>
+    <div id="adminTessereRicaricaForm" style="position:relative;z-index:2;border:1.5px dashed rgba(74,144,184,.3);border-radius:6px;padding:.9rem 1rem;margin-bottom:1rem;">
+      <p style="font-family:'Playfair Display',serif;font-size:.9rem;font-style:italic;color:var(--blue);margin-bottom:.7rem">+ Inserisci ricarica</p>
+      <div class="field"><label class="fl">Tessera</label>
+        <select id="adminTesseraSelect" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;appearance:none;cursor:pointer;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right .3rem center;padding-right:1.5rem;">
+          <option value="">— seleziona tessera —</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:.8rem;flex-wrap:wrap">
+        <div class="field" style="flex:1;min-width:120px"><label class="fl">Importo €</label><input type="number" id="adminRicaricaImporto" placeholder="es. 100.00" step="0.01" min="0" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+        <div class="field" style="flex:1;min-width:120px"><label class="fl">Data</label><input type="date" id="adminRicaricaData" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+      </div>
+      <div class="field"><label class="fl">Note</label><input type="text" id="adminRicaricaNote" placeholder="es. Ricarica mensile" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+      <button class="ba" style="background:var(--blue);margin-top:.4rem" onclick="addRicaricaTessera()">+ Aggiungi ricarica</button>
+      <div class="sn" id="ricaricaOk" style="display:none;margin-top:.5rem;color:var(--blue);background:rgba(74,144,184,.06);border-left:3px solid var(--blue);padding:.4rem;font-size:.85rem;">✓ Ricarica registrata!</div>
+    </div>
+    <div id="adminTessereRiepilogo"></div>
+  </div>
+
   <div class="as">
     <div class="ast">⚠️ Messaggi di Attenzione</div>
     <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Inserisci messaggi per gli autisti. Scegli una barca specifica o tutte, e imposta durata o scadenza.</p>
@@ -727,6 +758,7 @@ body{padding:.8rem .3rem 3rem;}
       <button class="exb cis" onclick="exportCisternaDiesel()">🛢️ CISTERNA CCB<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">→ Shortcut: «Esporta Cisterna CCB»</span></button>
       <button class="exb" style="background:linear-gradient(135deg,#2d6a4f,#1a4f38)" onclick="exportAllDotazioniCSV()">🛡️ DOTAZIONI<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">CSV tutte le barche</span></button>
       <button class="exb" style="background:linear-gradient(135deg,#c8854a,#a0602a)" onclick="exportAllManutenzioneCSV()">🔧 MANUTENZIONE<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">CSV tutti gli interventi</span></button>
+      <button class="exb" style="background:linear-gradient(135deg,#4a90b8,#2a6080)" onclick="exportTessereCSV()">💳 TESSERE PREPAGATE<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">CSV ricariche e scarichi</span></button>
     </div>
   </div>
 
@@ -780,6 +812,32 @@ body{padding:.8rem .3rem 3rem;}
     <div class="sast">🚤 Assegna barche agli admin</div>
     <div class="ib">Per ogni admin, seleziona il gruppo di barche che potrà gestire.</div>
     <div id="saAdminBoatsList"></div>
+  </div>
+
+  <!-- Tessere Prepagate: SOLO SuperAdmin può creare -->
+  <div class="sas">
+    <div class="sast">💳 Tessere Prepagate</div>
+    <div class="ib">Solo il Super Admin può creare e gestire le tessere prepagate. Ogni tessera ha un nome, tipo carburante e importo corrente. Gli admin autorizzati possono inserire ricariche.</div>
+    <div id="sa-tessere-list"></div>
+    <div class="ar" style="flex-direction:column;gap:.6rem">
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <input class="hi" id="saTesseraNome" type="text" placeholder="Nome tessera (es. Tessera ENI 01)" style="border-bottom-color:rgba(107,63,160,.4)">
+        <select id="saTesseraTipo" style="flex:1;min-width:110px;border:none;border-bottom:1px solid rgba(107,63,160,.4);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;color:var(--ink);padding:.25rem 0;outline:none;appearance:none;cursor:pointer;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right .3rem center;padding-right:1.5rem;">
+          <option value="diesel">DIESEL</option>
+          <option value="benzina">BENZINA</option>
+          <option value="misto">MISTO</option>
+        </select>
+        <input class="hi" id="saTesseraFornitore" type="text" placeholder="Fornitore (es. ENI, IP…)" style="border-bottom-color:rgba(107,63,160,.4)">
+      </div>
+      <button class="ba" style="background:var(--purple);align-self:flex-start" onclick="saAddTessera()">+ Crea tessera</button>
+    </div>
+  </div>
+
+  <!-- Autorizza admin alle Tessere Prepagate -->
+  <div class="sas">
+    <div class="sast">💳 Autorizza admin — Tessere Prepagate</div>
+    <div class="ib">Seleziona gli admin che possono inserire ricariche sulle tessere prepagate (come per Cisterna).</div>
+    <div id="saTesserePermList" style="position:relative;z-index:2;"></div>
   </div>
 
   <!-- Fornitori carburante: SOLO SuperAdmin -->
@@ -978,18 +1036,7 @@ body{padding:.8rem .3rem 3rem;}
   </div><!-- /pages -->
 </div><!-- /book -->
 
-<!-- FAB: bottoni admin/SA a cascata (visibile solo dopo login) -->
-<div class="fab-container" id="fabContainer" style="display:none">
-  <div class="fab-actions" id="fabActions">
-    <button class="fab-action-btn" id="fabDotBtn" onclick="showPage('dotazioni',null);closeFab()" style="display:none">
-      <span class="fab-icon" style="background:rgba(45,106,79,.1)">🛡️</span>Dotazioni
-    </button>
-    <button class="fab-action-btn" id="fabManBtn" onclick="showPage('manutenzione',null);closeFab()" style="display:none">
-      <span class="fab-icon" style="background:rgba(200,133,74,.1)">🔧</span>Manutenzione
-    </button>
-  </div>
-  <button class="fab-main" id="fabMain" onclick="toggleFab()">☰</button>
-</div>
+<!-- FAB rimosso -->
 
 <!-- MODAL: aggiunta multipla dotazioni -->
 <div class="mo" id="dotMultiModal">
@@ -1043,6 +1090,35 @@ body{padding:.8rem .3rem 3rem;}
     <div class="edit-mf">
       <button class="bh" onclick="closeEditModal()">Annulla</button>
       <button class="bh" style="background:var(--ink);color:#f5f0e6;border-color:var(--ink)" onclick="saveEditRecord()">✓ Salva modifiche</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Scarico tessera prepagata (autista) -->
+<div class="mo" id="tesseraScaricaModal">
+  <div class="md">
+    <div class="mh">💳 Rifornimento con Tessera Prepagata</div>
+    <div class="mb2">
+      <div class="field"><label class="fl">Tessera</label>
+        <select id="tesseraScaricaId" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;appearance:none;cursor:pointer;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right .3rem center;padding-right:1.5rem;">
+          <option value="">— seleziona —</option>
+        </select>
+      </div>
+      <div class="field"><label class="fl">Barca</label>
+        <select id="tesseraScaricaBarca" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;appearance:none;cursor:pointer;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right .3rem center;padding-right:1.5rem;">
+          <option value="">— seleziona —</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:.8rem;flex-wrap:wrap">
+        <div class="field" style="flex:1;min-width:100px"><label class="fl">Litri</label><input type="number" id="tesseraScaricaLitri" placeholder="es. 40" step="0.5" min="0" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+        <div class="field" style="flex:1;min-width:100px"><label class="fl">Costo €</label><input type="number" id="tesseraScaricaCosto" placeholder="es. 78.50" step="0.01" min="0" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+      </div>
+      <div class="field"><label class="fl">Data e Ora</label><input type="datetime-local" id="tesseraScaricaData" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+      <div class="field"><label class="fl">Note</label><input type="text" id="tesseraScaricaNote" placeholder="es. rifornimento pieno" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+    </div>
+    <div class="mf">
+      <button class="bh" onclick="document.getElementById('tesseraScaricaModal').classList.remove('show')">Annulla</button>
+      <button class="bh" style="background:var(--blue);color:#fff;border-color:var(--blue)" onclick="submitScaricaTessera()">✓ Salva rifornimento</button>
     </div>
   </div>
 </div>
@@ -1184,6 +1260,9 @@ async function init(){
   const di=await dbGet('fleet-dot-items');if(di)dotItems=di;
   const dbd=await dbGet('fleet-dot-barca');if(dbd)dotBarcaDotazioni=dbd;
   const mr=await dbGet('fleet-man-records');if(mr)manRecords=mr;
+  const tl=await dbGet('fleet-tessere-list');if(tl)tessereList=tl;
+  const tm=await dbGet('fleet-tessere-movimenti');if(tm)tessereMovimenti=tm;
+  const tp=await dbGet('fleet-tessere-perms');if(tp)tesserePerms=tp;
   const now=new Date();
   const ds=now.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   document.getElementById('todayDate').textContent=ds;
@@ -1339,14 +1418,10 @@ async function enterApp(){
   }
   populateMezzoSelect();populateFuelFornitori();setupMic();
   await loadAttMessages();updateAttBtn();
-  // Mostra FAB solo per admin/SA
-  if(currentUser.isAdmin||currentUser.isSA){
-    const fab=document.getElementById('fabContainer');if(fab)fab.style.display='flex';
-    const dotBtn=document.getElementById('fabDotBtn');if(dotBtn)dotBtn.style.display='flex';
-    const manBtn=document.getElementById('fabManBtn');if(manBtn)manBtn.style.display='flex';
-  }
+  // FAB rimosso
   showPage('compila',document.querySelector('.side-tab.compila'));
   renderDotazioniSera();
+  checkTessereBlink();
 }
 
 async function doLogout(){
@@ -1361,7 +1436,7 @@ async function doLogout(){
   document.getElementById('loginErr').classList.remove('show');document.getElementById('pwField').style.display='none';
   document.getElementById('loginSub').textContent='Diario di Bordo Como Classic Boats';
   document.getElementById('switchLink').textContent='Accedi come amministratore';
-  const fab=document.getElementById('fabContainer');if(fab)fab.style.display='none';
+  
   ['tabAdmin','tabSA','tabCisterna','tabDotazioni','tabManutenzione'].forEach(id=>{const el=document.getElementById(id);if(el)el.remove();});
   document.querySelector('.side-tab.carburanti').style.display='none';
   PAGE_IDS.forEach(id=>{const el=document.getElementById(id);if(el){el.classList.remove('active');el.style.display='none';}});
@@ -1383,6 +1458,8 @@ function showPage(name,btn){
   if(name==='carburanti'){
     if(currentUser.isAdmin||currentUser.isSA){document.getElementById('adminRegSec').style.display='block';document.getElementById('autoristaFuel').style.display='none';populateFuelBarcoFilter();renderFuelHistory();}
     else{document.getElementById('adminRegSec').style.display='none';document.getElementById('autoristaFuel').style.display='block';}
+    renderTessereAdminFuelSection();
+    renderTessereAutistaSection();
   }
 }
 
@@ -1430,6 +1507,8 @@ function renderSA(){
   renderSaAdminBoats();
   renderSaFornitori();
   renderSaBarcoFuel();
+  renderSaTessere();
+  renderSaTesserePerms();
   renderAuditLog();
   const box=document.getElementById('saPwInfoBox');
   const cnt=document.getElementById('saPwInfoContent');
@@ -1807,6 +1886,17 @@ function renderAdmin(){
     :myMezzi.map(m=>`<div class="dr"><div class="dn">${m}</div></div>`).join('');
 
   renderCisternaPerms();
+  // Sezione Tessere Prepagate Admin
+  const tessereAdminSec=document.getElementById('adminTessereSection');
+  if(tessereAdminSec){
+    tessereAdminSec.style.display=canAccessTessere()?'block':'none';
+    if(canAccessTessere()){
+      populateAdminTessereSelect();
+      // setta data di oggi
+      const di=document.getElementById('adminRicaricaData');if(di)di.value=new Date().toISOString().slice(0,10);
+      renderAdminTessereRiepilogo();
+    }
+  }
 }
 
 function renderCisternaPerms(){
@@ -2271,31 +2361,7 @@ async function setDotFuel(recId,lvl,btn){
 // =============================================
 // INTERVAL / LISTENERS
 // =============================================
-// =============================================
-// FAB MENU (bottoni a cascata admin/SA)
-// =============================================
-function toggleFab(){
-  const actions=document.getElementById('fabActions');
-  const mainBtn=document.getElementById('fabMain');
-  const isOpen=actions.classList.contains('open');
-  if(isOpen){closeFab();}
-  else{
-    actions.classList.add('open');
-    mainBtn.textContent='✕';
-    checkDotBlink();checkManBlink();
-    if(fabTimer)clearTimeout(fabTimer);
-    fabTimer=setTimeout(()=>closeFab(),5000);
-  }
-}
-function closeFab(){
-  const actions=document.getElementById('fabActions');
-  const mainBtn=document.getElementById('fabMain');
-  actions.classList.remove('open');
-  mainBtn.textContent='☰';
-  if(fabTimer){clearTimeout(fabTimer);fabTimer=null;}
-}
 function checkDotBlink(){
-  const btn=document.getElementById('fabDotBtn');
   const tab=document.getElementById('tabDotazioni');
   const now=new Date();const in2months=new Date(now);in2months.setMonth(in2months.getMonth()+2);
   let hasSoon=false;
@@ -2304,25 +2370,23 @@ function checkDotBlink(){
       if(it.expDate){const d=new Date(it.expDate);if(d<=in2months)hasSoon=true;}
     });
   });
-  if(btn)btn.classList.toggle('blink',hasSoon);
   if(tab){
     if(hasSoon){tab.style.animation='attBlink 1.4s infinite';}
     else{tab.style.animation='';}
   }
 }
 function checkManBlink(){
-  const btn=document.getElementById('fabManBtn');
   const tab=document.getElementById('tabManutenzione');
   let hasPending=false;
   manRecords.forEach(r=>{
     if(r.avviso&&!r.avvisoSpento){hasPending=true;}
   });
-  if(btn)btn.classList.toggle('blink',hasPending);
   if(tab){
     if(hasPending){tab.style.animation='attBlink 1.4s infinite';}
     else{tab.style.animation='';}
   }
 }
+function closeFab(){}
 
 // =============================================
 // DOTAZIONI
@@ -2629,22 +2693,250 @@ function exportAllManutenzioneCSV(){
 
 
 // =============================================
+// TESSERE PREPAGATE
+// =============================================
+let tessereList=[];       // [{id, nome, tipo, fornitore, creato}]
+let tessereMovimenti=[];  // [{id, tesseraId, tipo:'ricarica'|'scarico', data, importo, litri, costo, barca, autore, note, salvato}]
+let tesserePerms={};      // {adminName: true/false}
+
+const svTessere=()=>dbSet('fleet-tessere-list',tessereList);
+const svTessereMovimenti=()=>dbSet('fleet-tessere-movimenti',tessereMovimenti);
+const svTesserePerms=()=>dbSet('fleet-tessere-perms',tesserePerms);
+
+function canAccessTessere(){
+  if(!currentUser)return false;
+  if(currentUser.isSA)return true;
+  if(currentUser.isAdmin)return tesserePerms[currentUser.name]===true;
+  return false;
+}
+
+async function saAddTessera(){
+  const nome=document.getElementById('saTesseraNome').value.trim();
+  const tipo=document.getElementById('saTesseraTipo').value;
+  const forn=document.getElementById('saTesseraFornitore').value.trim();
+  if(!nome){alert('Inserisci il nome della tessera');return;}
+  if(tessereList.find(t=>t.nome.toLowerCase()===nome.toLowerCase())){alert('Tessera già presente.');return;}
+  tessereList.push({id:Date.now(),nome,tipo,fornitore:forn,creato:new Date().toISOString()});
+  await svTessere();
+  await addAudit('Super Admin','superadmin','save',`Tessera prepagata creata: ${nome}`);
+  document.getElementById('saTesseraNome').value='';document.getElementById('saTesseraFornitore').value='';
+  renderSaTessere();
+}
+
+function renderSaTessere(){
+  const c=document.getElementById('sa-tessere-list');if(!c)return;
+  if(!tessereList.length){c.innerHTML='<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessuna tessera creata.</p>';return;}
+  c.innerHTML=tessereList.map((t,i)=>{
+    const movs=tessereMovimenti.filter(m=>m.tesseraId===t.id);
+    const saldo=movs.reduce((s,m)=>m.tipo==='ricarica'?s+m.importo:s-m.costo,0);
+    return`<div class="dr"><div class="dn">💳 ${t.nome}</div><div class="dm">${t.tipo.toUpperCase()} · ${t.fornitore||'—'} · Saldo: <strong style="color:${saldo>=0?'var(--green)':'var(--red)'}">€${saldo.toFixed(2)}</strong></div><div class="da"><button class="bh red" onclick="saRemoveTessera(${i})">×</button></div></div>`;
+  }).join('');
+}
+
+async function saRemoveTessera(i){
+  if(!confirm(`Eliminare tessera "${tessereList[i].nome}"? Verranno eliminati anche tutti i movimenti.`))return;
+  const id=tessereList[i].id;tessereList.splice(i,1);tessereMovimenti=tessereMovimenti.filter(m=>m.tesseraId!==id);
+  await svTessere();await svTessereMovimenti();renderSaTessere();
+}
+
+function renderSaTesserePerms(){
+  const c=document.getElementById('saTesserePermList');if(!c)return;
+  if(!adminAccounts.length){c.innerHTML='<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessun admin presente.</p>';return;}
+  c.innerHTML=adminAccounts.filter(a=>a.active).map(a=>`<div class="dr"><div class="dn">${a.name}</div><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded)"><input type="checkbox" ${tesserePerms[a.name]?'checked':''} onchange="toggleTesseraPerm('${a.name}',this.checked)" style="accent-color:var(--blue);width:16px;height:16px;cursor:pointer">Accesso Tessere Prepagate</label></div>`).join('');
+}
+
+async function toggleTesseraPerm(name,val){if(val)tesserePerms[name]=true;else delete tesserePerms[name];await svTesserePerms();}
+
+function populateAdminTessereSelect(){
+  const sel=document.getElementById('adminTesseraSelect');if(!sel)return;
+  sel.innerHTML='<option value="">— seleziona tessera —</option>'+tessereList.map(t=>`<option value="${t.id}">${t.nome} (${t.tipo.toUpperCase()})</option>`).join('');
+}
+
+async function addRicaricaTessera(){
+  const tesseraId=parseInt(document.getElementById('adminTesseraSelect').value);
+  const importo=parseFloat(document.getElementById('adminRicaricaImporto').value);
+  const data=document.getElementById('adminRicaricaData').value;
+  const note=document.getElementById('adminRicaricaNote').value.trim();
+  if(!tesseraId||!importo||importo<=0||!data){alert('Compila tutti i campi obbligatori');return;}
+  const tessera=tessereList.find(t=>t.id===tesseraId);if(!tessera){alert('Tessera non trovata');return;}
+  tessereMovimenti.unshift({id:Date.now(),tesseraId,tipo:'ricarica',data,importo,litri:0,costo:0,barca:'',autore:currentUser.name,note,salvato:new Date().toISOString()});
+  await svTessereMovimenti();
+  await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','save',`Ricarica tessera "${tessera.nome}": €${importo}`);
+  document.getElementById('adminRicaricaImporto').value='';document.getElementById('adminRicaricaNote').value='';
+  const ok=document.getElementById('ricaricaOk');ok.style.display='block';setTimeout(()=>ok.style.display='none',2500);
+  renderAdminTessereRiepilogo();renderTessereAdminFuelSection();checkTessereBlink();
+}
+
+function renderAdminTessereRiepilogo(){
+  const c=document.getElementById('adminTessereRiepilogo');if(!c)return;
+  if(!tessereList.length){c.innerHTML='<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessuna tessera disponibile.</p>';return;}
+  c.innerHTML=tessereList.map(t=>{
+    const movs=tessereMovimenti.filter(m=>m.tesseraId===t.id);
+    const ricariche=movs.filter(m=>m.tipo==='ricarica');const scarichi=movs.filter(m=>m.tipo==='scarico');
+    const totR=ricariche.reduce((s,m)=>s+m.importo,0);const totC=scarichi.reduce((s,m)=>s+m.costo,0);const totL=scarichi.reduce((s,m)=>s+m.litri,0);const saldo=totR-totC;
+    const saldoAlert=saldo<=500;
+    const borderColor=saldoAlert?'rgba(192,57,43,.5)':'var(--line)';
+    const saldoColor=saldo<=0?'var(--red)':saldoAlert?'var(--orange)':'var(--green)';
+    return`<div style="border:1.5px solid ${borderColor};border-radius:6px;padding:.8rem 1rem;margin-bottom:.8rem;background:${saldoAlert?'rgba(192,57,43,.03)':'#fafaf8'}">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;margin-bottom:.5rem">
+        <div style="font-family:'Playfair Display',serif;font-size:.95rem;font-style:italic;color:var(--blue)">💳 ${t.nome}</div>
+        <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+          ${saldoAlert?`<span style="font-family:'Source Sans 3',sans-serif;font-size:.62rem;font-weight:700;background:var(--red);color:#fff;padding:.12rem .45rem;border-radius:3px;letter-spacing:.05em">⚠️ SALDO BASSO</span>`:''}
+          <div style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded)">${t.tipo.toUpperCase()} · ${t.fornitore||'—'}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:1.2rem;margin-bottom:.6rem;flex-wrap:wrap">
+        <div><span style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--green);font-weight:700">€${totR.toFixed(2)}</span><br><span style="font-size:.62rem;color:var(--ink-faded);text-transform:uppercase">Ricaricate</span></div>
+        <div><span style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--red);font-weight:700">€${totC.toFixed(2)}</span><br><span style="font-size:.62rem;color:var(--ink-faded);text-transform:uppercase">Costi €</span></div>
+        <div style="border-left:2px solid ${borderColor};padding-left:.7rem"><span style="font-family:'Playfair Display',serif;font-size:1.5rem;color:${saldoColor};font-weight:700">€${saldo.toFixed(2)}</span><br><span style="font-size:.62rem;color:${saldoColor};text-transform:uppercase;font-weight:600;letter-spacing:.04em">Saldo attuale</span></div>
+        <div><span style="font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--orange);font-weight:700">${totL.toFixed(1)}L</span><br><span style="font-size:.62rem;color:var(--ink-faded);text-transform:uppercase">Litri</span></div>
+      </div>
+      ${movs.slice(0,8).length?`<div style="border-top:1px solid var(--line-light);padding-top:.5rem">
+        <div style="font-size:.65rem;color:var(--ink-faded);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.35rem">Ultimi movimenti</div>
+        ${movs.slice(0,8).map(m=>{const d=m.data?new Date(m.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'}):'—';const isR=m.tipo==='ricarica';
+          return`<div style="display:flex;align-items:center;gap:.5rem;padding:.25rem 0;border-bottom:1px dashed var(--line-light);font-size:.78rem">
+            <span>${isR?'📥':'📤'}</span><span style="color:var(--ink-faded);min-width:38px">${d}</span>
+            <span style="flex:1">${isR?'Ricarica':'Scarico'} ${m.barca?'→ '+m.barca:''}</span>
+            <span style="font-weight:600;color:${isR?'var(--green)':'var(--red)'}">${isR?'+€'+m.importo.toFixed(2):(m.litri+'L · €'+m.costo.toFixed(2))}</span>
+            <span style="font-size:.7rem;color:var(--ink-faded)">${m.autore||''}</span>
+            ${!isR?`<button class="dx" style="font-size:.9rem" onclick="delTessereMovimento(${m.id})">×</button>`:''}
+          </div>`;
+        }).join('')}
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function delTessereMovimento(id){
+  if(!confirm('Eliminare questo movimento?'))return;
+  tessereMovimenti=tessereMovimenti.filter(m=>m.id!==id);await svTessereMovimenti();
+  renderAdminTessereRiepilogo();renderTessereAdminFuelSection();checkTessereBlink();
+}
+
+function renderTessereAdminFuelSection(){
+  const sec=document.getElementById('tessereAdminSection');if(!sec)return;
+  sec.style.display=(canAccessTessere()&&(currentUser.isAdmin||currentUser.isSA))?'block':'none';
+  if(!canAccessTessere())return;
+  const c=document.getElementById('tessereAdminList');if(!c)return;
+  if(!tessereList.length){c.innerHTML='<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessuna tessera. Il Super Admin deve prima crearle.</p>';return;}
+  c.innerHTML=tessereList.map(t=>{
+    const movs=tessereMovimenti.filter(m=>m.tesseraId===t.id);
+    const scarichi=movs.filter(m=>m.tipo==='scarico');
+    const totR=movs.filter(m=>m.tipo==='ricarica').reduce((s,m)=>s+m.importo,0);
+    const totC=scarichi.reduce((s,m)=>s+m.costo,0);
+    const totL=scarichi.reduce((s,m)=>s+m.litri,0);
+    const saldo=totR-totC;
+    const saldoAlert=saldo<=500;
+    const saldoColor=saldo<=0?'var(--red)':saldoAlert?'var(--orange)':'var(--green)';
+    return`<div style="border:1.5px solid ${saldoAlert?'rgba(192,57,43,.4)':'var(--line)'};border-radius:6px;padding:.7rem .9rem;margin-bottom:.6rem;background:${saldoAlert?'rgba(192,57,43,.03)':'#fafaf8'}">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:.4rem;flex-wrap:wrap;margin-bottom:.35rem">
+        <div style="font-family:'Playfair Display',serif;font-size:.9rem;font-style:italic;color:var(--blue)">💳 ${t.nome}</div>
+        ${saldoAlert?`<span style="font-size:.6rem;font-weight:700;background:var(--red);color:#fff;padding:.1rem .4rem;border-radius:3px">⚠️ SALDO BASSO</span>`:''}
+      </div>
+      <div style="display:flex;gap:1rem;align-items:center;margin-bottom:.4rem;flex-wrap:wrap">
+        <div style="font-size:.78rem;color:var(--ink-faded)">${t.tipo.toUpperCase()} · ${t.fornitore||'—'} · ${totL.toFixed(1)}L</div>
+        <div style="margin-left:auto;font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;color:${saldoColor}">€${saldo.toFixed(2)} <span style="font-size:.6rem;font-family:'Source Sans 3',sans-serif;font-weight:400;color:var(--ink-faded)">saldo</span></div>
+      </div>
+      ${scarichi.slice(0,5).map(m=>{const d=m.data?new Date(m.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'}):'—';
+        return`<div style="display:flex;align-items:center;gap:.5rem;padding:.2rem 0;border-bottom:1px dashed var(--line-light);font-size:.78rem">
+          <span style="color:var(--ink-faded);min-width:38px">${d}</span><span style="flex:1">${m.barca||'—'}</span>
+          <span>${m.litri}L</span><span style="font-weight:600;color:var(--red)">€${m.costo.toFixed(2)}</span>
+          <span style="font-size:.7rem;color:var(--ink-faded)">${m.autore||''}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderTessereAutistaSection(){
+  const sec=document.getElementById('tessereAutistaSection');if(!sec)return;
+  if(currentUser.isAdmin||currentUser.isSA){sec.style.display='none';return;}
+  if(!tessereList.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  const c=document.getElementById('tessereAutistaList');if(!c)return;
+  const myName=currentUser.name;
+  const myScarichi=tessereMovimenti.filter(m=>m.tipo==='scarico'&&m.autore===myName);
+  const btn='<button class="sb" style="margin-bottom:1rem;background:var(--blue)" onclick="openTesseraScaricaModal()">💳 Nuovo rifornimento con tessera</button>';
+  if(!myScarichi.length){
+    c.innerHTML=`<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessun rifornimento con tessera registrato.</p>
+    <button class="sb" style="margin-top:.8rem;background:var(--blue)" onclick="openTesseraScaricaModal()">💳 Rifornimento con tessera</button>`;return;
+  }
+  c.innerHTML=btn+myScarichi.slice(0,20).map(m=>{
+    const t=tessereList.find(x=>x.id===m.tesseraId);const d=m.data?new Date(m.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+    return`<div style="display:flex;align-items:center;gap:.6rem;padding:.4rem 0;border-bottom:1px dashed var(--line-light);font-size:.82rem;flex-wrap:wrap">
+      <span style="color:var(--ink-faded);min-width:60px">${d}</span><span style="font-weight:600;color:var(--blue);flex:1">${t?t.nome:'—'}</span>
+      <span>${m.barca||'—'}</span><span style="color:var(--ink-faded)">${m.litri}L</span><span style="font-weight:600;color:var(--red)">€${m.costo.toFixed(2)}</span>
+    </div>`;
+  }).join('');
+}
+
+function openTesseraScaricaModal(){
+  const selT=document.getElementById('tesseraScaricaId');
+  selT.innerHTML='<option value="">— seleziona —</option>'+tessereList.map(t=>`<option value="${t.id}">${t.nome} (${t.tipo.toUpperCase()})</option>`).join('');
+  const selB=document.getElementById('tesseraScaricaBarca');
+  const barche=getDriverMezzi(currentUser.name);
+  selB.innerHTML='<option value="">— seleziona —</option>'+barche.map(b=>`<option>${b}</option>`).join('');
+  document.getElementById('tesseraScaricaData').value=new Date().toISOString().slice(0,16);
+  document.getElementById('tesseraScaricaModal').classList.add('show');
+}
+
+async function submitScaricaTessera(){
+  const tesseraId=parseInt(document.getElementById('tesseraScaricaId').value);
+  const barca=document.getElementById('tesseraScaricaBarca').value;
+  const litri=parseFloat(document.getElementById('tesseraScaricaLitri').value);
+  const costo=parseFloat(document.getElementById('tesseraScaricaCosto').value)||0;
+  const data=document.getElementById('tesseraScaricaData').value;
+  const note=document.getElementById('tesseraScaricaNote').value.trim();
+  if(!tesseraId||!barca||!litri||litri<=0||!data){alert('Compila tutti i campi obbligatori');return;}
+  const tessera=tessereList.find(t=>t.id===tesseraId);if(!tessera){alert('Tessera non trovata');return;}
+  const rec={id:Date.now(),tesseraId,tipo:'scarico',data,litri,costo,barca,autore:currentUser.name,note,salvato:new Date().toISOString()};
+  tessereMovimenti.unshift(rec);await svTessereMovimenti();
+  benzinaDieselDati.unshift({id:rec.id,data:data.slice(0,10),ora:data.includes('T')?data.slice(11,16):'',barca,tipo:tessera.tipo,litri,fornitori:'💳 '+tessera.nome,note,salvato:new Date().toISOString(),tessera:true});
+  await sv.benzinaDiesel();
+  await addAudit(currentUser.name,'driver','save',`Scarico tessera "${tessera.nome}": ${litri}L €${costo} — ${barca}`);
+  document.getElementById('tesseraScaricaModal').classList.remove('show');
+  ['tesseraScaricaLitri','tesseraScaricaCosto','tesseraScaricaNote'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderTessereAutistaSection();checkTessereBlink();
+}
+
+function exportTessereCSV(){
+  if(!tessereMovimenti.length){alert('Nessun dato tessere');return;}
+  const rows=tessereMovimenti.map(m=>{
+    const t=tessereList.find(x=>x.id===m.tesseraId);
+    return[m.data?m.data.slice(0,10):'',t?t.nome:'—',t?t.tipo.toUpperCase():'',t?t.fornitore||'—':'',m.tipo.toUpperCase(),
+      m.tipo==='ricarica'?m.importo.toFixed(2):'',m.tipo==='scarico'?m.litri:'',m.tipo==='scarico'?m.costo.toFixed(2):'',m.barca||'',m.autore||'',m.note||''].join('\t');
+  });
+  downloadCSV('\uFEFFData\tTessera\tTipo carb.\tFornitore\tMovimento\tRicarica €\tLitri\tCosto €\tBarca\tAutore\tNote\n'+rows.join('\n'),'Tessere Prepagate CCB');
+}
+
+// =============================================
 // INTERVAL / LISTENERS
 // =============================================
+function checkTessereBlink(){
+  if(!currentUser||(!currentUser.isAdmin&&!currentUser.isSA))return;
+  const tab=document.getElementById('tabAdmin');
+  const soglia=500;
+  let hasAlert=false;
+  tessereList.forEach(t=>{
+    const movs=tessereMovimenti.filter(m=>m.tesseraId===t.id);
+    const saldo=movs.reduce((s,m)=>m.tipo==='ricarica'?s+m.importo:s-m.costo,0);
+    if(saldo<=soglia)hasAlert=true;
+  });
+  if(tab){
+    if(hasAlert){tab.style.animation='attBlink 1.4s infinite';}
+    else{tab.style.animation='';}
+  }
+}
+
 setInterval(()=>{
   purgeExpiredMessages();updateAttBtn();
   if(document.getElementById('attMsgAdminList'))renderAttMsgAdmin();
-  if(currentUser&&(currentUser.isAdmin||currentUser.isSA)){checkDotBlink();checkManBlink();}
+  if(currentUser&&(currentUser.isAdmin||currentUser.isSA)){checkDotBlink();checkManBlink();checkTessereBlink();}
 },60000);
 
 document.getElementById('loginName').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 document.getElementById('loginPw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 document.getElementById('saPw').addEventListener('keydown',e=>{if(e.key==='Enter')saVerifyPw();});
-// Chiudi FAB cliccando fuori
-document.addEventListener('click',e=>{
-  const fab=document.getElementById('fabContainer');
-  if(fab&&!fab.contains(e.target)){closeFab();}
-});
 </script>
 
 </body>

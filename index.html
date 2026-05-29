@@ -539,21 +539,33 @@ body{padding:.8rem .3rem 3rem;}
       <div class="fd"><div class="pc"><div class="pi">⛽</div><div class="pl" id="pumpLabel">DIESEL</div><div class="pn" id="litriDisplay">0</div><div class="pu">Litri</div></div></div>
       <div class="field"><label class="fl">Quantità (litri)</label><input type="number" id="fLitri" placeholder="es. 50.5" step="0.5" min="0" oninput="updateDisplay()"></div>
       <div class="field"><label class="fl">Note rifornimento</label><textarea id="fNoteFuel" rows="3" placeholder="Es. rifornimento completo…" style="resize:none;min-height:70px;line-height:1.8;border:1px solid var(--line);padding:.45rem .7rem;background:#fafaf8;font-family:'Source Sans 3',sans-serif;font-size:1rem;width:100%;outline:none;border-radius:2px;"></textarea></div>
+
+      <!-- SPUNTA TESSERA PREPAGATA -->
+      <div id="tesseraToggleRow" style="display:none;margin:.9rem 0 .2rem;position:relative;z-index:2;">
+        <label style="display:flex;align-items:center;gap:.7rem;cursor:pointer;padding:.55rem .8rem;border:1.5px solid var(--line);border-radius:6px;background:#fafaf8;transition:border-color .2s;" id="tesseraToggleLabel">
+          <input type="checkbox" id="usaTesseraCheck" onchange="toggleUsaTessera()" style="accent-color:var(--blue);width:18px;height:18px;cursor:pointer;flex-shrink:0;">
+          <span style="font-family:'Source Sans 3',sans-serif;font-size:.88rem;color:var(--ink);font-weight:600">💳 Usa tessera prepagata</span>
+        </label>
+        <div id="tesseraExtraFields" style="display:none;margin-top:.7rem;padding:.7rem .8rem;border:1.5px solid rgba(74,144,184,.35);border-radius:6px;background:rgba(74,144,184,.04);">
+          <div class="field" style="margin-bottom:.8rem">
+            <label class="fl">Tessera</label>
+            <select id="fTesseraId" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;appearance:none;cursor:pointer;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right .3rem center;padding-right:1.5rem;">
+              <option value="">— seleziona tessera —</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label class="fl">Costo € (opzionale)</label>
+            <input type="number" id="fTesseraCosto" placeholder="es. 78.50" step="0.01" min="0" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;">
+          </div>
+        </div>
+      </div>
+
       <button class="sb" onclick="submitFuel()">✦ Salva rifornimento</button>
       <div class="sn" id="successNoteFuel">✓ Rifornimento salvato!</div>
     </div>
   </div>
 
-  <!-- TESSERE PREPAGATE: sezione autista (solo scarichi propri) -->
-  <div id="tessereAutistaSection" style="display:none;position:relative;z-index:2;margin-top:1.5rem;">
-    <div style="border-top:2px solid var(--line);padding-top:1rem;margin-bottom:.5rem;">
-      <p style="font-family:'Playfair Display',serif;font-size:1rem;font-style:italic;color:var(--ink);margin-bottom:.2rem">💳 La mia Tessera Prepagata</p>
-      <p style="font-family:'Source Sans 3',sans-serif;font-size:.75rem;color:var(--ink-faded);margin-bottom:.9rem;line-height:1.5">Rifornimenti effettuati con tessera prepagata assegnata.</p>
-      <div id="tessereAutistaList"></div>
-    </div>
-  </div>
-
-  <!-- TESSERE PREPAGATE: sezione admin -->
+  <!-- TESSERE PREPAGATE: sezione admin (nella pagina Fuel) -->
   <div id="tessereAdminSection" style="display:none;position:relative;z-index:2;margin-top:1.5rem;">
     <div style="border-top:2px solid var(--line);padding-top:1rem;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;flex-wrap:wrap;gap:.4rem;">
@@ -1094,35 +1106,6 @@ body{padding:.8rem .3rem 3rem;}
   </div>
 </div>
 
-<!-- MODAL: Scarico tessera prepagata (autista) -->
-<div class="mo" id="tesseraScaricaModal">
-  <div class="md">
-    <div class="mh">💳 Rifornimento con Tessera Prepagata</div>
-    <div class="mb2">
-      <div class="field"><label class="fl">Tessera</label>
-        <select id="tesseraScaricaId" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;appearance:none;cursor:pointer;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right .3rem center;padding-right:1.5rem;">
-          <option value="">— seleziona —</option>
-        </select>
-      </div>
-      <div class="field"><label class="fl">Barca</label>
-        <select id="tesseraScaricaBarca" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;appearance:none;cursor:pointer;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right .3rem center;padding-right:1.5rem;">
-          <option value="">— seleziona —</option>
-        </select>
-      </div>
-      <div style="display:flex;gap:.8rem;flex-wrap:wrap">
-        <div class="field" style="flex:1;min-width:100px"><label class="fl">Litri</label><input type="number" id="tesseraScaricaLitri" placeholder="es. 40" step="0.5" min="0" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
-        <div class="field" style="flex:1;min-width:100px"><label class="fl">Costo €</label><input type="number" id="tesseraScaricaCosto" placeholder="es. 78.50" step="0.01" min="0" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
-      </div>
-      <div class="field"><label class="fl">Data e Ora</label><input type="datetime-local" id="tesseraScaricaData" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
-      <div class="field"><label class="fl">Note</label><input type="text" id="tesseraScaricaNote" placeholder="es. rifornimento pieno" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
-    </div>
-    <div class="mf">
-      <button class="bh" onclick="document.getElementById('tesseraScaricaModal').classList.remove('show')">Annulla</button>
-      <button class="bh" style="background:var(--blue);color:#fff;border-color:var(--blue)" onclick="submitScaricaTessera()">✓ Salva rifornimento</button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL: assegna barche -->
 
 <div class="mo" id="assignModal">
@@ -1413,6 +1396,9 @@ async function enterApp(){
   if((currentUser.isAdmin||currentUser.isSA)&&!document.getElementById('tabManutenzione')){
     const t=document.createElement('div');t.className='side-tab';t.id='tabManutenzione';t.style.cssText='background:#c8854a;color:#fff';t.textContent='🔧 Manuten.';t.onclick=function(){showPage('manutenzione',this);};document.getElementById('tabsSide').appendChild(t);
   }
+  if((currentUser.isAdmin||currentUser.isSA)&&canAccessTessere()&&!document.getElementById('tabTessere')){
+    const t=document.createElement('div');t.className='side-tab';t.id='tabTessere';t.style.cssText='background:#4a90b8;color:#fff';t.textContent='💳 Tessere';t.onclick=function(){showPage('carburanti',this);};document.getElementById('tabsSide').appendChild(t);
+  }
   if(currentUser.isSA&&!document.getElementById('tabSA')){
     const t=document.createElement('div');t.className='side-tab superadmin';t.id='tabSA';t.textContent='👑 SA';t.onclick=function(){showPage('superadmin',this);};document.getElementById('tabsSide').appendChild(t);
   }
@@ -1437,7 +1423,7 @@ async function doLogout(){
   document.getElementById('loginSub').textContent='Diario di Bordo Como Classic Boats';
   document.getElementById('switchLink').textContent='Accedi come amministratore';
   
-  ['tabAdmin','tabSA','tabCisterna','tabDotazioni','tabManutenzione'].forEach(id=>{const el=document.getElementById(id);if(el)el.remove();});
+  ['tabAdmin','tabSA','tabCisterna','tabDotazioni','tabManutenzione','tabTessere'].forEach(id=>{const el=document.getElementById(id);if(el)el.remove();});
   document.querySelector('.side-tab.carburanti').style.display='none';
   PAGE_IDS.forEach(id=>{const el=document.getElementById(id);if(el){el.classList.remove('active');el.style.display='none';}});
 }
@@ -1995,8 +1981,30 @@ function selectFuel(type,el){
   if(!currentUser.isAdmin&&!currentUser.isSA){const b=getDriverMezzi(currentUser.name);if(!b.length){alert('Non hai barche assegnate');return;}}
   selectedFuelType=type;document.querySelectorAll('.ft').forEach(e=>e.classList.remove('active'));el.classList.add('active');
   document.getElementById('pumpLabel').textContent=type.toUpperCase();document.getElementById('fuelForm').style.display='block';
+  // Mostra spunta tessera solo se ci sono tessere disponibili (autista e admin)
+  const tr=document.getElementById('tesseraToggleRow');
+  if(tr){
+    const hasTessere=tessereList.length>0;
+    tr.style.display=hasTessere?'block':'none';
+    // reset spunta
+    const chk=document.getElementById('usaTesseraCheck');if(chk)chk.checked=false;
+    const ef=document.getElementById('tesseraExtraFields');if(ef)ef.style.display='none';
+    // popola select tessere
+    const selT=document.getElementById('fTesseraId');
+    if(selT)selT.innerHTML='<option value="">— seleziona tessera —</option>'+tessereList.map(t=>`<option value="${t.id}">${t.nome} (${t.tipo.toUpperCase()})</option>`).join('');
+  }
   populateFuelBarcos();renderFuelHistory();
 }
+
+function toggleUsaTessera(){
+  const chk=document.getElementById('usaTesseraCheck');
+  const ef=document.getElementById('tesseraExtraFields');
+  const lbl=document.getElementById('tesseraToggleLabel');
+  if(!chk||!ef)return;
+  ef.style.display=chk.checked?'block':'none';
+  if(lbl)lbl.style.borderColor=chk.checked?'var(--blue)':'var(--line)';
+}
+
 function populateFuelBarcos(){
   let b;
   if(currentUser.isSA)b=allMezzi;
@@ -2019,17 +2027,38 @@ async function submitFuel(){
   if(selectedFuelType==='diesel'&&isCisternaCCB(forn)){
     if(litri>cisternaDiesel.litriAttuali){alert(`❌ Cisterna insufficiente!\nDisponibili: ${cisternaDiesel.litriAttuali.toFixed(0)} L\nRichiesti: ${litri} L`);return;}
   }
-  const rec={id:Date.now(),barca,data,tipo:selectedFuelType,litri,fornitori:forn,note:document.getElementById('fNoteFuel').value.trim(),salvato:new Date().toISOString()};
+
+  // Controlla se è usata una tessera prepagata
+  const usaTessera=document.getElementById('usaTesseraCheck')?.checked;
+  const tesseraId=usaTessera?parseInt(document.getElementById('fTesseraId')?.value||'0'):0;
+  const tesseraCosto=usaTessera?parseFloat(document.getElementById('fTesseraCosto')?.value||'0')||0:0;
+  if(usaTessera&&!tesseraId){alert('Seleziona una tessera prepagata');return;}
+  const tessera=tesseraId?tessereList.find(t=>t.id===tesseraId):null;
+
+  const rec={id:Date.now(),barca,data,tipo:selectedFuelType,litri,fornitori:tessera?'💳 '+tessera.nome:forn,note:document.getElementById('fNoteFuel').value.trim(),salvato:new Date().toISOString()};
   fuelRecords.unshift(rec);await sv.fuel();
-  await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'save',`Rifornimento ${selectedFuelType.toUpperCase()} ${litri}L — ${barca}`);
-  if(selectedFuelType==='diesel'&&isCisternaCCB(forn)){
+  await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'save',`Rifornimento ${selectedFuelType.toUpperCase()} ${litri}L — ${barca}${tessera?' [💳 '+tessera.nome+']':''}`);
+  if(selectedFuelType==='diesel'&&isCisternaCCB(forn)&&!tessera){
     cisternaDiesel.litriAttuali=Math.max(0,cisternaDiesel.litriAttuali-litri);
     if(!cisternaDiesel.storico)cisternaDiesel.storico=[];
     cisternaDiesel.storico.unshift({id:Date.now(),tipo:'scarico',data:data.slice(0,10),barca,litri,livelloAfter:cisternaDiesel.litriAttuali,nota:'Scarico automatico da rifornimento',salvato:new Date().toISOString()});
     await sv.cisternaDiesel();
   }
-  benzinaDieselDati.unshift({id:rec.id,data:data.slice(0,10),ora:data.includes('T')?data.slice(11,16):'',barca,tipo:selectedFuelType,litri,fornitori:forn,note:rec.note,salvato:new Date().toISOString()});await sv.benzinaDiesel();
+  benzinaDieselDati.unshift({id:rec.id,data:data.slice(0,10),ora:data.includes('T')?data.slice(11,16):'',barca,tipo:selectedFuelType,litri,fornitori:rec.fornitori,note:rec.note,salvato:new Date().toISOString(),tessera:!!tessera});
+  await sv.benzinaDiesel();
+
+  // Se tessera: registra movimento scarico
+  if(tessera){
+    tessereMovimenti.unshift({id:rec.id,tesseraId:tessera.id,tipo:'scarico',data,litri,costo:tesseraCosto,barca,autore:currentUser.name,note:rec.note,salvato:new Date().toISOString()});
+    await svTessereMovimenti();
+    renderTessereAdminFuelSection();
+    checkTessereBlink();
+  }
+
+  // Reset form
   document.getElementById('fLitri').value='';document.getElementById('fNoteFuel').value='';document.getElementById('litriDisplay').textContent='0';
+  const chk=document.getElementById('usaTesseraCheck');if(chk){chk.checked=false;toggleUsaTessera();}
+  if(document.getElementById('fTesseraCosto'))document.getElementById('fTesseraCosto').value='';
   const n=document.getElementById('successNoteFuel');n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2500);
   renderFuelHistory();
 }
@@ -2849,54 +2878,9 @@ function renderTessereAdminFuelSection(){
 }
 
 function renderTessereAutistaSection(){
-  const sec=document.getElementById('tessereAutistaSection');if(!sec)return;
-  if(currentUser.isAdmin||currentUser.isSA){sec.style.display='none';return;}
-  if(!tessereList.length){sec.style.display='none';return;}
-  sec.style.display='block';
-  const c=document.getElementById('tessereAutistaList');if(!c)return;
-  const myName=currentUser.name;
-  const myScarichi=tessereMovimenti.filter(m=>m.tipo==='scarico'&&m.autore===myName);
-  const btn='<button class="sb" style="margin-bottom:1rem;background:var(--blue)" onclick="openTesseraScaricaModal()">💳 Nuovo rifornimento con tessera</button>';
-  if(!myScarichi.length){
-    c.innerHTML=`<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessun rifornimento con tessera registrato.</p>
-    <button class="sb" style="margin-top:.8rem;background:var(--blue)" onclick="openTesseraScaricaModal()">💳 Rifornimento con tessera</button>`;return;
-  }
-  c.innerHTML=btn+myScarichi.slice(0,20).map(m=>{
-    const t=tessereList.find(x=>x.id===m.tesseraId);const d=m.data?new Date(m.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
-    return`<div style="display:flex;align-items:center;gap:.6rem;padding:.4rem 0;border-bottom:1px dashed var(--line-light);font-size:.82rem;flex-wrap:wrap">
-      <span style="color:var(--ink-faded);min-width:60px">${d}</span><span style="font-weight:600;color:var(--blue);flex:1">${t?t.nome:'—'}</span>
-      <span>${m.barca||'—'}</span><span style="color:var(--ink-faded)">${m.litri}L</span><span style="font-weight:600;color:var(--red)">€${m.costo.toFixed(2)}</span>
-    </div>`;
-  }).join('');
-}
-
-function openTesseraScaricaModal(){
-  const selT=document.getElementById('tesseraScaricaId');
-  selT.innerHTML='<option value="">— seleziona —</option>'+tessereList.map(t=>`<option value="${t.id}">${t.nome} (${t.tipo.toUpperCase()})</option>`).join('');
-  const selB=document.getElementById('tesseraScaricaBarca');
-  const barche=getDriverMezzi(currentUser.name);
-  selB.innerHTML='<option value="">— seleziona —</option>'+barche.map(b=>`<option>${b}</option>`).join('');
-  document.getElementById('tesseraScaricaData').value=new Date().toISOString().slice(0,16);
-  document.getElementById('tesseraScaricaModal').classList.add('show');
-}
-
-async function submitScaricaTessera(){
-  const tesseraId=parseInt(document.getElementById('tesseraScaricaId').value);
-  const barca=document.getElementById('tesseraScaricaBarca').value;
-  const litri=parseFloat(document.getElementById('tesseraScaricaLitri').value);
-  const costo=parseFloat(document.getElementById('tesseraScaricaCosto').value)||0;
-  const data=document.getElementById('tesseraScaricaData').value;
-  const note=document.getElementById('tesseraScaricaNote').value.trim();
-  if(!tesseraId||!barca||!litri||litri<=0||!data){alert('Compila tutti i campi obbligatori');return;}
-  const tessera=tessereList.find(t=>t.id===tesseraId);if(!tessera){alert('Tessera non trovata');return;}
-  const rec={id:Date.now(),tesseraId,tipo:'scarico',data,litri,costo,barca,autore:currentUser.name,note,salvato:new Date().toISOString()};
-  tessereMovimenti.unshift(rec);await svTessereMovimenti();
-  benzinaDieselDati.unshift({id:rec.id,data:data.slice(0,10),ora:data.includes('T')?data.slice(11,16):'',barca,tipo:tessera.tipo,litri,fornitori:'💳 '+tessera.nome,note,salvato:new Date().toISOString(),tessera:true});
-  await sv.benzinaDiesel();
-  await addAudit(currentUser.name,'driver','save',`Scarico tessera "${tessera.nome}": ${litri}L €${costo} — ${barca}`);
-  document.getElementById('tesseraScaricaModal').classList.remove('show');
-  ['tesseraScaricaLitri','tesseraScaricaCosto','tesseraScaricaNote'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  renderTessereAutistaSection();checkTessereBlink();
+  // Autista non vede la lista tessere — il rifornimento con tessera è integrato nel form fuel tramite spunta
+  const sec=document.getElementById('tessereAutistaSection');
+  if(sec)sec.style.display='none';
 }
 
 function exportTessereCSV(){
@@ -2914,18 +2898,21 @@ function exportTessereCSV(){
 // =============================================
 function checkTessereBlink(){
   if(!currentUser||(!currentUser.isAdmin&&!currentUser.isSA))return;
-  const tab=document.getElementById('tabAdmin');
+  // Crea tab tessere se non esiste e l'utente ha accesso
+  if(canAccessTessere()&&!document.getElementById('tabTessere')){
+    const t=document.createElement('div');t.className='side-tab';t.id='tabTessere';t.style.cssText='background:#4a90b8;color:#fff';t.textContent='💳 Tessere';t.onclick=function(){showPage('carburanti',this);};
+    const tabSA=document.getElementById('tabSA');
+    if(tabSA)tabSA.before(t);else document.getElementById('tabsSide').appendChild(t);
+  }
+  const tab=document.getElementById('tabTessere');
+  if(!tab)return;
   const soglia=500;
-  let hasAlert=false;
-  tessereList.forEach(t=>{
+  let hasAlert=tessereList.some(t=>{
     const movs=tessereMovimenti.filter(m=>m.tesseraId===t.id);
     const saldo=movs.reduce((s,m)=>m.tipo==='ricarica'?s+m.importo:s-m.costo,0);
-    if(saldo<=soglia)hasAlert=true;
+    return saldo<=soglia;
   });
-  if(tab){
-    if(hasAlert){tab.style.animation='attBlink 1.4s infinite';}
-    else{tab.style.animation='';}
-  }
+  tab.style.animation=hasAlert?'attBlink 1.4s infinite':'';
 }
 
 setInterval(()=>{

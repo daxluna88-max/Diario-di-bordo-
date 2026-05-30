@@ -30,6 +30,10 @@ body{background:#e8e0d0;background-image:radial-gradient(ellipse at 20% 50%,rgba
 .spirals{position:absolute;left:-7px;top:24px;bottom:24px;display:flex;flex-direction:column;justify-content:space-around;z-index:10;pointer-events:none;}
 .spiral{width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#d0d0d0,#888,#444);box-shadow:0 2px 4px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.35);flex-shrink:0;}
 .tabs-side{display:none;flex-direction:column;position:absolute;right:-2px;top:70px;gap:4px;z-index:20;}
+.tabs-toggle{width:22px;height:22px;border-radius:0 6px 6px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.75rem;background:rgba(28,20,10,.55);color:#fff;border:none;box-shadow:2px 0 6px rgba(0,0,0,.25);flex-shrink:0;transition:background .2s;user-select:none;border-left:none;}
+.tabs-toggle:hover{background:rgba(28,20,10,.8);}
+.tabs-group{display:flex;flex-direction:column;gap:4px;overflow:hidden;transition:max-height .28s ease,opacity .22s ease;max-height:600px;opacity:1;}
+.tabs-group.collapsed{max-height:0;opacity:0;pointer-events:none;}
 .side-tab{width:38px;padding:.6rem .3rem;border-radius:0 8px 8px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Source Sans 3',sans-serif;font-size:.52rem;font-weight:600;letter-spacing:.06em;writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);transition:all .2s;border:1px solid rgba(0,0,0,.12);border-left:none;box-shadow:3px 0 6px rgba(0,0,0,.2);user-select:none;}
 .side-tab.compila{background:var(--red);color:#fff;}
 .side-tab.registro{background:var(--blue);color:#fff;}
@@ -374,9 +378,12 @@ body{padding:.8rem .3rem 3rem;}
     <div class="spiral"></div>
   </div>
   <div class="tabs-side" id="tabsSide">
-    <div class="side-tab compila active" onclick="showPage('compila',this)">✏ Compila</div>
-    <div class="side-tab registro" onclick="showPage('registro',this)">📋 Registro</div>
-    <div class="side-tab carburanti" onclick="showPage('carburanti',this)" style="display:none">⛽ Fuel</div>
+    <button class="tabs-toggle" id="tabsToggleBtn" onclick="toggleTabsGroup()" title="Mostra/nascondi menu">☰</button>
+    <div class="tabs-group" id="tabsGroup">
+      <div class="side-tab compila active" onclick="showPage('compila',this)">✏ Compila</div>
+      <div class="side-tab registro" onclick="showPage('registro',this)">📋 Registro</div>
+      <div class="side-tab carburanti" onclick="showPage('carburanti',this)" style="display:none">⛽ Fuel</div>
+    </div>
   </div>
 
   <!-- LOGIN NORMALE -->
@@ -1384,23 +1391,24 @@ async function enterApp(){
   if(!currentUser.isAdmin&&!currentUser.isSA)document.getElementById('fAutista').value=currentUser.name;
   document.getElementById('mediaUploadSection').style.display=(currentUser.isAdmin||currentUser.isSA)?'block':'none';
   document.querySelector('.side-tab.carburanti').style.display='flex';
+  const _tg=document.getElementById('tabsGroup');
   if(canAccessCisterna()&&!document.getElementById('tabCisterna')){
-    const t=document.createElement('div');t.className='side-tab cisterna';t.id='tabCisterna';t.textContent='🛢 Cisterna';t.onclick=function(){showPage('cisterna',this);};document.getElementById('tabsSide').appendChild(t);
+    const t=document.createElement('div');t.className='side-tab cisterna';t.id='tabCisterna';t.textContent='🛢 Cisterna';t.onclick=function(){showPage('cisterna',this);};_tg.appendChild(t);
   }
   if((currentUser.isAdmin||currentUser.isSA)&&!document.getElementById('tabAdmin')){
-    const t=document.createElement('div');t.className='side-tab admin';t.id='tabAdmin';t.textContent='⚙ Admin';t.onclick=function(){showPage('admin',this);};document.getElementById('tabsSide').appendChild(t);
+    const t=document.createElement('div');t.className='side-tab admin';t.id='tabAdmin';t.textContent='⚙ Admin';t.onclick=function(){showPage('admin',this);};_tg.appendChild(t);
   }
   if((currentUser.isAdmin||currentUser.isSA)&&!document.getElementById('tabDotazioni')){
-    const t=document.createElement('div');t.className='side-tab';t.id='tabDotazioni';t.style.cssText='background:#2d6a4f;color:#fff';t.textContent='🛡 Dotazioni';t.onclick=function(){showPage('dotazioni',this);};document.getElementById('tabsSide').appendChild(t);
+    const t=document.createElement('div');t.className='side-tab';t.id='tabDotazioni';t.style.cssText='background:#2d6a4f;color:#fff';t.textContent='🛡 Dotazioni';t.onclick=function(){showPage('dotazioni',this);};_tg.appendChild(t);
   }
   if((currentUser.isAdmin||currentUser.isSA)&&!document.getElementById('tabManutenzione')){
-    const t=document.createElement('div');t.className='side-tab';t.id='tabManutenzione';t.style.cssText='background:#c8854a;color:#fff';t.textContent='🔧 Manuten.';t.onclick=function(){showPage('manutenzione',this);};document.getElementById('tabsSide').appendChild(t);
+    const t=document.createElement('div');t.className='side-tab';t.id='tabManutenzione';t.style.cssText='background:#c8854a;color:#fff';t.textContent='🔧 Manuten.';t.onclick=function(){showPage('manutenzione',this);};_tg.appendChild(t);
   }
   if((currentUser.isAdmin||currentUser.isSA)&&canAccessTessere()&&!document.getElementById('tabTessere')){
-    const t=document.createElement('div');t.className='side-tab';t.id='tabTessere';t.style.cssText='background:#4a90b8;color:#fff';t.textContent='💳 Tessere';t.onclick=function(){showPage('carburanti',this);};document.getElementById('tabsSide').appendChild(t);
+    const t=document.createElement('div');t.className='side-tab';t.id='tabTessere';t.style.cssText='background:#4a90b8;color:#fff';t.textContent='💳 Tessere';t.onclick=function(){showPage('carburanti',this);};_tg.appendChild(t);
   }
   if(currentUser.isSA&&!document.getElementById('tabSA')){
-    const t=document.createElement('div');t.className='side-tab superadmin';t.id='tabSA';t.textContent='👑 SA';t.onclick=function(){showPage('superadmin',this);};document.getElementById('tabsSide').appendChild(t);
+    const t=document.createElement('div');t.className='side-tab superadmin';t.id='tabSA';t.textContent='👑 SA';t.onclick=function(){showPage('superadmin',this);};_tg.appendChild(t);
   }
   populateMezzoSelect();populateFuelFornitori();setupMic();
   await loadAttMessages();updateAttBtn();
@@ -2902,7 +2910,8 @@ function checkTessereBlink(){
   if(canAccessTessere()&&!document.getElementById('tabTessere')){
     const t=document.createElement('div');t.className='side-tab';t.id='tabTessere';t.style.cssText='background:#4a90b8;color:#fff';t.textContent='💳 Tessere';t.onclick=function(){showPage('carburanti',this);};
     const tabSA=document.getElementById('tabSA');
-    if(tabSA)tabSA.before(t);else document.getElementById('tabsSide').appendChild(t);
+    const tg=document.getElementById('tabsGroup');
+    if(tabSA)tabSA.before(t);else tg.appendChild(t);
   }
   const tab=document.getElementById('tabTessere');
   if(!tab)return;
@@ -2920,6 +2929,15 @@ setInterval(()=>{
   if(document.getElementById('attMsgAdminList'))renderAttMsgAdmin();
   if(currentUser&&(currentUser.isAdmin||currentUser.isSA)){checkDotBlink();checkManBlink();checkTessereBlink();}
 },60000);
+
+function toggleTabsGroup(){
+  const g=document.getElementById('tabsGroup');
+  const b=document.getElementById('tabsToggleBtn');
+  if(!g)return;
+  const collapsed=g.classList.toggle('collapsed');
+  b.textContent=collapsed?'☰':'×';
+  b.title=collapsed?'Mostra navigazione':'Nascondi navigazione';
+}
 
 document.getElementById('loginName').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 document.getElementById('loginPw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});

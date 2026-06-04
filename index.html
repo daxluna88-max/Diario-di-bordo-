@@ -768,7 +768,10 @@ body{padding:.8rem .3rem 3rem;}
     <div id="attMsgAdminList" style="position:relative;z-index:2;margin-bottom:.8rem;"></div>
     <div style="position:relative;z-index:2;border:1.5px dashed rgba(192,57,43,.3);border-radius:6px;padding:.9rem 1rem;">
       <p style="font-family:'Playfair Display',serif;font-size:.9rem;font-style:italic;color:var(--red);margin-bottom:.7rem">+ Nuovo messaggio</p>
-      <div class="field"><label class="fl">Destinatari</label><select id="attMsgTarget" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;appearance:none;-webkit-appearance:none;cursor:pointer"><option value="__all__">— Tutte le barche —</option></select></div>
+      <div class="field"><label class="fl">Destinatari</label>
+        <div id="attMsgTargetBox" style="display:flex;flex-direction:column;gap:.1rem;max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:4px;padding:.5rem .7rem;background:#fafaf8;margin-top:.2rem"></div>
+        <div style="font-size:.68rem;color:var(--ink-faded);margin-top:.25rem;font-style:italic">Seleziona una o più barche, oppure "Tutte".</div>
+      </div>
       <div class="field"><label class="fl">Messaggio</label><textarea id="attMsgText" rows="3" style="resize:none;min-height:60px;line-height:1.8;border:1px solid var(--line);padding:.45rem .7rem;background:#fafaf8;font-family:'Source Sans 3',sans-serif;font-size:1rem;width:100%;outline:none;border-radius:2px;" placeholder="Es. Verificare cinghia motore prima della partenza…"></textarea></div>
       <div class="field">
         <label class="fl">Scadenza</label>
@@ -1259,6 +1262,7 @@ let currentUser=null,assigningDriver=null,isAdminMode=false;
 let currentOTP=null,otpTimer=null,pendingPwChange=null,resetPwTarget=null;
 let dotItems=[],dotBarcaDotazioni={};  // dotazioni globali
 let manRecords=[];  // manutenzione
+let _barcheConAvvisoMan=[];  // barche con avvisi manutenzione attivi (per notifica mobile)
 let fabTimer=null;
 
 // Audit pagination
@@ -1437,7 +1441,7 @@ async function enterApp(){
     const t=document.createElement('div');t.className='side-tab';t.id='tabDotazioni';t.style.cssText='background:#2d6a4f;color:#fff';t.textContent='🛡 Dotazioni';t.onclick=function(){showPage('dotazioni',this);};_tg.appendChild(t);
   }
   if((currentUser.isAdmin||currentUser.isSA)&&!document.getElementById('tabManutenzione')){
-    const t=document.createElement('div');t.className='side-tab';t.id='tabManutenzione';t.style.cssText='background:#c8854a;color:#fff';t.textContent='🔧 Manuten.';t.onclick=function(){showPage('manutenzione',this);};_tg.appendChild(t);
+    const t=document.createElement('div');t.className='side-tab';t.id='tabManutenzione';t.style.cssText='background:#c8854a;color:#fff';t.textContent='🔧 Manuten.';t.onclick=function(){openManutenzione(this);};_tg.appendChild(t);
   }
   if((currentUser.isAdmin||currentUser.isSA)&&canAccessTessere()&&!document.getElementById('tabTessere')){
     const t=document.createElement('div');t.className='side-tab';t.id='tabTessere';t.style.cssText='background:#4a90b8;color:#fff';t.textContent='💳 Tessere';t.onclick=function(){showPage('carburanti',this);};_tg.appendChild(t);
@@ -1451,6 +1455,7 @@ async function enterApp(){
   showPage('compila',document.querySelector('.side-tab.compila'));
   renderDotazioniSera();
   checkTessereBlink();
+  if(currentUser.isAdmin||currentUser.isSA){checkDotBlink();checkManBlink();}
 }
 
 async function doLogout(){
@@ -2255,8 +2260,20 @@ function getMyAttMessages(){
   return attMessages.filter(m=>{
     if(currentUser.isAdmin||currentUser.isSA)return true;
     if(m.target==='__all__')return true;
-    return barca_utente&&barca_utente.includes(m.target);
+    if(!barca_utente)return false;
+    // target può essere stringa (vecchio formato) o array (nuovo multi-barca)
+    const targets=Array.isArray(m.target)?m.target:[m.target];
+    return targets.some(t=>barca_utente.includes(t));
   });
+}
+// Etichetta leggibile per il destinatario, gestisce stringa o array
+function attTargetLabel(target){
+  if(target==='__all__')return'🚢 Tutte le barche';
+  if(Array.isArray(target)){
+    if(target.length===1)return'🚤 '+target[0];
+    return'🚤 '+target.join(', ');
+  }
+  return'🚤 '+target;
 }
 function updateAttBtn(){
   const msgs=getMyAttMessages();const btn=document.getElementById('attBtn');const badge=document.getElementById('attBadge');
@@ -2271,7 +2288,7 @@ function formatExpiry(expiresAt){
 function openAttModal(){
   const msgs=getMyAttMessages();const list=document.getElementById('attMsgList');
   if(!msgs.length){list.innerHTML="<p style='font-family:Source Sans 3,sans-serif;font-style:italic;color:var(--ink-faded);text-align:center;padding:1.5rem 0'>Nessun messaggio</p>";}
-  else{list.innerHTML=msgs.map(m=>{const expLabel=m.expiresAt?'<div style="font-size:.65rem;color:var(--ink-faded);margin-top:.25rem">'+formatExpiry(m.expiresAt)+'</div>':'';return'<div class="att-msg"><div class="att-msg-barca">'+(m.target==='__all__'?'🚢 Tutte le barche':'🚤 '+m.target)+'</div><div class="att-msg-text">'+m.text+'</div>'+expLabel+'</div>';}).join('');}
+  else{list.innerHTML=msgs.map(m=>{const expLabel=m.expiresAt?'<div style="font-size:.65rem;color:var(--ink-faded);margin-top:.25rem">'+formatExpiry(m.expiresAt)+'</div>':'';return'<div class="att-msg"><div class="att-msg-barca">'+attTargetLabel(m.target)+'</div><div class="att-msg-text">'+m.text+'</div>'+expLabel+'</div>';}).join('');}
   document.getElementById('attModal').classList.add('show');
 }
 function closeAttModal(){document.getElementById('attModal').classList.remove('show');}
@@ -2282,27 +2299,56 @@ function toggleCustomExpiry(){
   if(row)row.style.display=val==='custom'?'block':'none';
 }
 async function addAttMsg(){
-  const target=document.getElementById('attMsgTarget').value;const text=document.getElementById('attMsgText').value.trim();
+  const text=document.getElementById('attMsgText').value.trim();
   if(!text){alert('Inserisci il messaggio');return;}
+  // Leggi destinatari dalle checkbox
+  const allChecked=document.getElementById('attMsgTargetAll')?.checked;
+  const boatsChecked=[...document.querySelectorAll('.attMsgTargetBoat:checked')].map(c=>c.value);
+  let target;
+  if(allChecked){target='__all__';}
+  else if(boatsChecked.length){target=boatsChecked;}
+  else{alert('Seleziona almeno una barca (o "Tutte")');return;}
   const expiryVal=document.getElementById('attMsgExpiry').value;let expiresAt=null;
   if(expiryVal==='12h')expiresAt=Date.now()+12*60*60*1000;
   else if(expiryVal==='24h')expiresAt=Date.now()+24*60*60*1000;
   else if(expiryVal==='custom'){const dt=document.getElementById('attMsgExpDate').value;const tm=document.getElementById('attMsgExpTime').value||'23:59';if(!dt){alert('Seleziona una data di scadenza');return;}expiresAt=new Date(dt+'T'+tm+':00').getTime();if(expiresAt<=Date.now()){alert('La data di scadenza deve essere nel futuro');return;}}
   attMessages.push({id:Date.now(),target,text,expiresAt,createdAt:Date.now()});
-  await saveAttMessages();document.getElementById('attMsgText').value='';document.getElementById('attMsgExpiry').value='permanent';toggleCustomExpiry();
+  await saveAttMessages();
+  document.getElementById('attMsgText').value='';document.getElementById('attMsgExpiry').value='permanent';toggleCustomExpiry();
+  // reset checkbox
+  const all=document.getElementById('attMsgTargetAll');if(all){all.checked=false;}
+  document.querySelectorAll('.attMsgTargetBoat').forEach(c=>{c.checked=false;c.disabled=false;c.parentElement.style.opacity='1';});
   renderAttMsgAdmin();updateAttBtn();
 }
 async function delAttMsg(id){if(!confirm('Eliminare messaggio?'))return;attMessages=attMessages.filter(m=>m.id!==id);await saveAttMessages();renderAttMsgAdmin();updateAttBtn();}
 function renderAttMsgAdmin(){
   const c=document.getElementById('attMsgAdminList');if(!c)return;purgeExpiredMessages();
   if(!attMessages.length){c.innerHTML="<p style='font-style:italic;font-size:.85rem;color:var(--ink-faded);padding:.4rem 0'>Nessun messaggio pubblicato.</p>";return;}
-  c.innerHTML=attMessages.map(m=>{const tgt=m.target==='__all__'?'Tutte':m.target;const exp=formatExpiry(m.expiresAt);return'<div class="amsg-row"><div style="flex:1"><div class="amsg-target">'+tgt+'</div><div class="amsg-text">'+m.text+'</div><div style="font-size:.65rem;color:var(--ink-faded);margin-top:.2rem">'+exp+'</div></div><button class="bh red" onclick="delAttMsg('+m.id+')">× rimuovi</button></div>';}).join('');
+  c.innerHTML=attMessages.map(m=>{const tgt=m.target==='__all__'?'Tutte':(Array.isArray(m.target)?m.target.join(', '):m.target);const exp=formatExpiry(m.expiresAt);return'<div class="amsg-row"><div style="flex:1"><div class="amsg-target">'+tgt+'</div><div class="amsg-text">'+m.text+'</div><div style="font-size:.65rem;color:var(--ink-faded);margin-top:.2rem">'+exp+'</div></div><button class="bh red" onclick="delAttMsg('+m.id+')">× rimuovi</button></div>';}).join('');
 }
 function populateAttMsgTarget(){
-  const sel=document.getElementById('attMsgTarget');if(!sel)return;
+  const box=document.getElementById('attMsgTargetBox');if(!box)return;
   const myMezzi=currentUser.isSA?allMezzi:getAdminMezzi();
-  const allOpt=currentUser.isSA?'<option value="__all__">— Tutte le barche —</option>':'<option value="__all__">— Tutte le mie barche —</option>';
-  sel.innerHTML=allOpt+myMezzi.map(m=>'<option value="'+m+'">'+m+'</option>').join('');
+  const allLabel=currentUser.isSA?'🚢 Tutte le barche':'🚢 Tutte le mie barche';
+  let html='<label style="display:flex;align-items:center;gap:.55rem;padding:.3rem 0;cursor:pointer;font-family:\'Source Sans 3\',sans-serif;font-size:.92rem;font-weight:600;color:var(--red);border-bottom:1px solid var(--line-light)">'
+    +'<input type="checkbox" id="attMsgTargetAll" onchange="onAttTargetAllChange()" style="accent-color:var(--red);width:17px;height:17px;cursor:pointer">'+allLabel+'</label>';
+  html+=myMezzi.map(m=>'<label style="display:flex;align-items:center;gap:.55rem;padding:.3rem 0;cursor:pointer;font-family:\'Source Sans 3\',sans-serif;font-size:.92rem;color:var(--ink)">'
+    +'<input type="checkbox" class="attMsgTargetBoat" value="'+m+'" onchange="onAttTargetBoatChange()" style="accent-color:var(--red);width:17px;height:17px;cursor:pointer">'+m+'</label>').join('');
+  box.innerHTML=html;
+}
+// Se spunto "Tutte" → deseleziono e disabilito le singole
+function onAttTargetAllChange(){
+  const all=document.getElementById('attMsgTargetAll');
+  document.querySelectorAll('.attMsgTargetBoat').forEach(c=>{
+    if(all.checked){c.checked=false;c.disabled=true;c.parentElement.style.opacity='.4';}
+    else{c.disabled=false;c.parentElement.style.opacity='1';}
+  });
+}
+// Se spunto almeno una singola → "Tutte" si deseleziona da sola (mutuamente esclusive)
+function onAttTargetBoatChange(){
+  const all=document.getElementById('attMsgTargetAll');
+  const anyBoat=[...document.querySelectorAll('.attMsgTargetBoat')].some(c=>c.checked);
+  if(anyBoat&&all.checked){all.checked=false;onAttTargetAllChange();}
 }
 
 // =============================================
@@ -2449,16 +2495,37 @@ function checkDotBlink(){
 }
 function checkManBlink(){
   const tab=document.getElementById('tabManutenzione');
-  let hasPending=false;
+  if(!tab||!currentUser)return;
+  // Solo le barche di competenza: SA = tutte, admin = le sue
+  const mieiMezzi=currentUser.isSA?allMezzi:getAdminMezzi();
+  const barcheConAvviso=[];
   manRecords.forEach(r=>{
-    if(r.avviso&&!r.avvisoSpento){hasPending=true;}
+    if(r.avviso&&!r.avvisoSpento&&mieiMezzi.includes(r.barca)){
+      if(!barcheConAvviso.includes(r.barca))barcheConAvviso.push(r.barca);
+    }
   });
-  if(tab){
-    if(hasPending){tab.style.animation='attBlink 1.4s infinite';}
-    else{tab.style.animation='';}
+  _barcheConAvvisoMan=barcheConAvviso;
+  if(barcheConAvviso.length){
+    tab.style.animation='attBlink 1.4s infinite';
+  }else{
+    tab.style.animation='';
   }
 }
 function closeFab(){}
+
+// Apre la pagina Manutenzione; su mobile mostra subito quali barche hanno avvisi
+function openManutenzione(el){
+  showPage('manutenzione',el);
+  if(_barcheConAvvisoMan&&_barcheConAvvisoMan.length){
+    // Pre-seleziona la prima barca con avviso e mostra lo storico
+    const sel=document.getElementById('manBarcaSelect');
+    if(sel){
+      sel.value=_barcheConAvvisoMan[0];
+      if(typeof loadManHistory==='function')loadManHistory();
+    }
+    alert('🔧 Avvisi manutenzione attivi su:\n\n• '+_barcheConAvvisoMan.join('\n• ')+'\n\nSeleziona la barca per spegnere l\u2019avviso.');
+  }
+}
 
 // =============================================
 // DOTAZIONI

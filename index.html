@@ -1217,6 +1217,16 @@ const CISTERNA_MAX=860;
 
 async function dbGet(k){try{const r=await fetch(`${SB_URL}/rest/v1/${encodeURIComponent(TABLE)}?key=eq.${encodeURIComponent(k)}&select=value`,{cache:'no-store',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Cache-Control':'no-cache'}});const d=await r.json();if(!Array.isArray(d)||!d.length)return null;const raw=d[0].value;try{return JSON.parse(raw);}catch{return raw;}}catch{return null;}}
 async function dbSet(k,v){try{await fetch(`${SB_URL}/rest/v1/${encodeURIComponent(TABLE)}`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:k,value:JSON.stringify(v)})});}catch(e){console.error(e);}}
+// Recupera più chiavi in UNA sola richiesta (riduce drasticamente la latenza all'avvio)
+async function dbGetMany(keys){
+  try{
+    const list=keys.map(k=>'"'+k+'"').join(',');
+    const r=await fetch(`${SB_URL}/rest/v1/${encodeURIComponent(TABLE)}?key=in.(${encodeURIComponent(list)})&select=key,value`,{cache:'no-store',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Cache-Control':'no-cache'}});
+    const d=await r.json();const map={};
+    if(Array.isArray(d))d.forEach(row=>{let v=row.value;try{v=JSON.parse(v);}catch{} map[row.key]=v;});
+    return map;
+  }catch(e){console.error(e);return {};}
+}
 async function uploadPhoto(file){
   // Comprimi lato client (max 1600px, qualità 0.82 — stile WhatsApp)
   const compressed=await compressImageWhatsApp(file);
@@ -1270,26 +1280,30 @@ let auditPage=0;
 // INIT
 // =============================================
 async function init(){
-  const r=await dbGet('fleet-records');if(r)records=r;
-  const d=await dbGet('fleet-drivers');if(d)drivers=d;
-  const m=await dbGet('fleet-mezzi');if(m)allMezzi=m;
-  const f=await dbGet('fleet-fuel-records');if(f)fuelRecords=f;
-  const s=await dbGet('fleet-fornitori');if(s)fornitori=s;
-  const bf=await dbGet('fleet-barco-fuel');if(bf)barcoFuel=bf;
-  const cd=await dbGet('fleet-cisterna-diesel');if(cd)cisternaDiesel=cd;
-  const bd=await dbGet('fleet-benzina-diesel-dati');if(bd)benzinaDieselDati=bd;
-  const al=await dbGet('fleet-audit-log');if(al)auditLog=al;
-  const aa=await dbGet('fleet-admin-accounts');if(aa)adminAccounts=aa;
-  const sc=await dbGet('fleet-sa-contacts');if(sc)saContacts=sc;
-  const cp=await dbGet('fleet-cisterna-perms');if(cp)cisternaPerms=cp;
-  const apw=await dbGet('fleet-admin-pw');if(apw)ADMIN_PW=apw;
-  const spw=await dbGet('fleet-sa-pw');if(spw)SA_PW=spw;
-  const di=await dbGet('fleet-dot-items');if(di)dotItems=di;
-  const dbd=await dbGet('fleet-dot-barca');if(dbd)dotBarcaDotazioni=dbd;
-  const mr=await dbGet('fleet-man-records');if(mr)manRecords=mr;
-  const tl=await dbGet('fleet-tessere-list');if(tl)tessereList=tl;
-  const tm=await dbGet('fleet-tessere-movimenti');if(tm)tessereMovimenti=tm;
-  const tp=await dbGet('fleet-tessere-perms');if(tp)tesserePerms=tp;
+  // Un solo round-trip per tutte le chiavi (prima erano 20 richieste in serie)
+  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages']);
+  if(g['fleet-records'])records=g['fleet-records'];
+  if(g['fleet-drivers'])drivers=g['fleet-drivers'];
+  if(g['fleet-mezzi'])allMezzi=g['fleet-mezzi'];
+  if(g['fleet-fuel-records'])fuelRecords=g['fleet-fuel-records'];
+  if(g['fleet-fornitori'])fornitori=g['fleet-fornitori'];
+  if(g['fleet-barco-fuel'])barcoFuel=g['fleet-barco-fuel'];
+  if(g['fleet-cisterna-diesel'])cisternaDiesel=g['fleet-cisterna-diesel'];
+  if(g['fleet-benzina-diesel-dati'])benzinaDieselDati=g['fleet-benzina-diesel-dati'];
+  if(g['fleet-audit-log'])auditLog=g['fleet-audit-log'];
+  if(g['fleet-admin-accounts'])adminAccounts=g['fleet-admin-accounts'];
+  if(g['fleet-sa-contacts'])saContacts=g['fleet-sa-contacts'];
+  if(g['fleet-cisterna-perms'])cisternaPerms=g['fleet-cisterna-perms'];
+  if(g['fleet-admin-pw'])ADMIN_PW=g['fleet-admin-pw'];
+  if(g['fleet-sa-pw'])SA_PW=g['fleet-sa-pw'];
+  if(g['fleet-dot-items'])dotItems=g['fleet-dot-items'];
+  if(g['fleet-dot-barca'])dotBarcaDotazioni=g['fleet-dot-barca'];
+  if(g['fleet-man-records'])manRecords=g['fleet-man-records'];
+  if(g['fleet-tessere-list'])tessereList=g['fleet-tessere-list'];
+  if(g['fleet-tessere-movimenti'])tessereMovimenti=g['fleet-tessere-movimenti'];
+  if(g['fleet-tessere-perms'])tesserePerms=g['fleet-tessere-perms'];
+  if(g['fleet-att-messages'])attMessages=g['fleet-att-messages'];
+  purgeExpiredMessages();
   const now=new Date();
   const ds=now.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   document.getElementById('todayDate').textContent=ds;
@@ -1302,7 +1316,6 @@ async function init(){
   if(saContacts.email)document.getElementById('saEmail').value=saContacts.email;
   if(saContacts.phone)document.getElementById('saPhone').value=saContacts.phone;
   syncCisternaFromFuel();
-  await loadAttMessages();
 }
 init().then(async()=>{
   // Tenta auto-login da sessione salvata

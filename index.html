@@ -441,6 +441,65 @@ body{padding:.8rem .3rem 3rem;}
         &nbsp;·&nbsp;
         <a class="sa-link" onclick="showSALogin()">👑 Super Admin</a>
       </div>
+      <div id="gameEntryBanner" style="display:none;margin-top:1.1rem;border-top:1px dashed var(--line);padding-top:1rem">
+        <button class="lb" onclick="openGameWelcome()" style="background:linear-gradient(135deg,#1a6ca8,#0d3b66);color:#fff;width:100%;font-family:'Playfair Display',serif;font-style:italic">🏆 Il Torneo della Flotta — Caccia alla Figurina</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGINA BENVENUTO GIOCO (accessibile prima del login) -->
+  <div class="lp" id="pageGameWelcome" style="display:none">
+    <div class="li" style="max-width:560px">
+      <div style="text-align:center;margin-bottom:.4rem;font-size:2.2rem">🏆🐟</div>
+      <div class="lt" style="color:#0d3b66">Il Torneo della Flotta</div>
+      <div class="ls" style="font-style:italic">Caccia alla Figurina · 15 giugno – 4 ottobre</div>
+
+      <div id="gameWelcomeIntro" style="margin-top:1.1rem;font-family:'Source Sans 3',sans-serif;font-size:.9rem;color:var(--ink);line-height:1.6">
+        Un torneo amichevole tra gli autisti della flotta: registra le tue attività, colleziona figurine, apri scrigni con le perle e scala la classifica. La partecipazione è <strong>volontaria</strong>.
+      </div>
+
+      <!-- Lista colleghi che NON partecipano -->
+      <div style="margin-top:1.1rem;background:#fff8e1;border-left:3px solid var(--gold);border-radius:4px;padding:.8rem .9rem">
+        <div style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faded);margin-bottom:.5rem">Colleghi che NON partecipano</div>
+        <div id="nonPartecipantiList" style="font-family:'Source Sans 3',sans-serif;font-size:.88rem;color:var(--ink);line-height:1.7"></div>
+        <div style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;font-style:italic;color:var(--ink-faded);margin-top:.5rem">Non partecipano al gioco e non si potrà usare la loro immagine.</div>
+      </div>
+
+      <!-- Pulsante Partecipa (pre-iscrizione) -->
+      <div id="gameJoinBox" style="margin-top:1.2rem">
+        <button class="lb dark" onclick="openGameConsent()" style="width:100%;background:linear-gradient(135deg,#1a6ca8,#0d3b66)">✅ Partecipa</button>
+        <div style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink-faded);text-align:center;margin-top:.4rem">Iscrivendoti accetti il disclaimer sui diritti d'immagine.</div>
+      </div>
+
+      <!-- 4 pulsanti principali (dopo iscrizione) -->
+      <div id="gameMainButtons" style="display:none;margin-top:1.2rem;grid-template-columns:1fr 1fr;gap:.6rem">
+        <button class="lb" onclick="openGameSection('benvenuto')" style="background:#eef3f8;color:#0d3b66;border:1px solid #cdd9e6">👋 Benvenuto</button>
+        <button class="lb" onclick="openGameSection('torneo')" style="background:#eef3f8;color:#0d3b66;border:1px solid #cdd9e6">🏆 Il Torneo</button>
+        <button class="lb" onclick="openGameSection('missioni')" style="background:#eef3f8;color:#0d3b66;border:1px solid #cdd9e6">🎯 Missioni</button>
+        <button class="lb" onclick="openGameSection('sondaggi')" style="background:#eef3f8;color:#0d3b66;border:1px solid #cdd9e6">⚖️ Sondaggi</button>
+      </div>
+
+      <div class="sab" style="margin-top:1.4rem"><a onclick="closeGameWelcome()">← Torna al Diario di Bordo</a></div>
+    </div>
+  </div>
+
+  <!-- MODAL: consenso/iscrizione gioco -->
+  <div class="att-mo" id="gameConsentModal">
+    <div class="att-md" style="border-color:#0d3b66;max-width:500px">
+      <div class="att-mh" style="background:#0d3b66">📜 Partecipa al Torneo</div>
+      <div class="att-mb">
+        <p id="gameConsentText" style="font-family:'Source Sans 3',sans-serif;font-size:.85rem;color:var(--ink);line-height:1.6;margin-bottom:.9rem"></p>
+        <div class="lf"><label class="ll">Nome e Cognome</label><input class="lin" id="gameConsentName" type="text" placeholder="es. Mario Rossi" autocomplete="name"></div>
+        <label style="display:flex;align-items:flex-start;gap:.5rem;margin-top:.7rem;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink)">
+          <input type="checkbox" id="gameConsentChk" style="accent-color:#0d3b66;width:18px;height:18px;margin-top:.1rem;flex-shrink:0">
+          <span>Ho letto e accetto il disclaimer sui diritti d'immagine.</span>
+        </label>
+        <div class="le" id="gameConsentErr"></div>
+      </div>
+      <div class="att-mf" style="gap:.5rem">
+        <button class="bh" onclick="closeGameConsent()">Annulla</button>
+        <button class="lb dark" style="margin:0;padding:.5rem 1rem;background:#0d3b66" onclick="confirmGameJoin()">Confermo l'iscrizione</button>
+      </div>
     </div>
   </div>
 
@@ -804,6 +863,32 @@ body{padding:.8rem .3rem 3rem;}
 <!-- SUPER ADMIN -->
 <div class="page" id="pageSuperadmin" style="display:none">
   <div class="saph"><span class="sapt">Super Amministratore <span class="sapb">👑 Livello 0</span></span><span class="ph-date" id="saDate"></span></div>
+
+  <div class="sas">
+    <div class="sast">🏆 Il Torneo della Flotta — Gestione gioco</div>
+    <div class="ib">Attiva il gioco, gestisci chi NON partecipa e controlla gli iscritti. Quando è attivo, gli autisti vedono il pulsante del Torneo nella schermata di accesso.</div>
+    <div style="display:flex;align-items:center;gap:.7rem;margin:.7rem 0;position:relative;z-index:2">
+      <span style="font-family:'Source Sans 3',sans-serif;font-size:.9rem;color:var(--ink);font-weight:600">Stato:</span>
+      <button id="gameToggleBtn" class="asb off" onclick="saToggleGame()" style="cursor:pointer;border:1px solid var(--line)">OFF</button>
+    </div>
+    <div style="display:flex;gap:.8rem;flex-wrap:wrap;margin:.4rem 0;position:relative;z-index:2">
+      <div class="field" style="flex:1;min-width:130px"><label class="fl">Inizio</label><input type="date" id="gameStartDate" onchange="saSaveGameDates()" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+      <div class="field" style="flex:1;min-width:130px"><label class="fl">Fine</label><input type="date" id="gameEndDate" onchange="saSaveGameDates()" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+    </div>
+    <div style="margin-top:.7rem;position:relative;z-index:2">
+      <label class="fl">Colleghi che NON partecipano</label>
+      <div id="saNonPartecipantiList" style="margin-top:.4rem"></div>
+      <div style="display:flex;gap:.4rem;margin-top:.5rem;flex-wrap:wrap">
+        <input id="npNome" placeholder="Nome" style="flex:1;min-width:90px;border:1px solid var(--line);border-radius:4px;padding:.35rem .5rem;font-family:'Source Sans 3',sans-serif;font-size:.9rem;outline:none">
+        <input id="npCognome" placeholder="Cognome" style="flex:1;min-width:90px;border:1px solid var(--line);border-radius:4px;padding:.35rem .5rem;font-family:'Source Sans 3',sans-serif;font-size:.9rem;outline:none">
+        <button class="bh" onclick="saAddNonPartecipante()">+ Aggiungi</button>
+      </div>
+    </div>
+    <div style="margin-top:.9rem;position:relative;z-index:2">
+      <label class="fl">Iscritti al Torneo (<span id="saGamePlayersCount">0</span>)</label>
+      <div id="saGamePlayersList" style="margin-top:.4rem"></div>
+    </div>
+  </div>
 
   <div class="sas">
     <div class="sast">📊 Esporta → Numbers via Shortcut</div>
@@ -1270,6 +1355,10 @@ let currentUser=null,assigningDriver=null,isAdminMode=false;
 let currentOTP=null,otpTimer=null,pendingPwChange=null,resetPwTarget=null;
 let dotItems=[],dotBarcaDotazioni={};  // dotazioni globali
 let manRecords=[];  // manutenzione
+// === GIOCO: Il Torneo della Flotta — Caccia alla Figurina ===
+const GAME_DISCLAIMER_DEFAULT='Partecipando al "Torneo della Flotta" autorizzo l\'utilizzo della mia immagine (foto e figurine) all\'interno del gioco, per le sole finalità ludiche interne alla flotta. So che la partecipazione è volontaria e che posso ritirarmi in qualsiasi momento contattando il Super Admin. I colleghi che non partecipano sono elencati nella pagina di benvenuto e la loro immagine non potrà essere usata.';
+let gameConfig={active:false,startDate:'2026-06-15',endDate:'2026-10-04',nonPartecipanti:[],disclaimer:GAME_DISCLAIMER_DEFAULT};
+let gamePlayers=[]; // iscritti al gioco: {name, consentAt}
 let _barcheConAvvisoMan=[];  // barche con avvisi manutenzione attivi (per notifica mobile)
 let fabTimer=null;
 
@@ -1281,7 +1370,7 @@ let auditPage=0;
 // =============================================
 async function init(){
   // Un solo round-trip per tutte le chiavi (prima erano 20 richieste in serie)
-  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages']);
+  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages','game-config','game-players']);
   if(g['fleet-records'])records=g['fleet-records'];
   if(g['fleet-drivers'])drivers=g['fleet-drivers'];
   if(g['fleet-mezzi'])allMezzi=g['fleet-mezzi'];
@@ -1303,6 +1392,8 @@ async function init(){
   if(g['fleet-tessere-movimenti'])tessereMovimenti=g['fleet-tessere-movimenti'];
   if(g['fleet-tessere-perms'])tesserePerms=g['fleet-tessere-perms'];
   if(g['fleet-att-messages'])attMessages=g['fleet-att-messages'];
+  if(g['game-config'])gameConfig=Object.assign(gameConfig,g['game-config']);
+  if(g['game-players'])gamePlayers=g['game-players'];
   purgeExpiredMessages();
   const now=new Date();
   const ds=now.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -1316,6 +1407,7 @@ async function init(){
   if(saContacts.email)document.getElementById('saEmail').value=saContacts.email;
   if(saContacts.phone)document.getElementById('saPhone').value=saContacts.phone;
   syncCisternaFromFuel();
+  refreshGameEntryBanner();
 }
 init().then(async()=>{
   // Tenta auto-login da sessione salvata
@@ -1358,6 +1450,8 @@ const sv={
   dotItems:()=>dbSet('fleet-dot-items',dotItems),
   dotBarca:()=>dbSet('fleet-dot-barca',dotBarcaDotazioni),
   manRecords:()=>dbSet('fleet-man-records',manRecords),
+  gameConfig:()=>dbSet('game-config',gameConfig),
+  gamePlayers:()=>dbSet('game-players',gamePlayers),
 };
 
 async function getIP(){try{const r=await fetch('https://api.ipify.org?format=json');return(await r.json()).ip;}catch{return'N/D';}}
@@ -1431,6 +1525,7 @@ async function enterApp(){
   }
   document.getElementById('pageLogin').style.display='none';
   document.getElementById('pageSALogin').style.display='none';
+  const _gw=document.getElementById('pageGameWelcome');if(_gw)_gw.style.display='none';
   document.getElementById('userBar').style.display='flex';
   const badge=document.getElementById('userBadge');
   badge.innerHTML=currentUser.isSA?'<span class="bsa">👑 SUPER ADMIN</span>':currentUser.isAdmin?'<span class="badm">ADMIN</span>':'';
@@ -1485,6 +1580,8 @@ async function doLogout(){
   ['tabAdmin','tabSA','tabCisterna','tabDotazioni','tabManutenzione','tabTessere'].forEach(id=>{const el=document.getElementById(id);if(el)el.remove();});
   document.querySelector('.side-tab.carburanti').style.display='none';
   PAGE_IDS.forEach(id=>{const el=document.getElementById(id);if(el){el.classList.remove('active');el.style.display='none';}});
+  document.getElementById('pageGameWelcome').style.display='none';
+  refreshGameEntryBanner();
 }
 
 function showPage(name,btn){
@@ -1514,6 +1611,72 @@ function showPage(name,btn){
 function showSALogin(){document.getElementById('pageLogin').style.display='none';document.getElementById('pageSALogin').style.display='flex';showOtpStep(1);}
 function hideSALogin(){document.getElementById('pageSALogin').style.display='none';document.getElementById('pageLogin').style.display='flex';clearOtpTimer();}
 function showOtpStep(n){document.querySelectorAll('.otp-step').forEach(s=>s.classList.remove('active'));document.getElementById('saStep'+n).classList.add('active');}
+
+// =============================================
+// GIOCO: Il Torneo della Flotta — Caccia alla Figurina
+// =============================================
+// Mostra il banner d'ingresso al gioco nella schermata di login se il gioco è attivo
+function refreshGameEntryBanner(){
+  const b=document.getElementById('gameEntryBanner');if(!b)return;
+  b.style.display=gameConfig.active?'block':'none';
+}
+// Nome dell'iscritto memorizzato su questo dispositivo (gioco accessibile prima del login)
+function gameMyName(){try{return localStorage.getItem('ccb_game_me')||'';}catch{return'';}}
+function isGameEnrolled(){const n=gameMyName().toLowerCase();return!!n&&gamePlayers.some(p=>p.name.toLowerCase()===n);}
+function openGameWelcome(){
+  document.getElementById('pageLogin').style.display='none';
+  document.getElementById('pageSALogin').style.display='none';
+  document.getElementById('pageGameWelcome').style.display='flex';
+  renderNonPartecipanti();
+  updateGameWelcomeState();
+}
+function closeGameWelcome(){
+  document.getElementById('pageGameWelcome').style.display='none';
+  document.getElementById('pageLogin').style.display='flex';
+}
+function renderNonPartecipanti(){
+  const el=document.getElementById('nonPartecipantiList');if(!el)return;
+  const list=gameConfig.nonPartecipanti||[];
+  el.innerHTML=list.length
+    ? list.map(p=>`<div>• ${escHtml(((p.nome||'')+' '+(p.cognome||'')).trim())}</div>`).join('')
+    : '<div style="font-style:italic;color:var(--ink-faded)">Al momento partecipano tutti.</div>';
+}
+function updateGameWelcomeState(){
+  const enrolled=isGameEnrolled();
+  document.getElementById('gameJoinBox').style.display=enrolled?'none':'block';
+  document.getElementById('gameMainButtons').style.display=enrolled?'grid':'none';
+}
+function openGameConsent(){
+  document.getElementById('gameConsentText').textContent=gameConfig.disclaimer||GAME_DISCLAIMER_DEFAULT;
+  document.getElementById('gameConsentName').value=gameMyName();
+  document.getElementById('gameConsentChk').checked=false;
+  document.getElementById('gameConsentErr').classList.remove('show');
+  document.getElementById('gameConsentModal').classList.add('show');
+}
+function closeGameConsent(){document.getElementById('gameConsentModal').classList.remove('show');}
+async function confirmGameJoin(){
+  const err=document.getElementById('gameConsentErr');
+  const name=document.getElementById('gameConsentName').value.trim().replace(/\s+/g,' ');
+  if(!name||name.split(' ').length<2){err.textContent='Inserisci nome e cognome.';err.classList.add('show');return;}
+  if(!document.getElementById('gameConsentChk').checked){err.textContent='Devi accettare il disclaimer per partecipare.';err.classList.add('show');return;}
+  // Blocca l'iscrizione se il nome è nella lista non-partecipanti
+  const low=name.toLowerCase();
+  if((gameConfig.nonPartecipanti||[]).some(p=>(((p.nome||'')+' '+(p.cognome||'')).trim().toLowerCase())===low)){
+    err.textContent='Questo nominativo risulta tra i NON partecipanti. Contatta il Super Admin.';err.classList.add('show');return;
+  }
+  if(!gamePlayers.some(p=>p.name.toLowerCase()===low)){
+    gamePlayers.push({name,consentAt:new Date().toISOString()});
+    await sv.gamePlayers();
+  }
+  try{localStorage.setItem('ccb_game_me',name);}catch{}
+  closeGameConsent();
+  updateGameWelcomeState();
+}
+function openGameSection(which){
+  // Le sezioni vere arrivano nei blocchi successivi (Torneo, Missioni, Sondaggi)
+  const titles={benvenuto:'👋 Benvenuto',torneo:'🏆 Il Torneo',missioni:'🎯 Missioni',sondaggi:'⚖️ Sondaggi'};
+  alert((titles[which]||'Sezione')+'\n\nIn arrivo nel prossimo aggiornamento del Torneo. La tua iscrizione è registrata!');
+}
 
 async function saVerifyPw(){
   const pw=document.getElementById('saPw').value;
@@ -1546,6 +1709,7 @@ async function saVerifyOTP(){
 // SUPER ADMIN RENDER
 // =============================================
 function renderSA(){
+  renderSaGamePanel();
   renderSAAdminList();
   renderSaDriverList();
   renderSaMezziList();
@@ -1561,6 +1725,64 @@ function renderSA(){
     cnt.innerHTML=`🔐 Password Admin: <strong>${ADMIN_PW}</strong><br>👑 Password Super Admin: <strong>${SA_PW}</strong><br><span style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink-faded)">Queste password sono salvate solo su Supabase, non nel codice sorgente.</span>`;
     box.style.display='block';
   }
+}
+
+// === Pannello Super Admin: gestione gioco ===
+function renderSaGamePanel(){
+  const btn=document.getElementById('gameToggleBtn');
+  if(btn){btn.textContent=gameConfig.active?'ON':'OFF';btn.className='asb '+(gameConfig.active?'on':'off');btn.style.cursor='pointer';}
+  const sd=document.getElementById('gameStartDate');if(sd&&gameConfig.startDate)sd.value=gameConfig.startDate;
+  const ed=document.getElementById('gameEndDate');if(ed&&gameConfig.endDate)ed.value=gameConfig.endDate;
+  const npl=document.getElementById('saNonPartecipantiList');
+  if(npl){
+    const list=gameConfig.nonPartecipanti||[];
+    npl.innerHTML=list.length
+      ? list.map((p,i)=>`<div class="dot-item-row" style="display:flex;justify-content:space-between;align-items:center;padding:.3rem 0;border-bottom:1px dashed var(--line-light)"><span style="font-family:'Source Sans 3',sans-serif;font-size:.88rem">${escHtml(((p.nome||'')+' '+(p.cognome||'')).trim())}</span><button class="bh red" onclick="saRemoveNonPartecipante(${i})">× rimuovi</button></div>`).join('')
+      : '<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded)">Nessuno: partecipano tutti.</p>';
+  }
+  const cnt=document.getElementById('saGamePlayersCount');if(cnt)cnt.textContent=gamePlayers.length;
+  const gpl=document.getElementById('saGamePlayersList');
+  if(gpl){
+    gpl.innerHTML=gamePlayers.length
+      ? gamePlayers.map((p,i)=>{const d=p.consentAt?new Date(p.consentAt).toLocaleDateString('it-IT'):'';return`<div class="dot-item-row" style="display:flex;justify-content:space-between;align-items:center;padding:.3rem 0;border-bottom:1px dashed var(--line-light)"><span style="font-family:'Source Sans 3',sans-serif;font-size:.88rem">${escHtml(p.name)}${d?` <span style="font-size:.7rem;color:var(--ink-faded)">· iscritto ${d}</span>`:''}</span><button class="bh red" onclick="saRemoveGamePlayer(${i})">× rimuovi</button></div>`;}).join('')
+      : '<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded)">Nessun iscritto.</p>';
+  }
+}
+async function saToggleGame(){
+  gameConfig.active=!gameConfig.active;
+  await sv.gameConfig();
+  renderSaGamePanel();refreshGameEntryBanner();
+  if(currentUser)addAudit(currentUser.name,'superadmin','settings','Gioco '+(gameConfig.active?'ATTIVATO':'disattivato'));
+}
+async function saSaveGameDates(){
+  gameConfig.startDate=document.getElementById('gameStartDate').value||gameConfig.startDate;
+  gameConfig.endDate=document.getElementById('gameEndDate').value||gameConfig.endDate;
+  await sv.gameConfig();
+}
+async function saAddNonPartecipante(){
+  const nome=document.getElementById('npNome').value.trim();
+  const cognome=document.getElementById('npCognome').value.trim();
+  if(!nome&&!cognome){alert('Inserisci almeno nome o cognome.');return;}
+  if(!gameConfig.nonPartecipanti)gameConfig.nonPartecipanti=[];
+  const full=((nome+' '+cognome).trim()).toLowerCase();
+  if(gameConfig.nonPartecipanti.some(p=>(((p.nome||'')+' '+(p.cognome||'')).trim().toLowerCase())===full)){alert('Già presente.');return;}
+  gameConfig.nonPartecipanti.push({nome,cognome});
+  // Se era iscritto, rimuovilo dagli iscritti
+  gamePlayers=gamePlayers.filter(p=>p.name.toLowerCase()!==full);
+  await sv.gameConfig();await sv.gamePlayers();
+  document.getElementById('npNome').value='';document.getElementById('npCognome').value='';
+  renderSaGamePanel();
+}
+async function saRemoveNonPartecipante(i){
+  if(!gameConfig.nonPartecipanti||!gameConfig.nonPartecipanti[i])return;
+  gameConfig.nonPartecipanti.splice(i,1);
+  await sv.gameConfig();renderSaGamePanel();
+}
+async function saRemoveGamePlayer(i){
+  if(!gamePlayers[i])return;
+  if(!confirm(`Rimuovere "${gamePlayers[i].name}" dagli iscritti?`))return;
+  gamePlayers.splice(i,1);
+  await sv.gamePlayers();renderSaGamePanel();
 }
 
 function renderSaMezziList(){

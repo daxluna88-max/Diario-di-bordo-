@@ -531,7 +531,6 @@ body{padding:.8rem .3rem 3rem;}
       </div>
     </div>
 
-```
 <!-- REGISTRO -->
 <div class="page" id="pageRegistro" style="display:none">
   <div class="ph"><span class="ph-title">Registro</span></div>
@@ -960,7 +959,6 @@ body{padding:.8rem .3rem 3rem;}
     </div>
   </div>
 </div>
-```
 
 <!-- DOTAZIONI PAGE (admin + SA only) -->
 <div class="page" id="pageDotazioni" style="display:none">
@@ -2476,8 +2474,49 @@ function renderDotazioniSera(){
         <button class="fuel-lvl-btn${fuel==='1/4'?' sel':''}" onclick='setDotFuel(${r.id},"1/4",this)'>1/4</button>
         <button class="fuel-lvl-btn${fuel==='1/8'?' sel':''}" onclick='setDotFuel(${r.id},"1/8",this)'>1/4½</button>
       </div></div>
+      ${renderFuelNotesTable(r)}
     </div>`;
   }).join('');
+}
+// Tabella note carburante (dotazioni giornaliere)
+function escHtml(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function renderFuelNotesTable(r){
+  const notes=Array.isArray(r.dotazioni?.noteCarburante)?r.dotazioni.noteCarburante:[];
+  const rows=notes.length?notes.map((n,i)=>{
+    const d=new Date(n.t);const ts=isNaN(d)?'':d.toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return`<tr style="border-bottom:1px solid var(--line-light)">
+      <td style="padding:.32rem .4rem;color:var(--ink-faded);white-space:nowrap;vertical-align:top;font-size:.72rem">${ts}</td>
+      <td style="padding:.32rem .4rem;color:var(--ink);word-break:break-word">${escHtml(n.txt)}</td>
+      <td style="padding:.32rem .2rem;text-align:right;vertical-align:top"><button class="bh red" onclick='removeDotFuelNote(${r.id},${i})'>×</button></td>
+    </tr>`;}).join('')
+    :`<tr><td colspan="3" style="padding:.4rem;color:var(--ink-faded);font-style:italic;font-size:.78rem">Nessuna nota carburante.</td></tr>`;
+  return`<div style="margin-top:.65rem;border-top:1px dashed var(--line-light);padding-top:.55rem">
+    <span class="check-label" style="display:block;margin-bottom:.4rem">📝 Note carburante</span>
+    <table style="width:100%;border-collapse:collapse;font-family:'Source Sans 3',sans-serif;font-size:.8rem">
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="display:flex;gap:.4rem;margin-top:.45rem">
+      <input id="dotFuelNoteInp-${r.id}" type="text" placeholder="Es. rifornito 20L, spia riserva accesa…" onkeydown="if(event.key==='Enter')addDotFuelNote(${r.id})" style="flex:1;border:1px solid var(--line);border-radius:4px;padding:.38rem .55rem;font-size:.85rem;outline:none;background:#fff;font-family:'Source Sans 3',sans-serif">
+      <button class="chk-btn" onclick="addDotFuelNote(${r.id})" style="white-space:nowrap">＋ Aggiungi</button>
+    </div>
+  </div>`;
+}
+async function addDotFuelNote(recId){
+  const inp=document.getElementById('dotFuelNoteInp-'+recId);if(!inp)return;
+  const txt=inp.value.trim();if(!txt){inp.focus();return;}
+  const rec=records.find(r=>r.id===recId);if(!rec)return;
+  if(!rec.dotazioni)rec.dotazioni={};
+  if(!Array.isArray(rec.dotazioni.noteCarburante))rec.dotazioni.noteCarburante=[];
+  rec.dotazioni.noteCarburante.push({t:Date.now(),txt});
+  await sv.records();
+  renderDotazioniSera();
+}
+async function removeDotFuelNote(recId,idx){
+  const rec=records.find(r=>r.id===recId);if(!rec||!rec.dotazioni||!Array.isArray(rec.dotazioni.noteCarburante))return;
+  if(!confirm('Eliminare questa nota carburante?'))return;
+  rec.dotazioni.noteCarburante.splice(idx,1);
+  await sv.records();
+  renderDotazioniSera();
 }
 async function setDot(recId,field,val,btn){
   const rec=records.find(r=>r.id===recId);if(!rec)return;if(!rec.dotazioni)rec.dotazioni={};rec.dotazioni[field]=val;await sv.records();

@@ -898,6 +898,8 @@ body{padding:.8rem .3rem 3rem;}
   <div class="as" id="adminFigurineSection" style="display:none">
     <div class="ast">📸 Figurine da approvare (<span class="figurinePendingCount">0</span>)</div>
     <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Supervisiona le figurine caricate dagli autisti e approvale o rifiutale. Permesso assegnato dal Super Admin.</p>
+    <input type="file" id="staffFigFileAdmin" accept="image/*" style="display:none" onchange="staffUploadFigurina(event)">
+    <button class="bh" onclick="document.getElementById('staffFigFileAdmin').click()" style="margin-bottom:.6rem;position:relative;z-index:2">📤 Carica figurina (senza limiti)</button>
     <div class="figurineQueue" style="position:relative;z-index:2;"></div>
   </div>
   <div class="as" id="adminTessereSection" style="display:none">
@@ -994,6 +996,8 @@ body{padding:.8rem .3rem 3rem;}
     </div>
     <div style="margin-top:1rem;position:relative;z-index:2;border-top:1px dashed var(--line);padding-top:.8rem">
       <label class="fl">📸 Figurine da approvare (<span class="figurinePendingCount">0</span>)</label>
+      <input type="file" id="staffFigFileSA" accept="image/*" style="display:none" onchange="staffUploadFigurina(event)">
+      <button class="bh" onclick="document.getElementById('staffFigFileSA').click()" style="margin:.4rem 0">📤 Carica figurina (senza limiti)</button>
       <div class="figurineQueue" id="saFigurineQueue" style="margin-top:.5rem"></div>
     </div>
     <div style="margin-top:.9rem;position:relative;z-index:2;border-top:1px dashed var(--line);padding-top:.8rem">
@@ -1005,7 +1009,7 @@ body{padding:.8rem .3rem 3rem;}
       <label class="fl">🎁 Omaggi figurine</label>
       <p style="font-family:'Source Sans 3',sans-serif;font-size:.74rem;color:var(--ink-faded);margin:.3rem 0 .5rem;line-height:1.5">Distribuisce figurine bonus: ogni autista dal 4° posto in giù ha il 75% di probabilità di riceverne una.</p>
       <button class="bh" onclick="saAssegnaOmaggi()">🎁 Assegna omaggi (75% dal 4° posto)</button>
-      <button class="bh" onclick="saAssegnaPremiMese()" style="margin-top:.4rem">🏅 Assegna premi del mese (vincitori)</button>
+      <p style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink-faded);margin-top:.5rem;line-height:1.5">🏅 Le figurine premio (Re del Rifornimento, figurina più votata, Fotografo, Regista) vengono assegnate <strong>in automatico</strong> a fine periodo.</p>
     </div>
   </div>
 
@@ -1484,6 +1488,7 @@ let gameBonusFig={}; // figurine bonus (scrigni + omaggi SA): {nomeLower: numero
 let gameChestsOpened={}; // scrigni aperti: {nomeLower: {giorno: true}}
 let gameFigurinePerms={}; // admin autorizzati ad approvare le figurine: {adminName: true}
 let gameVotes=[]; // voti sondaggio: {id, voter, figurinaId, week, ts}
+let gamePrizesGiven={}; // premi figurina già assegnati automaticamente: {chiavePremio: true}
 let _barcheConAvvisoMan=[];  // barche con avvisi manutenzione attivi (per notifica mobile)
 let fabTimer=null;
 
@@ -1495,7 +1500,7 @@ let auditPage=0;
 // =============================================
 async function init(){
   // Un solo round-trip per tutte le chiavi (prima erano 20 richieste in serie)
-  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages','game-config','game-players','game-figurine','game-msg-reads','game-bonus-fig','game-chests-opened','game-figurine-perms','game-votes']);
+  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages','game-config','game-players','game-figurine','game-msg-reads','game-bonus-fig','game-chests-opened','game-figurine-perms','game-votes','game-prizes-given']);
   if(g['fleet-records'])records=g['fleet-records'];
   if(g['fleet-drivers'])drivers=g['fleet-drivers'];
   if(g['fleet-mezzi'])allMezzi=g['fleet-mezzi'];
@@ -1527,6 +1532,7 @@ async function init(){
   if(g['game-chests-opened'])gameChestsOpened=g['game-chests-opened'];
   if(g['game-figurine-perms'])gameFigurinePerms=g['game-figurine-perms'];
   if(g['game-votes'])gameVotes=g['game-votes'];
+  if(g['game-prizes-given'])gamePrizesGiven=g['game-prizes-given'];
   purgeExpiredMessages();
   const now=new Date();
   const ds=now.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -1541,6 +1547,7 @@ async function init(){
   if(saContacts.phone)document.getElementById('saPhone').value=saContacts.phone;
   syncCisternaFromFuel();
   refreshGameEntryBanner();
+  autoAssignPrizes();
 }
 init().then(async()=>{
   // Tenta auto-login da sessione salvata
@@ -1591,6 +1598,7 @@ const sv={
   gameChestsOpened:()=>dbSet('game-chests-opened',gameChestsOpened),
   gameFigurinePerms:()=>dbSet('game-figurine-perms',gameFigurinePerms),
   gameVotes:()=>dbSet('game-votes',gameVotes),
+  gamePrizesGiven:()=>dbSet('game-prizes-given',gamePrizesGiven),
 };
 
 async function getIP(){try{const r=await fetch('https://api.ipify.org?format=json');return(await r.json()).ip;}catch{return'N/D';}}
@@ -1899,6 +1907,32 @@ function monthLeaders(){
   const figOwner=figId!=null?((gameFigurine.find(f=>String(f.id)===String(figId))||{}).owner||null):null;
   return {month:m,general,rif:{name:rifName,count:rifMax},fig:{owner:figOwner,votes:figMax}};
 }
+// Assegnazione AUTOMATICA delle figurine premio per i periodi conclusi (idempotente, no doppioni)
+async function autoAssignPrizes(){
+  if(!gameConfig||gameConfig.status==='off')return;
+  const nowM=gameMonthKey(new Date()),nowW=gameWeekKey(new Date());
+  let changed=false;
+  const grant=(k,nameLower)=>{if(!nameLower||gamePrizesGiven[k])return;gamePrizesGiven[k]=true;gameBonusFig[nameLower]=(gameBonusFig[nameLower]||0)+1;changed=true;};
+  // Competitivi mensili (mesi conclusi): Re del Rifornimento + figurina più votata
+  const rifByMonth={};
+  fuelRecords.forEach(f=>{if(!f.autista)return;const mk=gameMonthKey(f.data);if(!mk)return;(rifByMonth[mk]=rifByMonth[mk]||{});const n=f.autista.toLowerCase();rifByMonth[mk][n]=(rifByMonth[mk][n]||0)+1;});
+  Object.keys(rifByMonth).forEach(mk=>{if(mk>=nowM)return;const c=rifByMonth[mk];let w=null,mx=0;Object.keys(c).forEach(n=>{if(c[n]>mx){mx=c[n];w=n;}});grant('rif:'+mk,w);});
+  const voteByMonthFig={};
+  gameVotes.forEach(v=>{const mk=gameMonthKey(v.ts);if(!mk)return;(voteByMonthFig[mk]=voteByMonthFig[mk]||{});voteByMonthFig[mk][v.figurinaId]=(voteByMonthFig[mk][v.figurinaId]||0)+1;});
+  Object.keys(voteByMonthFig).forEach(mk=>{if(mk>=nowM)return;const c=voteByMonthFig[mk];let bid=null,mx=0;Object.keys(c).forEach(fid=>{if(c[fid]>mx){mx=c[fid];bid=fid;}});if(bid!=null){const f=gameFigurine.find(x=>String(x.id)===String(bid));if(f&&f.owner)grant('vote:'+mk,f.owner.toLowerCase());}});
+  // Per-giocatore: Fotografo (settimane concluse) e Regista (mesi conclusi)
+  gamePlayers.forEach(p=>{
+    const key=p.name.toLowerCase();
+    const myFig=gameFigurine.filter(f=>f.owner&&f.owner.toLowerCase()===key);
+    const perDay={};myFig.forEach(f=>{const d=(f.uploadedAt||'').slice(0,10);if(d&&gameInPeriod(d))perDay[d]=(perDay[d]||0)+1;});
+    const fullDays=Object.keys(perDay).filter(d=>perDay[d]>=2);
+    const weekFull={};fullDays.forEach(d=>{const wk=gameWeekKey(d);weekFull[wk]=(weekFull[wk]||0)+1;});
+    Object.keys(weekFull).forEach(wk=>{if(weekFull[wk]>=5&&wk<nowW)grant('fotografo:'+wk+':'+key,key);});
+    const monthDays={};Object.keys(perDay).forEach(d=>{const mk=gameMonthKey(d);(monthDays[mk]=monthDays[mk]||new Set()).add(d);});
+    Object.keys(monthDays).forEach(mk=>{if(monthDays[mk].size>=20&&mk<nowM)grant('regista:'+mk+':'+key,key);});
+  });
+  if(changed){await sv.gameBonusFig();await sv.gamePrizesGiven();}
+}
 function renderClassifica(){
   const c=document.getElementById('classificaContent');if(!c)return;
   const lb=getLeaderboard();const me=(gameMyName()||'').toLowerCase();
@@ -1922,26 +1956,11 @@ function renderClassifica(){
         ⛽ Re del Rifornimento: <strong>${ml.rif.name?escHtml(ml.rif.name):'—'}</strong> ${ml.rif.count?`(${ml.rif.count} pieni)`:''}<br>
         ⚖️ Figurina più votata: <strong>${ml.fig.owner?escHtml(ml.fig.owner):'—'}</strong> ${ml.fig.votes?`(${ml.fig.votes} voti)`:''}
       </div>
-      <div style="font-size:.7rem;color:var(--ink-faded);margin-top:.4rem">A fine mese i vincitori ricevono una figurina omaggio (assegnata dal Super Admin).</div>
+      <div style="font-size:.7rem;color:var(--ink-faded);margin-top:.4rem">A fine periodo i vincitori ricevono una figurina omaggio, assegnata <strong>in automatico</strong>.</div>
     </div>`;
   }
 }
 // Super Admin: assegna 1 figurina omaggio ai vincitori del mese (classifica, rifornimento, figurina più votata)
-async function saAssegnaPremiMese(){
-  const ml=monthLeaders();
-  const winners=new Set();
-  if(ml.general)winners.add(ml.general.name.toLowerCase());
-  if(ml.rif.name)winners.add(ml.rif.name.toLowerCase());
-  if(ml.fig.owner)winners.add(ml.fig.owner.toLowerCase());
-  if(!winners.size){alert('Nessun vincitore da premiare questo mese.');return;}
-  const names=[...winners];
-  if(!confirm('Assegnare 1 figurina omaggio a: '+names.join(', ')+'?'))return;
-  names.forEach(k=>{gameBonusFig[k]=(gameBonusFig[k]||0)+1;});
-  await sv.gameBonusFig();
-  if(currentUser)addAudit(currentUser.name,'superadmin','save','Premi del mese assegnati: '+names.join(', '));
-  alert('🏅 Figurine omaggio assegnate ai vincitori del mese.');
-}
-
 // =============================================
 // DASHBOARD TORNEO (Blocco 5)
 // =============================================
@@ -2079,7 +2098,7 @@ function gameInPeriod(dateStr){
 function gameMonthKey(d){const dt=new Date(d);if(isNaN(dt))return null;return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');}
 function computeGamePoints(name){
   const key=String(name||'').toLowerCase();
-  const parts={ore:0,rifornimento:0,figurine:0,antenna:0,giurato:0};
+  const parts={ore:0,rifornimento:0,figurine:0,antenna:0,giurato:0,penalita:0};
   const info={ore:{},rifornimento:{},figurine:{},antenna:{},giurato:{}};
   // --- Ore Motore: +30 per serie di 5 giorni di fila, -50 per ogni registrazione dopo le 12, +20 per spunta dotazioni completa ---
   const myRecs=records.filter(r=>r.autista&&r.autista.toLowerCase()===key&&gameInPeriod(r.data));
@@ -2129,7 +2148,18 @@ function computeGamePoints(name){
   const myVotes=gameVotes.filter(v=>v.voter&&v.voter.toLowerCase()===key);
   parts.giurato=myVotes.length*5;
   info.giurato={voti:myVotes.length};
-  const total=parts.ore+parts.rifornimento+parts.figurine+parts.antenna+parts.giurato;
+  // --- Penalità: -100 per ogni giorno in cui gioca al Torneo ma NON compila il diario di bordo ---
+  const gameDays=new Set();
+  myVotes.forEach(v=>{const d=(v.ts||'').slice(0,10);if(d)gameDays.add(d);});
+  myFig.forEach(f=>{const d=(f.uploadedAt||'').slice(0,10);if(d)gameDays.add(d);});
+  Object.keys(gameChestsOpened[key]||{}).forEach(d=>gameDays.add(d));
+  const logDays=new Set();
+  myRecs.forEach(r=>{if(r.data)logDays.add(r.data.slice(0,10));if(r.salvato)logDays.add(r.salvato.slice(0,10));});
+  let noLogPlay=0;
+  gameDays.forEach(d=>{if(gameInPeriod(d)&&!logDays.has(d))noLogPlay++;});
+  parts.penalita=noLogPlay*(-100);
+  info.penalita={giorni:noLogPlay};
+  const total=parts.ore+parts.rifornimento+parts.figurine+parts.antenna+parts.giurato+parts.penalita;
   return {total,parts,info};
 }
 function openMissioniModal(){renderMissioni();document.getElementById('gameMissioniModal').classList.add('show');}
@@ -2145,6 +2175,7 @@ function renderMissioni(){
     {ic:'📡',nome:'Antenna Alzata — Leggi i messaggi',rule:'+10 per messaggio letto entro 6 ore',pts:p.parts.antenna,prog:`${p.info.antenna.inTempo} in tempo su ${p.info.antenna.letti} letti`},
     {ic:'📸',nome:'Fotografo / Regista — Figurine',rule:'+25 a settimana (2 figurine/giorno × 5 gg) · +100 al mese costante',pts:p.parts.figurine,prog:`${p.info.figurine.caricate} caricate · ${p.info.figurine.fotografoWeeks} sett. Fotografo · ${p.info.figurine.registaMonths} mesi Regista`},
     {ic:'⚖️',nome:'Il Giurato — Vota i sondaggi',rule:'+5 per ogni voto · la figurina più votata del mese vale +100',pts:p.parts.giurato,prog:`${p.info.giurato.voti} voti espressi`},
+    {ic:'⛔',nome:'Penalità — Giochi ma non lavori',rule:'−100 per ogni giorno in cui giochi al Torneo ma NON compili il diario di bordo',pts:p.parts.penalita,prog:`${p.info.penalita.giorni} giorni senza diario`},
   ];
   c.innerHTML=`<div style="text-align:center;margin-bottom:1rem">
     <div style="font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;color:#0d3b66;line-height:1">${p.total}</div>
@@ -2158,7 +2189,15 @@ function renderMissioni(){
         <div style="font-family:'Playfair Display',serif;font-weight:700;font-size:1.2rem;color:#0d3b66;flex-shrink:0">${m.pts}<span style="font-size:.58rem;font-weight:400;color:var(--ink-faded)"> pt</span></div>
       </div>
       <div style="font-size:.7rem;color:var(--blue);margin-top:.4rem">${m.prog}</div>
-    </div>`).join('');
+    </div>`).join('')+`
+    <div style="border:1px solid var(--line);border-radius:6px;padding:.8rem .85rem;margin-top:.4rem;background:#fff8e1">
+      <div style="font-family:'Playfair Display',serif;font-style:italic;color:var(--gold);margin-bottom:.45rem">📖 Regole</div>
+      <div style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink);line-height:1.6">
+        ⛔ <strong>−100 punti</strong> per ogni giorno in cui accedi e giochi al Torneo ma <strong>non compili il diario di bordo</strong>: il gioco premia chi usa l'app per lavorare, non solo per giocare.<br><br>
+        🎨 <strong>Come creare le figurine:</strong> scarica ChatGPT, scrivi un prompt e incolla il viso di uno dei partecipanti al Torneo. Carica poi la figurina nella sezione dedicata (verrà compressa in .webp con il tuo nome stampato sopra).<br><br>
+        🏅 <strong>Figurine premio:</strong> vengono assegnate <strong>in automatico</strong> ai vincitori (Re del Rifornimento, figurina più votata, ecc.) a fine periodo.
+      </div>
+    </div>`;
 }
 
 // --- Figurine: Cloudinary watermark + .webp + download ---
@@ -2197,6 +2236,25 @@ async function uploadMyFigurina(e){
     await sv.gameFigurine();
     document.getElementById('figCaption').value='';
     renderMyFigurine();
+  }catch(err){console.error(err);alert('Errore durante il caricamento.');}
+  finally{hideAttendi();}
+}
+// Super Admin / admin autorizzato: carica figurine senza limiti (auto-approvate, per riempire eventuali mancanze)
+async function staffUploadFigurina(e){
+  const file=e.target.files&&e.target.files[0];e.target.value='';
+  if(!file)return;
+  if(!canApproveFigurine()){alert('Non sei autorizzato a caricare figurine.');return;}
+  const owner=currentUser?currentUser.name:'Staff';
+  if(!showAttendi('Caricamento figurina in corso…'))return;
+  try{
+    const raw=await uploadFigurinaCloudinary(file);
+    if(!raw){alert('Caricamento non riuscito. Riprova.');return;}
+    const url=gameWatermarkUrl(raw,owner);
+    gameFigurine.unshift({id:Date.now(),owner,url,raw,status:'approved',caption:'',uploadedAt:new Date().toISOString(),reviewedAt:new Date().toISOString(),reviewedBy:owner});
+    await sv.gameFigurine();
+    if(currentUser)addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','save','Figurina caricata dallo staff');
+    renderFigurineQueue();
+    alert('Figurina caricata e approvata.');
   }catch(err){console.error(err);alert('Errore durante il caricamento.');}
   finally{hideAttendi();}
 }

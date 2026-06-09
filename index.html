@@ -865,6 +865,11 @@ body{padding:.8rem .3rem 3rem;}
     <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Seleziona gli autisti che possono vedere la sezione Cisterna CCB.</p>
     <div id="cisternaPermList" style="position:relative;z-index:2;"></div>
   </div>
+  <div class="as" id="adminFigurineSection" style="display:none">
+    <div class="ast">📸 Figurine da approvare (<span class="figurinePendingCount">0</span>)</div>
+    <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Supervisiona le figurine caricate dagli autisti e approvale o rifiutale. Permesso assegnato dal Super Admin.</p>
+    <div class="figurineQueue" style="position:relative;z-index:2;"></div>
+  </div>
   <div class="as" id="adminTessereSection" style="display:none">
     <div class="ast">💳 Tessere Prepagate — Saldo carta</div>
     <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Imposta direttamente il saldo attuale che la tessera deve avere. Vedi anche i rifornimenti (scarichi) effettuati dagli autisti, che verranno sottratti da questo saldo.</p>
@@ -958,8 +963,13 @@ body{padding:.8rem .3rem 3rem;}
       <div id="saGamePlayersList" style="margin-top:.4rem"></div>
     </div>
     <div style="margin-top:1rem;position:relative;z-index:2;border-top:1px dashed var(--line);padding-top:.8rem">
-      <label class="fl">📸 Figurine da approvare (<span id="saFigurinePendingCount">0</span>)</label>
-      <div id="saFigurineQueue" style="margin-top:.5rem"></div>
+      <label class="fl">📸 Figurine da approvare (<span class="figurinePendingCount">0</span>)</label>
+      <div class="figurineQueue" id="saFigurineQueue" style="margin-top:.5rem"></div>
+    </div>
+    <div style="margin-top:.9rem;position:relative;z-index:2;border-top:1px dashed var(--line);padding-top:.8rem">
+      <label class="fl">✅ Chi può approvare le figurine</label>
+      <p style="font-family:'Source Sans 3',sans-serif;font-size:.74rem;color:var(--ink-faded);margin:.3rem 0 .5rem;line-height:1.5">Spunta gli admin che possono supervisionare e approvare le figurine (come per le tessere).</p>
+      <div id="saFigurinePermsList"></div>
     </div>
     <div style="margin-top:.9rem;position:relative;z-index:2;border-top:1px dashed var(--line);padding-top:.8rem">
       <label class="fl">🎁 Omaggi figurine</label>
@@ -1441,6 +1451,7 @@ let gameFigurine=[]; // figurine: {id, owner, url, raw, status:'pending'|'approv
 let gameMsgReads={}; // letture messaggi per missione "Antenna Alzata": {nomeLower: {msgId: readTimestampMs}}
 let gameBonusFig={}; // figurine bonus (scrigni + omaggi SA): {nomeLower: numero}
 let gameChestsOpened={}; // scrigni aperti: {nomeLower: {giorno: true}}
+let gameFigurinePerms={}; // admin autorizzati ad approvare le figurine: {adminName: true}
 let _barcheConAvvisoMan=[];  // barche con avvisi manutenzione attivi (per notifica mobile)
 let fabTimer=null;
 
@@ -1452,7 +1463,7 @@ let auditPage=0;
 // =============================================
 async function init(){
   // Un solo round-trip per tutte le chiavi (prima erano 20 richieste in serie)
-  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages','game-config','game-players','game-figurine','game-msg-reads','game-bonus-fig','game-chests-opened']);
+  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages','game-config','game-players','game-figurine','game-msg-reads','game-bonus-fig','game-chests-opened','game-figurine-perms']);
   if(g['fleet-records'])records=g['fleet-records'];
   if(g['fleet-drivers'])drivers=g['fleet-drivers'];
   if(g['fleet-mezzi'])allMezzi=g['fleet-mezzi'];
@@ -1482,6 +1493,7 @@ async function init(){
   if(g['game-msg-reads'])gameMsgReads=g['game-msg-reads'];
   if(g['game-bonus-fig'])gameBonusFig=g['game-bonus-fig'];
   if(g['game-chests-opened'])gameChestsOpened=g['game-chests-opened'];
+  if(g['game-figurine-perms'])gameFigurinePerms=g['game-figurine-perms'];
   purgeExpiredMessages();
   const now=new Date();
   const ds=now.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -1544,6 +1556,7 @@ const sv={
   gameMsgReads:()=>dbSet('game-msg-reads',gameMsgReads),
   gameBonusFig:()=>dbSet('game-bonus-fig',gameBonusFig),
   gameChestsOpened:()=>dbSet('game-chests-opened',gameChestsOpened),
+  gameFigurinePerms:()=>dbSet('game-figurine-perms',gameFigurinePerms),
 };
 
 async function getIP(){try{const r=await fetch('https://api.ipify.org?format=json');return(await r.json()).ip;}catch{return'N/D';}}
@@ -2144,42 +2157,64 @@ function renderSaGamePanel(){
       ? gamePlayers.map((p,i)=>{const d=p.consentAt?new Date(p.consentAt).toLocaleDateString('it-IT'):'';return`<div class="dot-item-row" style="display:flex;justify-content:space-between;align-items:center;padding:.3rem 0;border-bottom:1px dashed var(--line-light)"><span style="font-family:'Source Sans 3',sans-serif;font-size:.88rem">${escHtml(p.name)}${d?` <span style="font-size:.7rem;color:var(--ink-faded)">· iscritto ${d}</span>`:''}</span><button class="bh red" onclick="saRemoveGamePlayer(${i})">× rimuovi</button></div>`;}).join('')
       : '<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded)">Nessun iscritto.</p>';
   }
-  renderSaFigurineQueue();
+  renderFigurineQueue();
+  renderSaFigurinePerms();
 }
-function renderSaFigurineQueue(){
+function canApproveFigurine(){
+  if(!currentUser)return false;
+  if(currentUser.isSA)return true;
+  if(currentUser.isAdmin)return gameFigurinePerms[currentUser.name]===true;
+  return false;
+}
+// Coda di approvazione figurine — visibile a SA e agli admin autorizzati (più contenitori)
+function renderFigurineQueue(){
   const pending=gameFigurine.filter(f=>f.status==='pending');
-  const cnt=document.getElementById('saFigurinePendingCount');if(cnt)cnt.textContent=pending.length;
-  const q=document.getElementById('saFigurineQueue');if(!q)return;
-  if(!pending.length){q.innerHTML='<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded)">Nessuna figurina in attesa.</p>';return;}
-  q.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.7rem">'+pending.map(f=>{
-    const d=f.uploadedAt?new Date(f.uploadedAt).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
-    return`<div style="border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fafaf8">
-      <img src="${f.url}" alt="figurina" loading="lazy" style="width:100%;height:130px;object-fit:cover;display:block">
-      <div style="padding:.45rem .5rem">
-        <div style="font-family:'Source Sans 3',sans-serif;font-size:.8rem;font-weight:600;color:var(--ink)">${escHtml(f.owner||'')}</div>
-        ${f.caption?`<div style="font-size:.72rem;color:var(--ink-faded);margin:.15rem 0">${escHtml(f.caption)}</div>`:''}
-        <div style="font-size:.66rem;color:var(--ink-faded);margin-bottom:.4rem">${d}</div>
-        <div style="display:flex;gap:.35rem">
-          <button class="bh" style="font-size:.72rem;background:var(--green);color:#fff;border-color:var(--green)" onclick="approveFigurina(${f.id})">✓ Approva</button>
-          <button class="bh red" style="font-size:.72rem" onclick="rejectFigurina(${f.id})">✖ Rifiuta</button>
-        </div>
-      </div>
-    </div>`;}).join('')+'</div>';
+  document.querySelectorAll('.figurinePendingCount').forEach(c=>{c.textContent=pending.length;});
+  const html=pending.length
+    ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.7rem">'+pending.map(f=>{
+        const d=f.uploadedAt?new Date(f.uploadedAt).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+        return`<div style="border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fafaf8">
+          <img src="${f.url}" alt="figurina" loading="lazy" style="width:100%;height:130px;object-fit:cover;display:block">
+          <div style="padding:.45rem .5rem">
+            <div style="font-family:'Source Sans 3',sans-serif;font-size:.8rem;font-weight:600;color:var(--ink)">${escHtml(f.owner||'')}</div>
+            ${f.caption?`<div style="font-size:.72rem;color:var(--ink-faded);margin:.15rem 0">${escHtml(f.caption)}</div>`:''}
+            <div style="font-size:.66rem;color:var(--ink-faded);margin-bottom:.4rem">${d}</div>
+            <div style="display:flex;gap:.35rem">
+              <button class="bh" style="font-size:.72rem;background:var(--green);color:#fff;border-color:var(--green)" onclick="approveFigurina(${f.id})">✓ Approva</button>
+              <button class="bh red" style="font-size:.72rem" onclick="rejectFigurina(${f.id})">✖ Rifiuta</button>
+            </div>
+          </div>
+        </div>`;}).join('')+'</div>'
+    : '<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded)">Nessuna figurina in attesa.</p>';
+  document.querySelectorAll('.figurineQueue').forEach(q=>{q.innerHTML=html;});
 }
+function renderSaFigurineQueue(){renderFigurineQueue();}
+function renderSaFigurinePerms(){
+  const c=document.getElementById('saFigurinePermsList');if(!c)return;
+  const admins=adminAccounts.filter(a=>a.active);
+  c.innerHTML=admins.length
+    ? admins.map(a=>`<div class="dr"><div class="dn">${escHtml(a.name)}</div><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded)"><input type="checkbox" ${gameFigurinePerms[a.name]?'checked':''} onchange="toggleFigurinaPerm('${a.name.replace(/'/g,"\\'")}',this.checked)" style="accent-color:var(--purple);width:16px;height:16px;cursor:pointer">Può approvare figurine</label></div>`).join('')
+    : '<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded)">Nessun admin attivo.</p>';
+}
+async function toggleFigurinaPerm(name,val){if(val)gameFigurinePerms[name]=true;else delete gameFigurinePerms[name];await sv.gameFigurinePerms();}
 async function approveFigurina(id){
+  if(!canApproveFigurine()){alert('Non hai i permessi per approvare le figurine.');return;}
   const f=gameFigurine.find(x=>x.id===id);if(!f)return;
-  f.status='approved';f.reviewedAt=new Date().toISOString();f.reviewedBy=currentUser?currentUser.name:'Super Admin';f.rejectReason='';
+  const role=currentUser&&currentUser.isSA?'superadmin':'admin';
+  f.status='approved';f.reviewedAt=new Date().toISOString();f.reviewedBy=currentUser?currentUser.name:'';f.rejectReason='';
   await sv.gameFigurine();
-  if(currentUser)addAudit(currentUser.name,'superadmin','save',`Figurina approvata (${f.owner})`);
-  renderSaFigurineQueue();
+  if(currentUser)addAudit(currentUser.name,role,'save',`Figurina approvata (${f.owner})`);
+  renderFigurineQueue();
 }
 async function rejectFigurina(id){
+  if(!canApproveFigurine()){alert('Non hai i permessi per gestire le figurine.');return;}
   const f=gameFigurine.find(x=>x.id===id);if(!f)return;
+  const role=currentUser&&currentUser.isSA?'superadmin':'admin';
   const reason=prompt('Motivo del rifiuto (opzionale):','')||'';
-  f.status='rejected';f.reviewedAt=new Date().toISOString();f.reviewedBy=currentUser?currentUser.name:'Super Admin';f.rejectReason=reason.trim().slice(0,120);
+  f.status='rejected';f.reviewedAt=new Date().toISOString();f.reviewedBy=currentUser?currentUser.name:'';f.rejectReason=reason.trim().slice(0,120);
   await sv.gameFigurine();
-  if(currentUser)addAudit(currentUser.name,'superadmin','delete',`Figurina rifiutata (${f.owner})`);
-  renderSaFigurineQueue();
+  if(currentUser)addAudit(currentUser.name,role,'delete',`Figurina rifiutata (${f.owner})`);
+  renderFigurineQueue();
 }
 async function saSetGameStatus(s){
   gameConfig.status=s;
@@ -2562,6 +2597,9 @@ function getAdminDrivers(){
 function renderAdmin(){
   const myMezzi=getAdminMezzi();
   const myDrivers=getAdminDrivers();
+  // Sezione approvazione figurine: visibile solo agli admin autorizzati dal Super Admin
+  const figSec=document.getElementById('adminFigurineSection');
+  if(figSec){const show=currentUser&&currentUser.isAdmin&&!currentUser.isSA&&canApproveFigurine();figSec.style.display=show?'block':'none';if(show)renderFigurineQueue();}
 
   // Driver list
   document.getElementById('driverList').innerHTML=!myDrivers.length

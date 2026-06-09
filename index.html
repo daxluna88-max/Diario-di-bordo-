@@ -1435,7 +1435,19 @@ const CL_PRESET='Agenda Flotta';
 const CISTERNA_MAX=860;
 
 async function dbGet(k){try{const r=await fetch(`${SB_URL}/rest/v1/${encodeURIComponent(TABLE)}?key=eq.${encodeURIComponent(k)}&select=value`,{cache:'no-store',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Cache-Control':'no-cache'}});const d=await r.json();if(!Array.isArray(d)||!d.length)return null;const raw=d[0].value;try{return JSON.parse(raw);}catch{return raw;}}catch{return null;}}
-async function dbSet(k,v){try{await fetch(`${SB_URL}/rest/v1/${encodeURIComponent(TABLE)}`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body:JSON.stringify({key:k,value:JSON.stringify(v)})});}catch(e){console.error(e);}}
+async function dbSet(k,v,retries){
+  if(retries==null)retries=3;
+  const body=JSON.stringify({key:k,value:JSON.stringify(v)});
+  for(let i=0;i<=retries;i++){
+    try{
+      const r=await fetch(`${SB_URL}/rest/v1/${encodeURIComponent(TABLE)}`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},body});
+      if(r.ok)return true; // salvataggio confermato
+      console.error('dbSet HTTP '+r.status+' su '+k);
+    }catch(e){console.error(e);}
+    if(i<retries)await new Promise(res=>setTimeout(res,400*Math.pow(2,i))); // backoff 0.4s/0.8s/1.6s
+  }
+  return false; // salvataggio NON riuscito dopo i tentativi
+}
 // Recupera più chiavi in UNA sola richiesta (riduce drasticamente la latenza all'avvio)
 async function dbGetMany(keys){
   try{
@@ -2452,7 +2464,16 @@ function renderSaFigurinePerms(){
     ? admins.map(a=>`<div class="dr"><div class="dn">${escHtml(a.name)}</div><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded)"><input type="checkbox" ${gameFigurinePerms[a.name]?'checked':''} onchange="toggleFigurinaPerm('${a.name.replace(/'/g,"\\'")}',this.checked)" style="accent-color:var(--purple);width:16px;height:16px;cursor:pointer">Può approvare figurine</label></div>`).join('')
     : '<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded)">Nessun admin attivo.</p>';
 }
-async function toggleFigurinaPerm(name,val){if(val)gameFigurinePerms[name]=true;else delete gameFigurinePerms[name];await sv.gameFigurinePerms();}
+async function toggleFigurinaPerm(name,val){
+  const had=Object.prototype.hasOwnProperty.call(gameFigurinePerms,name)?gameFigurinePerms[name]:undefined;
+  if(val)gameFigurinePerms[name]=true;else delete gameFigurinePerms[name];
+  const ok=await sv.gameFigurinePerms();
+  if(!ok){
+    if(had===undefined)delete gameFigurinePerms[name];else gameFigurinePerms[name]=had;
+    renderSaFigurinePerms();
+    alert('⚠️ Salvataggio non riuscito (connessione instabile).\nIl permesso figurine NON è stato salvato. Riprova quando hai segnale.');
+  }
+}
 async function approveFigurina(id){
   if(!canApproveFigurine()){alert('Non hai i permessi per approvare le figurine.');return;}
   const f=gameFigurine.find(x=>x.id===id);if(!f)return;
@@ -2901,7 +2922,16 @@ function renderCisternaPerms(){
   if(!list.length){c.innerHTML='<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessun autista nel tuo gruppo.</p>';return;}
   c.innerHTML=list.map(d=>`<div class="dr"><div class="dn">${d.name}</div><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded)"><input type="checkbox" ${cisternaPerms[d.name]?'checked':''} onchange="toggleCisternaPerm('${d.name}',this.checked)" style="accent-color:#1a6b8a;width:16px;height:16px;cursor:pointer">Accesso Cisterna CCB</label></div>`).join('');
 }
-async function toggleCisternaPerm(name,val){if(val)cisternaPerms[name]=true;else delete cisternaPerms[name];await sv.cisternaPerms();}
+async function toggleCisternaPerm(name,val){
+  const had=Object.prototype.hasOwnProperty.call(cisternaPerms,name)?cisternaPerms[name]:undefined;
+  if(val)cisternaPerms[name]=true;else delete cisternaPerms[name];
+  const ok=await sv.cisternaPerms();
+  if(!ok){
+    if(had===undefined)delete cisternaPerms[name];else cisternaPerms[name]=had; // ripristina
+    renderCisternaPerms();
+    alert('⚠️ Salvataggio non riuscito (connessione instabile).\nIl permesso Cisterna NON è stato salvato. Riprova quando hai segnale.');
+  }
+}
 
 // MODIFICA: aggiunge autista al gruppo di questo admin senza rimuoverlo dagli altri
 async function addDriverFromSelect(){
@@ -3917,7 +3947,16 @@ function renderSaTesserePerms(){
   c.innerHTML=adminAccounts.filter(a=>a.active).map(a=>`<div class="dr"><div class="dn">${a.name}</div><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded)"><input type="checkbox" ${tesserePerms[a.name]?'checked':''} onchange="toggleTesseraPerm('${a.name}',this.checked)" style="accent-color:var(--blue);width:16px;height:16px;cursor:pointer">Accesso Tessere Prepagate</label></div>`).join('');
 }
 
-async function toggleTesseraPerm(name,val){if(val)tesserePerms[name]=true;else delete tesserePerms[name];await svTesserePerms();}
+async function toggleTesseraPerm(name,val){
+  const had=Object.prototype.hasOwnProperty.call(tesserePerms,name)?tesserePerms[name]:undefined;
+  if(val)tesserePerms[name]=true;else delete tesserePerms[name];
+  const ok=await svTesserePerms();
+  if(!ok){
+    if(had===undefined)delete tesserePerms[name];else tesserePerms[name]=had;
+    renderSaTesserePerms();
+    alert('⚠️ Salvataggio non riuscito (connessione instabile).\nIl permesso Tessere NON è stato salvato. Riprova quando hai segnale.');
+  }
+}
 
 function populateAdminTessereSelect(){
   const sel=document.getElementById('adminTesseraSelect');if(!sel)return;

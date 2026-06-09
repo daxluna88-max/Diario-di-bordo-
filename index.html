@@ -800,22 +800,22 @@ body{padding:.8rem .3rem 3rem;}
     <div id="cisternaPermList" style="position:relative;z-index:2;"></div>
   </div>
   <div class="as" id="adminTessereSection" style="display:none">
-    <div class="ast">💳 Tessere Prepagate — Gestione Ricariche</div>
-    <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Inserisci ricariche sulle tessere prepagate del tuo gruppo. Vedi anche i rifornimenti (scarichi) effettuati dagli autisti.</p>
+    <div class="ast">💳 Tessere Prepagate — Saldo carta</div>
+    <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Imposta direttamente il saldo attuale che la tessera deve avere. Vedi anche i rifornimenti (scarichi) effettuati dagli autisti, che verranno sottratti da questo saldo.</p>
     <div id="adminTessereRicaricaForm" style="position:relative;z-index:2;border:1.5px dashed rgba(74,144,184,.3);border-radius:6px;padding:.9rem 1rem;margin-bottom:1rem;">
-      <p style="font-family:'Playfair Display',serif;font-size:.9rem;font-style:italic;color:var(--blue);margin-bottom:.7rem">+ Inserisci ricarica</p>
+      <p style="font-family:'Playfair Display',serif;font-size:.9rem;font-style:italic;color:var(--blue);margin-bottom:.7rem">🎯 Imposta nuovo saldo</p>
       <div class="field"><label class="fl">Tessera</label>
         <select id="adminTesseraSelect" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;appearance:none;cursor:pointer;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right .3rem center;padding-right:1.5rem;">
           <option value="">— seleziona tessera —</option>
         </select>
       </div>
       <div style="display:flex;gap:.8rem;flex-wrap:wrap">
-        <div class="field" style="flex:1;min-width:120px"><label class="fl">Importo €</label><input type="number" id="adminRicaricaImporto" placeholder="es. 100.00" step="0.01" min="0" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+        <div class="field" style="flex:1;min-width:120px"><label class="fl">Nuovo saldo €</label><input type="number" id="adminRicaricaImporto" placeholder="es. 250.00" step="0.01" min="0" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
         <div class="field" style="flex:1;min-width:120px"><label class="fl">Data</label><input type="date" id="adminRicaricaData" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
       </div>
-      <div class="field"><label class="fl">Note</label><input type="text" id="adminRicaricaNote" placeholder="es. Ricarica mensile" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
-      <button class="ba" style="background:var(--blue);margin-top:.4rem" onclick="addRicaricaTessera()">+ Aggiungi ricarica</button>
-      <div class="sn" id="ricaricaOk" style="display:none;margin-top:.5rem;color:var(--blue);background:rgba(74,144,184,.06);border-left:3px solid var(--blue);padding:.4rem;font-size:.85rem;">✓ Ricarica registrata!</div>
+      <div class="field"><label class="fl">Note</label><input type="text" id="adminRicaricaNote" placeholder="es. Saldo aggiornato a inizio mese" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+      <button class="ba" style="background:var(--blue);margin-top:.4rem" onclick="addRicaricaTessera()">🎯 Imposta saldo</button>
+      <div class="sn" id="ricaricaOk" style="display:none;margin-top:.5rem;color:var(--blue);background:rgba(74,144,184,.06);border-left:3px solid var(--blue);padding:.4rem;font-size:.85rem;">✓ Saldo aggiornato!</div>
     </div>
     <div id="adminTessereRiepilogo"></div>
   </div>
@@ -2565,17 +2565,22 @@ function populateAttMsgTarget(){
   const myMezzi=currentUser.isSA?allMezzi:getAdminMezzi();
   const allLabel=currentUser.isSA?'🚢 Tutte le barche':'🚢 Tutte le mie barche';
   const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  let html='<label style="display:flex;align-items:center;gap:.55rem;padding:.4rem .5rem;cursor:pointer;border-radius:4px;font-family:\'Source Sans 3\',sans-serif;font-size:.92rem;font-weight:600;color:var(--red);border-bottom:1px solid var(--line-light)">'
-    +'<input type="checkbox" id="attMsgTargetAll" onchange="onAttTargetAllChange()" style="accent-color:var(--red);width:18px;height:18px;cursor:pointer;flex-shrink:0">'+allLabel+'</label>';
-  html+=myMezzi.map(m=>'<label class="attMsgTargetRow" style="display:flex;align-items:center;gap:.55rem;padding:.4rem .5rem;cursor:pointer;border-radius:4px;font-family:\'Source Sans 3\',sans-serif;font-size:.92rem;color:var(--ink);transition:background .12s">'
-    +'<input type="checkbox" class="attMsgTargetBoat" value="'+esc(m)+'" onchange="onAttTargetBoatChange()" style="accent-color:var(--red);width:18px;height:18px;cursor:pointer;flex-shrink:0">'
+  let html='<label style="display:flex;align-items:center;gap:.6rem;padding:.45rem .5rem;cursor:pointer;border-radius:4px;font-family:\'Source Sans 3\',sans-serif;font-size:.95rem;font-weight:600;color:var(--red);border-bottom:1px solid var(--line-light)">'
+    +'<input type="checkbox" id="attMsgTargetAll" onchange="onAttTargetAllChange()" style="display:none">'
+    +'<span class="attMark" style="font-size:1.35rem;line-height:1;flex-shrink:0">⬜</span>'+allLabel+'</label>';
+  html+=myMezzi.map(m=>'<label class="attMsgTargetRow" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .5rem;cursor:pointer;border-radius:4px;font-family:\'Source Sans 3\',sans-serif;font-size:.95rem;color:var(--ink);transition:background .12s">'
+    +'<input type="checkbox" class="attMsgTargetBoat" value="'+esc(m)+'" onchange="onAttTargetBoatChange()" style="display:none">'
+    +'<span class="attMark" style="font-size:1.35rem;line-height:1;flex-shrink:0">⬜</span>'
     +'<span>'+esc(m)+'</span></label>').join('');
   box.innerHTML=html||'<p style="font-size:.8rem;font-style:italic;color:var(--ink-faded);padding:.4rem 0">Nessuna barca disponibile.</p>';
   refreshAttTargetRows();
 }
-// Evidenzia visivamente le righe spuntate (feedback chiaro)
+// Evidenzia con ✅ le righe spuntate (feedback chiaro e ben visibile)
 function refreshAttTargetRows(){
+  const all=document.getElementById('attMsgTargetAll');
+  if(all){const m=all.parentElement.querySelector('.attMark');if(m)m.textContent=all.checked?'✅':'⬜';all.parentElement.style.background=all.checked?'rgba(192,57,43,.12)':'transparent';}
   document.querySelectorAll('.attMsgTargetBoat').forEach(c=>{
+    const m=c.parentElement.querySelector('.attMark');if(m)m.textContent=c.checked?'✅':'⬜';
     c.parentElement.style.background=c.checked?'rgba(192,57,43,.1)':'transparent';
   });
 }
@@ -3121,12 +3126,25 @@ function exportAllManutenzioneCSV(){
 // TESSERE PREPAGATE
 // =============================================
 let tessereList=[];       // [{id, nome, tipo, fornitore, creato}]
-let tessereMovimenti=[];  // [{id, tesseraId, tipo:'ricarica'|'scarico', data, importo, litri, costo, barca, autore, note, salvato}]
+let tessereMovimenti=[];  // [{id, tesseraId, tipo:'ricarica'|'scarico'|'saldo', data, importo, litri, costo, barca, autore, note, salvato}]
 let tesserePerms={};      // {adminName: true/false}
 
 const svTessere=()=>dbSet('fleet-tessere-list',tessereList);
 const svTessereMovimenti=()=>dbSet('fleet-tessere-movimenti',tessereMovimenti);
 const svTesserePerms=()=>dbSet('fleet-tessere-perms',tesserePerms);
+// Calcola il saldo di una tessera in ordine cronologico.
+// Il movimento 'saldo' AZZERA e imposta il saldo al valore indicato (saldo diretto),
+// poi gli scarichi successivi lo riducono. 'ricarica' resta supportato (storico).
+function computeTesseraSaldo(movs){
+  const sorted=[...movs].sort((a,b)=>(a.id||0)-(b.id||0));
+  let s=0;
+  for(const m of sorted){
+    if(m.tipo==='saldo')s=m.importo||0;
+    else if(m.tipo==='ricarica')s+=m.importo||0;
+    else if(m.tipo==='scarico')s-=m.costo||0;
+  }
+  return s;
+}
 
 function canAccessTessere(){
   if(!currentUser)return false;
@@ -3153,7 +3171,7 @@ function renderSaTessere(){
   if(!tessereList.length){c.innerHTML='<p style="color:#ccc;font-style:italic;font-size:.85rem;padding:.4rem 0">Nessuna tessera creata.</p>';return;}
   c.innerHTML=tessereList.map((t,i)=>{
     const movs=tessereMovimenti.filter(m=>m.tesseraId===t.id);
-    const saldo=movs.reduce((s,m)=>m.tipo==='ricarica'?s+m.importo:s-m.costo,0);
+    const saldo=computeTesseraSaldo(movs);
     return`<div class="dr"><div class="dn">💳 ${t.nome}</div><div class="dm">${t.tipo.toUpperCase()} · ${t.fornitore||'—'} · Saldo: <strong style="color:${saldo>=0?'var(--green)':'var(--red)'}">€${saldo.toFixed(2)}</strong></div><div class="da"><button class="bh red" onclick="saRemoveTessera(${i})">×</button></div></div>`;
   }).join('');
 }
@@ -3182,11 +3200,12 @@ async function addRicaricaTessera(){
   const importo=parseFloat(document.getElementById('adminRicaricaImporto').value);
   const data=document.getElementById('adminRicaricaData').value;
   const note=document.getElementById('adminRicaricaNote').value.trim();
-  if(!tesseraId||!importo||importo<=0||!data){alert('Compila tutti i campi obbligatori');return;}
+  if(!tesseraId||isNaN(importo)||importo<0||!data){alert('Compila tutti i campi: tessera, nuovo saldo (≥ 0) e data');return;}
   const tessera=tessereList.find(t=>t.id===tesseraId);if(!tessera){alert('Tessera non trovata');return;}
-  tessereMovimenti.unshift({id:Date.now(),tesseraId,tipo:'ricarica',data,importo,litri:0,costo:0,barca:'',autore:currentUser.name,note,salvato:new Date().toISOString()});
+  // Movimento 'saldo': imposta direttamente il saldo della carta al valore indicato
+  tessereMovimenti.unshift({id:Date.now(),tesseraId,tipo:'saldo',data,importo,litri:0,costo:0,barca:'',autore:currentUser.name,note:note||('Saldo impostato a €'+importo.toFixed(2)),salvato:new Date().toISOString()});
   await svTessereMovimenti();
-  await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','save',`Ricarica tessera "${tessera.nome}": €${importo}`);
+  await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','save',`Saldo tessera "${tessera.nome}" impostato a €${importo.toFixed(2)}`);
   document.getElementById('adminRicaricaImporto').value='';document.getElementById('adminRicaricaNote').value='';
   const ok=document.getElementById('ricaricaOk');ok.style.display='block';setTimeout(()=>ok.style.display='none',2500);
   renderAdminTessereRiepilogo();renderTessereAdminFuelSection();checkTessereBlink();
@@ -3198,7 +3217,7 @@ function renderAdminTessereRiepilogo(){
   c.innerHTML=tessereList.map(t=>{
     const movs=tessereMovimenti.filter(m=>m.tesseraId===t.id);
     const ricariche=movs.filter(m=>m.tipo==='ricarica');const scarichi=movs.filter(m=>m.tipo==='scarico');
-    const totR=ricariche.reduce((s,m)=>s+m.importo,0);const totC=scarichi.reduce((s,m)=>s+m.costo,0);const totL=scarichi.reduce((s,m)=>s+m.litri,0);const saldo=totR-totC;
+    const totR=ricariche.reduce((s,m)=>s+m.importo,0);const totC=scarichi.reduce((s,m)=>s+m.costo,0);const totL=scarichi.reduce((s,m)=>s+m.litri,0);const saldo=computeTesseraSaldo(movs);
     const saldoAlert=saldo<=500;
     const borderColor=saldoAlert?'rgba(192,57,43,.5)':'var(--line)';
     const saldoColor=saldo<=0?'var(--red)':saldoAlert?'var(--orange)':'var(--green)';
@@ -3218,13 +3237,19 @@ function renderAdminTessereRiepilogo(){
       </div>
       ${movs.slice(0,8).length?`<div style="border-top:1px solid var(--line-light);padding-top:.5rem">
         <div style="font-size:.65rem;color:var(--ink-faded);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.35rem">Ultimi movimenti</div>
-        ${movs.slice(0,8).map(m=>{const d=m.data?new Date(m.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'}):'—';const isR=m.tipo==='ricarica';
+        ${movs.slice(0,8).map(m=>{const d=m.data?new Date(m.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'}):'—';
+          const isScarico=m.tipo==='scarico';const isSaldo=m.tipo==='saldo';
+          const icon=isScarico?'📤':(isSaldo?'🎯':'📥');
+          const label=isScarico?('Scarico '+(m.barca?'→ '+m.barca:'')):(isSaldo?'Saldo impostato':'Ricarica');
+          const amount=isScarico?(m.litri+'L · €'+m.costo.toFixed(2)):(isSaldo?'=€'+(m.importo||0).toFixed(2):'+€'+(m.importo||0).toFixed(2));
+          const amtColor=isScarico?'var(--red)':(isSaldo?'var(--blue)':'var(--green)');
+          const canDel=isScarico||isSaldo;
           return`<div style="display:flex;align-items:center;gap:.5rem;padding:.25rem 0;border-bottom:1px dashed var(--line-light);font-size:.78rem">
-            <span>${isR?'📥':'📤'}</span><span style="color:var(--ink-faded);min-width:38px">${d}</span>
-            <span style="flex:1">${isR?'Ricarica':'Scarico'} ${m.barca?'→ '+m.barca:''}</span>
-            <span style="font-weight:600;color:${isR?'var(--green)':'var(--red)'}">${isR?'+€'+m.importo.toFixed(2):(m.litri+'L · €'+m.costo.toFixed(2))}</span>
+            <span>${icon}</span><span style="color:var(--ink-faded);min-width:38px">${d}</span>
+            <span style="flex:1">${label}</span>
+            <span style="font-weight:600;color:${amtColor}">${amount}</span>
             <span style="font-size:.7rem;color:var(--ink-faded)">${m.autore||''}</span>
-            ${!isR?`<button class="dx" style="font-size:.9rem" onclick="delTessereMovimento(${m.id})">×</button>`:''}
+            ${canDel?`<button class="dx" style="font-size:.9rem" onclick="delTessereMovimento(${m.id})">×</button>`:''}
           </div>`;
         }).join('')}
       </div>`:''}
@@ -3250,7 +3275,7 @@ function renderTessereAdminFuelSection(){
     const totR=movs.filter(m=>m.tipo==='ricarica').reduce((s,m)=>s+m.importo,0);
     const totC=scarichi.reduce((s,m)=>s+m.costo,0);
     const totL=scarichi.reduce((s,m)=>s+m.litri,0);
-    const saldo=totR-totC;
+    const saldo=computeTesseraSaldo(movs);
     const saldoAlert=saldo<=500;
     const saldoColor=saldo<=0?'var(--red)':saldoAlert?'var(--orange)':'var(--green)';
     return`<div style="border:1.5px solid ${saldoAlert?'rgba(192,57,43,.4)':'var(--line)'};border-radius:6px;padding:.7rem .9rem;margin-bottom:.6rem;background:${saldoAlert?'rgba(192,57,43,.03)':'#fafaf8'}">
@@ -3284,9 +3309,9 @@ function exportTessereCSV(){
   const rows=tessereMovimenti.map(m=>{
     const t=tessereList.find(x=>x.id===m.tesseraId);
     return[m.data?m.data.slice(0,10):'',t?t.nome:'—',t?t.tipo.toUpperCase():'',t?t.fornitore||'—':'',m.tipo.toUpperCase(),
-      m.tipo==='ricarica'?m.importo.toFixed(2):'',m.tipo==='scarico'?m.litri:'',m.tipo==='scarico'?m.costo.toFixed(2):'',m.barca||'',m.autore||'',m.note||''].join('\t');
+      (m.tipo==='ricarica'||m.tipo==='saldo')?(m.importo||0).toFixed(2):'',m.tipo==='scarico'?m.litri:'',m.tipo==='scarico'?m.costo.toFixed(2):'',m.barca||'',m.autore||'',m.note||''].join('\t');
   });
-  downloadCSV('\uFEFFData\tTessera\tTipo carb.\tFornitore\tMovimento\tRicarica €\tLitri\tCosto €\tBarca\tAutore\tNote\n'+rows.join('\n'),'Tessere Prepagate CCB');
+  downloadCSV('\uFEFFData\tTessera\tTipo carb.\tFornitore\tMovimento\tRicarica/Saldo €\tLitri\tCosto €\tBarca\tAutore\tNote\n'+rows.join('\n'),'Tessere Prepagate CCB');
 }
 
 // =============================================
@@ -3306,7 +3331,7 @@ function checkTessereBlink(){
   const soglia=500;
   let hasAlert=tessereList.some(t=>{
     const movs=tessereMovimenti.filter(m=>m.tesseraId===t.id);
-    const saldo=movs.reduce((s,m)=>m.tipo==='ricarica'?s+m.importo:s-m.costo,0);
+    const saldo=computeTesseraSaldo(movs);
     return saldo<=soglia;
   });
   tab.style.animation=hasAlert?'attBlink 1.4s infinite':'';

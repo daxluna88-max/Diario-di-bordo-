@@ -898,8 +898,12 @@ body{padding:.8rem .3rem 3rem;}
   <div class="as" id="adminFigurineSection" style="display:none">
     <div class="ast">📸 Figurine da approvare (<span class="figurinePendingCount">0</span>)</div>
     <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Supervisiona le figurine caricate dagli autisti e approvale o rifiutale. Permesso assegnato dal Super Admin.</p>
-    <input type="file" id="staffFigFileAdmin" accept="image/*" style="display:none" onchange="staffUploadFigurina(event)">
-    <button class="bh" onclick="document.getElementById('staffFigFileAdmin').click()" style="margin-bottom:.6rem;position:relative;z-index:2">📤 Carica figurina (senza limiti)</button>
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin-bottom:.6rem;position:relative;z-index:2">
+      <select id="staffFigOwnerAdmin" style="flex:1;min-width:150px;border:1px solid var(--line);border-radius:4px;padding:.3rem .5rem;font-family:'Source Sans 3',sans-serif;font-size:.85rem;background:#fff"><option value="">— assegna a (nessun autista) —</option></select>
+      <input type="file" id="staffFigFileAdmin" accept="image/*" style="display:none" onchange="staffUploadFigurina(event)">
+      <button class="bh" onclick="document.getElementById('staffFigFileAdmin').click()">📤 Carica figurina</button>
+    </div>
+    <div class="figurineGiacenzaInfo" style="font-size:.74rem;color:var(--purple-dark);margin:.1rem 0 .5rem;font-weight:600;position:relative;z-index:2"></div>
     <div class="figurineQueue" style="position:relative;z-index:2;"></div>
   </div>
   <div class="as" id="adminTessereSection" style="display:none">
@@ -976,7 +980,10 @@ body{padding:.8rem .3rem 3rem;}
       <button id="gameStTest" class="asb" onclick="saSetGameStatus('test')" style="cursor:pointer;border:1px solid var(--line)">🧪 PROVA (solo te)</button>
       <button id="gameStOn" class="asb" onclick="saSetGameStatus('on')" style="cursor:pointer;border:1px solid var(--line)">🟢 ON (tutti)</button>
     </div>
-    <button class="bh" onclick="openGamePreview()" style="position:relative;z-index:2;margin-bottom:.4rem">👁 Apri anteprima del gioco</button>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;position:relative;z-index:2;margin-bottom:.4rem">
+      <button class="bh" onclick="openGamePreview()">👁 Apri anteprima del gioco</button>
+      <button class="bh" onclick="openGameDemo()">🎬 Demo a immagini</button>
+    </div>
     <div style="display:flex;gap:.8rem;flex-wrap:wrap;margin:.4rem 0;position:relative;z-index:2">
       <div class="field" style="flex:1;min-width:130px"><label class="fl">Inizio</label><input type="date" id="gameStartDate" onchange="saSaveGameDates()" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
       <div class="field" style="flex:1;min-width:130px"><label class="fl">Fine</label><input type="date" id="gameEndDate" onchange="saSaveGameDates()" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
@@ -996,8 +1003,12 @@ body{padding:.8rem .3rem 3rem;}
     </div>
     <div style="margin-top:1rem;position:relative;z-index:2;border-top:1px dashed var(--line);padding-top:.8rem">
       <label class="fl">📸 Figurine da approvare (<span class="figurinePendingCount">0</span>)</label>
-      <input type="file" id="staffFigFileSA" accept="image/*" style="display:none" onchange="staffUploadFigurina(event)">
-      <button class="bh" onclick="document.getElementById('staffFigFileSA').click()" style="margin:.4rem 0">📤 Carica figurina (senza limiti)</button>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin:.4rem 0">
+        <select id="staffFigOwnerSA" style="flex:1;min-width:150px;border:1px solid var(--line);border-radius:4px;padding:.3rem .5rem;font-family:'Source Sans 3',sans-serif;font-size:.85rem;background:#fff"><option value="">— assegna a (nessun autista) —</option></select>
+        <input type="file" id="staffFigFileSA" accept="image/*" style="display:none" onchange="staffUploadFigurina(event)">
+        <button class="bh" onclick="document.getElementById('staffFigFileSA').click()">📤 Carica figurina</button>
+      </div>
+      <div class="figurineGiacenzaInfo" style="font-size:.74rem;color:var(--purple-dark);margin:.1rem 0 .4rem;font-weight:600"></div>
       <div class="figurineQueue" id="saFigurineQueue" style="margin-top:.5rem"></div>
     </div>
     <div style="margin-top:.9rem;position:relative;z-index:2;border-top:1px dashed var(--line);padding-top:.8rem">
@@ -1913,13 +1924,14 @@ async function autoAssignPrizes(){
   const nowM=gameMonthKey(new Date()),nowW=gameWeekKey(new Date());
   let changed=false;
   const grant=(k,nameLower)=>{if(!nameLower||gamePrizesGiven[k])return;gamePrizesGiven[k]=true;gameBonusFig[nameLower]=(gameBonusFig[nameLower]||0)+1;changed=true;};
-  // Competitivi mensili (mesi conclusi): Re del Rifornimento + figurina più votata
+  const ended=isGameEnded();
+  // Competitivi mensili (mesi conclusi, o tutto a gioco finito): Re del Rifornimento + figurina più votata
   const rifByMonth={};
   fuelRecords.forEach(f=>{if(!f.autista)return;const mk=gameMonthKey(f.data);if(!mk)return;(rifByMonth[mk]=rifByMonth[mk]||{});const n=f.autista.toLowerCase();rifByMonth[mk][n]=(rifByMonth[mk][n]||0)+1;});
-  Object.keys(rifByMonth).forEach(mk=>{if(mk>=nowM)return;const c=rifByMonth[mk];let w=null,mx=0;Object.keys(c).forEach(n=>{if(c[n]>mx){mx=c[n];w=n;}});grant('rif:'+mk,w);});
+  Object.keys(rifByMonth).forEach(mk=>{if(mk>=nowM&&!ended)return;const c=rifByMonth[mk];let w=null,mx=0;Object.keys(c).forEach(n=>{if(c[n]>mx){mx=c[n];w=n;}});grant('rif:'+mk,w);});
   const voteByMonthFig={};
   gameVotes.forEach(v=>{const mk=gameMonthKey(v.ts);if(!mk)return;(voteByMonthFig[mk]=voteByMonthFig[mk]||{});voteByMonthFig[mk][v.figurinaId]=(voteByMonthFig[mk][v.figurinaId]||0)+1;});
-  Object.keys(voteByMonthFig).forEach(mk=>{if(mk>=nowM)return;const c=voteByMonthFig[mk];let bid=null,mx=0;Object.keys(c).forEach(fid=>{if(c[fid]>mx){mx=c[fid];bid=fid;}});if(bid!=null){const f=gameFigurine.find(x=>String(x.id)===String(bid));if(f&&f.owner)grant('vote:'+mk,f.owner.toLowerCase());}});
+  Object.keys(voteByMonthFig).forEach(mk=>{if(mk>=nowM&&!ended)return;const c=voteByMonthFig[mk];let bid=null,mx=0;Object.keys(c).forEach(fid=>{if(c[fid]>mx){mx=c[fid];bid=fid;}});if(bid!=null){const f=gameFigurine.find(x=>String(x.id)===String(bid));if(f&&f.owner)grant('vote:'+mk,f.owner.toLowerCase());}});
   // Per-giocatore: Fotografo (settimane concluse) e Regista (mesi conclusi)
   gamePlayers.forEach(p=>{
     const key=p.name.toLowerCase();
@@ -1927,10 +1939,12 @@ async function autoAssignPrizes(){
     const perDay={};myFig.forEach(f=>{const d=(f.uploadedAt||'').slice(0,10);if(d&&gameInPeriod(d))perDay[d]=(perDay[d]||0)+1;});
     const fullDays=Object.keys(perDay).filter(d=>perDay[d]>=2);
     const weekFull={};fullDays.forEach(d=>{const wk=gameWeekKey(d);weekFull[wk]=(weekFull[wk]||0)+1;});
-    Object.keys(weekFull).forEach(wk=>{if(weekFull[wk]>=5&&wk<nowW)grant('fotografo:'+wk+':'+key,key);});
+    Object.keys(weekFull).forEach(wk=>{if(weekFull[wk]>=5&&(wk<nowW||ended))grant('fotografo:'+wk+':'+key,key);});
     const monthDays={};Object.keys(perDay).forEach(d=>{const mk=gameMonthKey(d);(monthDays[mk]=monthDays[mk]||new Set()).add(d);});
-    Object.keys(monthDays).forEach(mk=>{if(monthDays[mk].size>=20&&mk<nowM)grant('regista:'+mk+':'+key,key);});
+    Object.keys(monthDays).forEach(mk=>{if(monthDays[mk].size>=20&&(mk<nowM||ended))grant('regista:'+mk+':'+key,key);});
   });
+  // A gioco finito (ottobre): vincitore assoluto della classifica
+  if(ended){const lb=getLeaderboard();if(lb[0])grant('winner:'+gameConfig.endDate,lb[0].name.toLowerCase());}
   if(changed){await sv.gameBonusFig();await sv.gamePrizesGiven();}
 }
 function renderClassifica(){
@@ -1997,7 +2011,9 @@ function _seededChance(seedStr){
 }
 function hasChestToday(name,rank,giacenza){
   const day=new Date().toISOString().slice(0,10);
-  return _seededChance(day+'|'+String(name).toLowerCase())<chestProbability(rank,giacenza);
+  let prob=chestProbability(rank,giacenza);
+  if(isGameFinalWeek())prob=Math.max(prob,0.97); // ultimi 7 giorni: scrigni per tutti, si svuota la giacenza
+  return _seededChance(day+'|'+String(name).toLowerCase())<prob;
 }
 function chestOpenedToday(name){
   const day=new Date().toISOString().slice(0,10);const key=String(name).toLowerCase();
@@ -2036,26 +2052,38 @@ function tdDecorations(){
   }
   return html;
 }
+let _gameDemo=false;
+const GAME_DEMO=[
+  {name:'Mario Rossi',points:340,giacenza:16,retro:0,img:'https://i.pravatar.cc/100?img=12'},
+  {name:'Luca Bianchi',points:300,giacenza:9,retro:1,img:'https://i.pravatar.cc/100?img=15'},
+  {name:'Giulia Verdi',points:265,giacenza:22,retro:0,img:'https://i.pravatar.cc/100?img=5'},
+  {name:'Marco Neri',points:185,giacenza:11,retro:2,img:'https://i.pravatar.cc/100?img=33'},
+  {name:'Sara Gallo',points:120,giacenza:18,retro:0,img:'https://i.pravatar.cc/100?img=20'},
+  {name:'Paolo Conti',points:60,giacenza:25,retro:1,img:'https://i.pravatar.cc/100?img=8'},
+];
+function openGameDemo(){_gameDemo=true;openTorneoDash();}
 function openTorneoDash(){
-  document.getElementById('tdPeriod').textContent=(gameConfig.startDate||'15/06')+' → '+(gameConfig.endDate||'04/10');
+  document.getElementById('tdPeriod').textContent=_gameDemo?'🎬 DEMO (dati di esempio)':((gameConfig.startDate||'15/06')+' → '+(gameConfig.endDate||'04/10'));
   document.getElementById('tdDeco').innerHTML=tdDecorations();
   renderTorneoDash();
   document.getElementById('torneoDash').classList.add('show');
 }
-function closeTorneoDash(){document.getElementById('torneoDash').classList.remove('show');}
+function closeTorneoDash(){document.getElementById('torneoDash').classList.remove('show');_gameDemo=false;}
 function renderTorneoDash(){
   const box=document.getElementById('tdBoats');if(!box)return;
-  const lb=getLeaderboard();
+  const demo=_gameDemo;
+  const lb=demo?GAME_DEMO.map((e,i)=>Object.assign({rank:i+1},e)):getLeaderboard();
   const me=(gameMyName()||'').toLowerCase();
-  if(!lb.length){box.innerHTML='<p style="text-align:center;color:#fff;font-style:italic;padding:2rem 0">Nessun autista iscritto al Torneo.</p>';return;}
+  if(!lb.length){box.innerHTML='<p style="text-align:center;color:#fff;font-style:italic;padding:2rem 0">Nessun autista iscritto al Torneo.<br><span style="font-size:.8rem;opacity:.85">(Usa la Demo dal pannello Super Admin per vedere un esempio)</span></p>';return;}
   const medals={1:'🥇',2:'🥈',3:'🥉'};
-  box.innerHTML=lb.map(e=>{
-    const isMe=e.name.toLowerCase()===me;
-    const chest=hasChestToday(e.name,e.rank,e.giacenza)&&!chestOpenedToday(e.name);
-    const chestBtn=chest?`<button class="td-chest" title="Scrigno con perle!" onclick="openChest('${e.name.replace(/'/g,"\\'")}')">🎁</button>`:'';
+  box.innerHTML=(demo?'<div class="td-finish" style="color:#ffd34d">🎬 Anteprima dimostrativa — volti di esempio</div>':'')+lb.map(e=>{
+    const isMe=!demo&&e.name.toLowerCase()===me;
+    const chest=(demo?e.rank>=4:(hasChestToday(e.name,e.rank,e.giacenza)&&!chestOpenedToday(e.name)));
+    const chestBtn=chest?(demo?'<span class="td-chest" title="Scrigno con perle!">🎁</span>':`<button class="td-chest" title="Scrigno con perle!" onclick="openChest('${e.name.replace(/'/g,"\\'")}')">🎁</button>`):'';
+    const ship=e.img?`<img src="${e.img}" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid #fff;flex-shrink:0">`:'<span class="td-ship">🚤</span>';
     return`<div class="td-boat${isMe?' me':''}">
       <span class="td-rank">${medals[e.rank]||('#'+e.rank)}</span>
-      <span class="td-ship">🚤</span>
+      ${ship}
       <span class="td-name">${escHtml(e.name)}</span>
       <span class="td-gia" title="Figurine in giacenza">🐚 ${e.giacenza}</span>
       <span class="td-pts">${e.points}<span style="font-size:.6rem;font-weight:400"> pt</span></span>
@@ -2096,6 +2124,14 @@ function gameInPeriod(dateStr){
   return true;
 }
 function gameMonthKey(d){const dt=new Date(d);if(isNaN(dt))return null;return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');}
+function isGameEnded(){const today=new Date().toISOString().slice(0,10);return!!(gameConfig.endDate&&today>gameConfig.endDate);}
+// Ultimi 7 giorni del Torneo: si moltiplicano gli scrigni per distribuire le figurine in giacenza
+function isGameFinalWeek(){
+  if(!gameConfig.endDate)return false;
+  const today=new Date().toISOString().slice(0,10);
+  const end=new Date(gameConfig.endDate+'T00:00:00');const start=new Date(end);start.setDate(start.getDate()-6);
+  return today>=start.toISOString().slice(0,10)&&today<=gameConfig.endDate;
+}
 function computeGamePoints(name){
   const key=String(name||'').toLowerCase();
   const parts={ore:0,rifornimento:0,figurine:0,antenna:0,giurato:0,penalita:0};
@@ -2240,21 +2276,29 @@ async function uploadMyFigurina(e){
   finally{hideAttendi();}
 }
 // Super Admin / admin autorizzato: carica figurine senza limiti (auto-approvate, per riempire eventuali mancanze)
+function populateStaffFigOwners(){
+  const opts='<option value="">— assegna a (nessun autista) —</option>'+gamePlayers.map(p=>`<option value="${escHtml(p.name)}">${escHtml(p.name)}</option>`).join('');
+  ['staffFigOwnerSA','staffFigOwnerAdmin'].forEach(id=>{const s=document.getElementById(id);if(s){const cur=s.value;s.innerHTML=opts;s.value=cur;}});
+}
 async function staffUploadFigurina(e){
-  const file=e.target.files&&e.target.files[0];e.target.value='';
+  const file=e.target.files&&e.target.files[0];const inputId=e.target.id;e.target.value='';
   if(!file)return;
   if(!canApproveFigurine()){alert('Non sei autorizzato a caricare figurine.');return;}
-  const owner=currentUser?currentUser.name:'Staff';
+  // Se assegnata a un autista, i punti seguono le regole normali (Fotografo/Regista, voti, giacenza)
+  const selId=inputId==='staffFigFileAdmin'?'staffFigOwnerAdmin':'staffFigOwnerSA';
+  const sel=document.getElementById(selId);
+  const assigned=sel&&sel.value?sel.value:'';
+  const owner=assigned||(currentUser?currentUser.name:'Staff');
   if(!showAttendi('Caricamento figurina in corso…'))return;
   try{
     const raw=await uploadFigurinaCloudinary(file);
     if(!raw){alert('Caricamento non riuscito. Riprova.');return;}
     const url=gameWatermarkUrl(raw,owner);
-    gameFigurine.unshift({id:Date.now(),owner,url,raw,status:'approved',caption:'',uploadedAt:new Date().toISOString(),reviewedAt:new Date().toISOString(),reviewedBy:owner});
+    gameFigurine.unshift({id:Date.now(),owner,url,raw,status:'approved',caption:'',uploadedAt:new Date().toISOString(),reviewedAt:new Date().toISOString(),reviewedBy:currentUser?currentUser.name:'Staff'});
     await sv.gameFigurine();
-    if(currentUser)addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','save','Figurina caricata dallo staff');
+    if(currentUser)addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','save','Figurina caricata dallo staff'+(assigned?' per '+assigned:''));
     renderFigurineQueue();
-    alert('Figurina caricata e approvata.');
+    alert('Figurina caricata e approvata'+(assigned?' per '+assigned+'. I punti seguiranno le regole.':'.'));
   }catch(err){console.error(err);alert('Errore durante il caricamento.');}
   finally{hideAttendi();}
 }
@@ -2364,6 +2408,7 @@ function renderSaGamePanel(){
   }
   renderFigurineQueue();
   renderSaFigurinePerms();
+  populateStaffFigOwners();
 }
 function canApproveFigurine(){
   if(!currentUser)return false;
@@ -2375,6 +2420,10 @@ function canApproveFigurine(){
 function renderFigurineQueue(){
   const pending=gameFigurine.filter(f=>f.status==='pending');
   document.querySelectorAll('.figurinePendingCount').forEach(c=>{c.textContent=pending.length;});
+  // Giacenza figurine (visibile solo a SA e admin)
+  const appr=gameFigurine.filter(f=>f.status==='approved').length;
+  const bonus=Object.values(gameBonusFig).reduce((s,n)=>s+(n||0),0);
+  document.querySelectorAll('.figurineGiacenzaInfo').forEach(el=>{el.textContent=`📦 Giacenza figurine: ${appr} approvate · ${pending.length} in attesa · ${bonus} bonus assegnate`;});
   const html=pending.length
     ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.7rem">'+pending.map(f=>{
         const d=f.uploadedAt?new Date(f.uploadedAt).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
@@ -2804,7 +2853,7 @@ function renderAdmin(){
   const myDrivers=getAdminDrivers();
   // Sezione approvazione figurine: visibile solo agli admin autorizzati dal Super Admin
   const figSec=document.getElementById('adminFigurineSection');
-  if(figSec){const show=currentUser&&currentUser.isAdmin&&!currentUser.isSA&&canApproveFigurine();figSec.style.display=show?'block':'none';if(show)renderFigurineQueue();}
+  if(figSec){const show=currentUser&&currentUser.isAdmin&&!currentUser.isSA&&canApproveFigurine();figSec.style.display=show?'block':'none';if(show){renderFigurineQueue();populateStaffFigOwners();}}
 
   // Driver list
   document.getElementById('driverList').innerHTML=!myDrivers.length

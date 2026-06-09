@@ -478,6 +478,7 @@ body{padding:.8rem .3rem 3rem;}
         <button class="lb" onclick="openGameSection('missioni')" style="background:#eef3f8;color:#0d3b66;border:1px solid #cdd9e6">🎯 Missioni</button>
         <button class="lb" onclick="openGameSection('sondaggi')" style="background:#eef3f8;color:#0d3b66;border:1px solid #cdd9e6">⚖️ Sondaggi</button>
       </div>
+      <button id="gameFigurineBtn" class="lb" onclick="openMyFigurineModal()" style="display:none;margin-top:.6rem;width:100%;background:linear-gradient(135deg,#1a6ca8,#0d3b66);color:#fff">📸 Le mie Figurine</button>
 
       <div class="sab" style="margin-top:1.4rem"><a onclick="closeGameWelcome()">← Torna al Diario di Bordo</a></div>
     </div>
@@ -500,6 +501,23 @@ body{padding:.8rem .3rem 3rem;}
         <button class="bh" onclick="closeGameConsent()">Annulla</button>
         <button class="lb dark" style="margin:0;padding:.5rem 1rem;background:#0d3b66" onclick="confirmGameJoin()">Confermo l'iscrizione</button>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Le mie figurine -->
+  <div class="att-mo" id="gameFigurineModal">
+    <div class="att-md" style="border-color:#0d3b66;max-width:540px">
+      <div class="att-mh" style="background:#0d3b66">📸 Le mie Figurine</div>
+      <div class="att-mb">
+        <p style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);line-height:1.55;margin-bottom:.8rem">Carica una figurina: verrà compressa, marchiata con il tuo nome e inviata al Super Admin per l'approvazione. Le figurine approvate sono scaricabili.</p>
+        <div style="border:1.5px dashed rgba(13,59,102,.3);border-radius:6px;padding:.8rem .9rem;margin-bottom:1rem">
+          <div class="field"><label class="fl">Didascalia (opzionale)</label><input type="text" id="figCaption" maxlength="60" placeholder="es. Sorriso al pontile" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
+          <input type="file" id="figFileInput" accept="image/*" style="display:none" onchange="uploadMyFigurina(event)">
+          <button class="lb dark" style="margin-top:.6rem;background:#0d3b66" onclick="document.getElementById('figFileInput').click()">＋ Scegli e carica figurina</button>
+        </div>
+        <div id="myFigurineList"></div>
+      </div>
+      <div class="att-mf"><button class="bh" onclick="closeMyFigurineModal()">Chiudi</button></div>
     </div>
   </div>
 
@@ -887,6 +905,10 @@ body{padding:.8rem .3rem 3rem;}
     <div style="margin-top:.9rem;position:relative;z-index:2">
       <label class="fl">Iscritti al Torneo (<span id="saGamePlayersCount">0</span>)</label>
       <div id="saGamePlayersList" style="margin-top:.4rem"></div>
+    </div>
+    <div style="margin-top:1rem;position:relative;z-index:2;border-top:1px dashed var(--line);padding-top:.8rem">
+      <label class="fl">📸 Figurine da approvare (<span id="saFigurinePendingCount">0</span>)</label>
+      <div id="saFigurineQueue" style="margin-top:.5rem"></div>
     </div>
   </div>
 
@@ -1359,6 +1381,7 @@ let manRecords=[];  // manutenzione
 const GAME_DISCLAIMER_DEFAULT='Partecipando al "Torneo della Flotta" autorizzo l\'utilizzo della mia immagine (foto e figurine) all\'interno del gioco, per le sole finalità ludiche interne alla flotta. So che la partecipazione è volontaria e che posso ritirarmi in qualsiasi momento contattando il Super Admin. I colleghi che non partecipano sono elencati nella pagina di benvenuto e la loro immagine non potrà essere usata.';
 let gameConfig={active:false,startDate:'2026-06-15',endDate:'2026-10-04',nonPartecipanti:[],disclaimer:GAME_DISCLAIMER_DEFAULT};
 let gamePlayers=[]; // iscritti al gioco: {name, consentAt}
+let gameFigurine=[]; // figurine: {id, owner, url, raw, status:'pending'|'approved'|'rejected', caption, uploadedAt, reviewedAt, reviewedBy, rejectReason}
 let _barcheConAvvisoMan=[];  // barche con avvisi manutenzione attivi (per notifica mobile)
 let fabTimer=null;
 
@@ -1370,7 +1393,7 @@ let auditPage=0;
 // =============================================
 async function init(){
   // Un solo round-trip per tutte le chiavi (prima erano 20 richieste in serie)
-  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages','game-config','game-players']);
+  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages','game-config','game-players','game-figurine']);
   if(g['fleet-records'])records=g['fleet-records'];
   if(g['fleet-drivers'])drivers=g['fleet-drivers'];
   if(g['fleet-mezzi'])allMezzi=g['fleet-mezzi'];
@@ -1394,6 +1417,7 @@ async function init(){
   if(g['fleet-att-messages'])attMessages=g['fleet-att-messages'];
   if(g['game-config'])gameConfig=Object.assign(gameConfig,g['game-config']);
   if(g['game-players'])gamePlayers=g['game-players'];
+  if(g['game-figurine'])gameFigurine=g['game-figurine'];
   purgeExpiredMessages();
   const now=new Date();
   const ds=now.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -1452,6 +1476,7 @@ const sv={
   manRecords:()=>dbSet('fleet-man-records',manRecords),
   gameConfig:()=>dbSet('game-config',gameConfig),
   gamePlayers:()=>dbSet('game-players',gamePlayers),
+  gameFigurine:()=>dbSet('game-figurine',gameFigurine),
 };
 
 async function getIP(){try{const r=await fetch('https://api.ipify.org?format=json');return(await r.json()).ip;}catch{return'N/D';}}
@@ -1645,6 +1670,7 @@ function updateGameWelcomeState(){
   const enrolled=isGameEnrolled();
   document.getElementById('gameJoinBox').style.display=enrolled?'none':'block';
   document.getElementById('gameMainButtons').style.display=enrolled?'grid':'none';
+  const fb=document.getElementById('gameFigurineBtn');if(fb)fb.style.display=enrolled?'block':'none';
 }
 function openGameConsent(){
   document.getElementById('gameConsentText').textContent=gameConfig.disclaimer||GAME_DISCLAIMER_DEFAULT;
@@ -1676,6 +1702,78 @@ function openGameSection(which){
   // Le sezioni vere arrivano nei blocchi successivi (Torneo, Missioni, Sondaggi)
   const titles={benvenuto:'👋 Benvenuto',torneo:'🏆 Il Torneo',missioni:'🎯 Missioni',sondaggi:'⚖️ Sondaggi'};
   alert((titles[which]||'Sezione')+'\n\nIn arrivo nel prossimo aggiornamento del Torneo. La tua iscrizione è registrata!');
+}
+
+// --- Figurine: Cloudinary watermark + .webp + download ---
+function gameWatermarkUrl(rawUrl,name){
+  if(!rawUrl||!rawUrl.includes('/image/upload/'))return rawUrl;
+  const clean=String(name||'').replace(/[\\/,%]/g,' ').replace(/\s+/g,' ').trim().slice(0,40)||'Flotta';
+  const txt=encodeURIComponent(clean);
+  // Ridimensiona, converte in .webp (stile WhatsApp) e applica watermark col nome in basso a destra
+  const tr='c_limit,w_1280/q_auto:good/f_webp/l_text:Arial_44_bold:'+txt+',co_white,b_rgb:00000080/fl_layer_apply,g_south_east,x_28,y_24';
+  return rawUrl.replace('/image/upload/','/image/upload/'+tr+'/');
+}
+function gameFigurinaDownloadUrl(url){
+  if(!url||!url.includes('/upload/'))return url;
+  return url.replace('/upload/','/upload/fl_attachment/');
+}
+async function uploadFigurinaCloudinary(file){
+  const compressed=await compressImageWhatsApp(file);
+  const fd=new FormData();fd.append('file',compressed);fd.append('upload_preset',CL_PRESET);
+  const r=await fetch(`https://api.cloudinary.com/v1_1/${CL_CLOUD}/image/upload`,{method:'POST',body:fd});
+  const j=await r.json();return j.secure_url||'';
+}
+function openMyFigurineModal(){renderMyFigurine();document.getElementById('gameFigurineModal').classList.add('show');}
+function closeMyFigurineModal(){document.getElementById('gameFigurineModal').classList.remove('show');}
+async function uploadMyFigurina(e){
+  const file=e.target.files&&e.target.files[0];e.target.value='';
+  if(!file)return;
+  const me=gameMyName();
+  if(!me){alert('Devi prima iscriverti al Torneo.');return;}
+  if(!showAttendi('Caricamento figurina in corso…'))return;
+  try{
+    const raw=await uploadFigurinaCloudinary(file);
+    if(!raw){alert('Caricamento non riuscito. Riprova.');return;}
+    const url=gameWatermarkUrl(raw,me);
+    const caption=document.getElementById('figCaption').value.trim().slice(0,60);
+    gameFigurine.unshift({id:Date.now(),owner:me,url,raw,status:'pending',caption,uploadedAt:new Date().toISOString()});
+    await sv.gameFigurine();
+    document.getElementById('figCaption').value='';
+    renderMyFigurine();
+  }catch(err){console.error(err);alert('Errore durante il caricamento.');}
+  finally{hideAttendi();}
+}
+function statusBadgeFigurina(st){
+  if(st==='approved')return'<span style="font-size:.62rem;font-weight:700;background:rgba(45,106,79,.15);color:var(--green);padding:.12rem .45rem;border-radius:3px;text-transform:uppercase;letter-spacing:.04em">✅ Approvata</span>';
+  if(st==='rejected')return'<span style="font-size:.62rem;font-weight:700;background:rgba(192,57,43,.12);color:var(--red);padding:.12rem .45rem;border-radius:3px;text-transform:uppercase;letter-spacing:.04em">✖ Rifiutata</span>';
+  return'<span style="font-size:.62rem;font-weight:700;background:rgba(184,132,10,.15);color:var(--gold);padding:.12rem .45rem;border-radius:3px;text-transform:uppercase;letter-spacing:.04em">⏳ In attesa</span>';
+}
+function renderMyFigurine(){
+  const c=document.getElementById('myFigurineList');if(!c)return;
+  const me=gameMyName().toLowerCase();
+  const mine=gameFigurine.filter(f=>f.owner&&f.owner.toLowerCase()===me);
+  if(!mine.length){c.innerHTML='<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded);text-align:center;padding:.8rem 0">Nessuna figurina caricata.</p>';return;}
+  c.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.7rem">'+mine.map(f=>`
+    <div style="border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fafaf8">
+      <img src="${f.url}" alt="figurina" loading="lazy" style="width:100%;height:120px;object-fit:cover;display:block">
+      <div style="padding:.45rem .5rem">
+        <div style="margin-bottom:.35rem">${statusBadgeFigurina(f.status)}</div>
+        ${f.caption?`<div style="font-size:.74rem;color:var(--ink);margin-bottom:.35rem">${escHtml(f.caption)}</div>`:''}
+        ${f.status==='rejected'&&f.rejectReason?`<div style="font-size:.68rem;color:var(--red);margin-bottom:.35rem">Motivo: ${escHtml(f.rejectReason)}</div>`:''}
+        <div style="display:flex;gap:.35rem;flex-wrap:wrap">
+          ${f.status==='approved'?`<a href="${gameFigurinaDownloadUrl(f.url)}" target="_blank" rel="noopener" style="font-size:.72rem;color:var(--blue);text-decoration:none;border:1px solid rgba(74,144,184,.3);border-radius:3px;padding:.15rem .45rem">↓ Scarica</a>`:''}
+          ${f.status!=='approved'?`<button class="bh red" style="font-size:.72rem" onclick="deleteMyFigurina(${f.id})">× elimina</button>`:''}
+        </div>
+      </div>
+    </div>`).join('')+'</div>';
+}
+async function deleteMyFigurina(id){
+  const f=gameFigurine.find(x=>x.id===id);if(!f)return;
+  if(f.owner.toLowerCase()!==gameMyName().toLowerCase())return;
+  if(!confirm('Eliminare questa figurina?'))return;
+  gameFigurine=gameFigurine.filter(x=>x.id!==id);
+  await sv.gameFigurine();
+  renderMyFigurine();
 }
 
 async function saVerifyPw(){
@@ -1747,6 +1845,42 @@ function renderSaGamePanel(){
       ? gamePlayers.map((p,i)=>{const d=p.consentAt?new Date(p.consentAt).toLocaleDateString('it-IT'):'';return`<div class="dot-item-row" style="display:flex;justify-content:space-between;align-items:center;padding:.3rem 0;border-bottom:1px dashed var(--line-light)"><span style="font-family:'Source Sans 3',sans-serif;font-size:.88rem">${escHtml(p.name)}${d?` <span style="font-size:.7rem;color:var(--ink-faded)">· iscritto ${d}</span>`:''}</span><button class="bh red" onclick="saRemoveGamePlayer(${i})">× rimuovi</button></div>`;}).join('')
       : '<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded)">Nessun iscritto.</p>';
   }
+  renderSaFigurineQueue();
+}
+function renderSaFigurineQueue(){
+  const pending=gameFigurine.filter(f=>f.status==='pending');
+  const cnt=document.getElementById('saFigurinePendingCount');if(cnt)cnt.textContent=pending.length;
+  const q=document.getElementById('saFigurineQueue');if(!q)return;
+  if(!pending.length){q.innerHTML='<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded)">Nessuna figurina in attesa.</p>';return;}
+  q.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.7rem">'+pending.map(f=>{
+    const d=f.uploadedAt?new Date(f.uploadedAt).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+    return`<div style="border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fafaf8">
+      <img src="${f.url}" alt="figurina" loading="lazy" style="width:100%;height:130px;object-fit:cover;display:block">
+      <div style="padding:.45rem .5rem">
+        <div style="font-family:'Source Sans 3',sans-serif;font-size:.8rem;font-weight:600;color:var(--ink)">${escHtml(f.owner||'')}</div>
+        ${f.caption?`<div style="font-size:.72rem;color:var(--ink-faded);margin:.15rem 0">${escHtml(f.caption)}</div>`:''}
+        <div style="font-size:.66rem;color:var(--ink-faded);margin-bottom:.4rem">${d}</div>
+        <div style="display:flex;gap:.35rem">
+          <button class="bh" style="font-size:.72rem;background:var(--green);color:#fff;border-color:var(--green)" onclick="approveFigurina(${f.id})">✓ Approva</button>
+          <button class="bh red" style="font-size:.72rem" onclick="rejectFigurina(${f.id})">✖ Rifiuta</button>
+        </div>
+      </div>
+    </div>`;}).join('')+'</div>';
+}
+async function approveFigurina(id){
+  const f=gameFigurine.find(x=>x.id===id);if(!f)return;
+  f.status='approved';f.reviewedAt=new Date().toISOString();f.reviewedBy=currentUser?currentUser.name:'Super Admin';f.rejectReason='';
+  await sv.gameFigurine();
+  if(currentUser)addAudit(currentUser.name,'superadmin','save',`Figurina approvata (${f.owner})`);
+  renderSaFigurineQueue();
+}
+async function rejectFigurina(id){
+  const f=gameFigurine.find(x=>x.id===id);if(!f)return;
+  const reason=prompt('Motivo del rifiuto (opzionale):','')||'';
+  f.status='rejected';f.reviewedAt=new Date().toISOString();f.reviewedBy=currentUser?currentUser.name:'Super Admin';f.rejectReason=reason.trim().slice(0,120);
+  await sv.gameFigurine();
+  if(currentUser)addAudit(currentUser.name,'superadmin','delete',`Figurina rifiutata (${f.owner})`);
+  renderSaFigurineQueue();
 }
 async function saToggleGame(){
   gameConfig.active=!gameConfig.active;

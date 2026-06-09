@@ -884,11 +884,14 @@ body{padding:.8rem .3rem 3rem;}
 
   <div class="sas">
     <div class="sast">🏆 Il Torneo della Flotta — Gestione gioco</div>
-    <div class="ib">Attiva il gioco, gestisci chi NON partecipa e controlla gli iscritti. Quando è attivo, gli autisti vedono il pulsante del Torneo nella schermata di accesso.</div>
-    <div style="display:flex;align-items:center;gap:.7rem;margin:.7rem 0;position:relative;z-index:2">
+    <div class="ib">Attiva il gioco, gestisci chi NON partecipa e controlla gli iscritti. <strong>PROVA</strong> = visibile solo a te (Super Admin) per testare. <strong>ON</strong> = visibile a tutti gli autisti nella schermata di accesso.</div>
+    <div style="display:flex;align-items:center;gap:.5rem;margin:.7rem 0;position:relative;z-index:2;flex-wrap:wrap">
       <span style="font-family:'Source Sans 3',sans-serif;font-size:.9rem;color:var(--ink);font-weight:600">Stato:</span>
-      <button id="gameToggleBtn" class="asb off" onclick="saToggleGame()" style="cursor:pointer;border:1px solid var(--line)">OFF</button>
+      <button id="gameStOff" class="asb off" onclick="saSetGameStatus('off')" style="cursor:pointer;border:1px solid var(--line)">OFF</button>
+      <button id="gameStTest" class="asb" onclick="saSetGameStatus('test')" style="cursor:pointer;border:1px solid var(--line)">🧪 PROVA (solo te)</button>
+      <button id="gameStOn" class="asb" onclick="saSetGameStatus('on')" style="cursor:pointer;border:1px solid var(--line)">🟢 ON (tutti)</button>
     </div>
+    <button class="bh" onclick="openGamePreview()" style="position:relative;z-index:2;margin-bottom:.4rem">👁 Apri anteprima del gioco</button>
     <div style="display:flex;gap:.8rem;flex-wrap:wrap;margin:.4rem 0;position:relative;z-index:2">
       <div class="field" style="flex:1;min-width:130px"><label class="fl">Inizio</label><input type="date" id="gameStartDate" onchange="saSaveGameDates()" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
       <div class="field" style="flex:1;min-width:130px"><label class="fl">Fine</label><input type="date" id="gameEndDate" onchange="saSaveGameDates()" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
@@ -1379,7 +1382,7 @@ let dotItems=[],dotBarcaDotazioni={};  // dotazioni globali
 let manRecords=[];  // manutenzione
 // === GIOCO: Il Torneo della Flotta — Caccia alla Figurina ===
 const GAME_DISCLAIMER_DEFAULT='Partecipando al "Torneo della Flotta" autorizzo l\'utilizzo della mia immagine (foto e figurine) all\'interno del gioco, per le sole finalità ludiche interne alla flotta. So che la partecipazione è volontaria e che posso ritirarmi in qualsiasi momento contattando il Super Admin. I colleghi che non partecipano sono elencati nella pagina di benvenuto e la loro immagine non potrà essere usata.';
-let gameConfig={active:false,startDate:'2026-06-15',endDate:'2026-10-04',nonPartecipanti:[],disclaimer:GAME_DISCLAIMER_DEFAULT};
+let gameConfig={status:'off',active:false,startDate:'2026-06-15',endDate:'2026-10-04',nonPartecipanti:[],disclaimer:GAME_DISCLAIMER_DEFAULT}; // status: 'off' | 'test' (solo Super Admin) | 'on' (tutti)
 let gamePlayers=[]; // iscritti al gioco: {name, consentAt}
 let gameFigurine=[]; // figurine: {id, owner, url, raw, status:'pending'|'approved'|'rejected', caption, uploadedAt, reviewedAt, reviewedBy, rejectReason}
 let _barcheConAvvisoMan=[];  // barche con avvisi manutenzione attivi (per notifica mobile)
@@ -1416,6 +1419,8 @@ async function init(){
   if(g['fleet-tessere-perms'])tesserePerms=g['fleet-tessere-perms'];
   if(g['fleet-att-messages'])attMessages=g['fleet-att-messages'];
   if(g['game-config'])gameConfig=Object.assign(gameConfig,g['game-config']);
+  if(!gameConfig.status)gameConfig.status=gameConfig.active?'on':'off'; // migrazione vecchi dati
+  gameConfig.active=(gameConfig.status==='on');
   if(g['game-players'])gamePlayers=g['game-players'];
   if(g['game-figurine'])gameFigurine=g['game-figurine'];
   purgeExpiredMessages();
@@ -1643,11 +1648,14 @@ function showOtpStep(n){document.querySelectorAll('.otp-step').forEach(s=>s.clas
 // Mostra il banner d'ingresso al gioco nella schermata di login se il gioco è attivo
 function refreshGameEntryBanner(){
   const b=document.getElementById('gameEntryBanner');if(!b)return;
-  b.style.display=gameConfig.active?'block':'none';
+  // Il banner pubblico nella schermata di login appare SOLO quando il gioco è ON per tutti.
+  // In modalità PROVA il gioco è visibile solo al Super Admin (dal pannello di anteprima).
+  b.style.display=(gameConfig.status==='on')?'block':'none';
 }
 // Nome dell'iscritto memorizzato su questo dispositivo (gioco accessibile prima del login)
 function gameMyName(){try{return localStorage.getItem('ccb_game_me')||'';}catch{return'';}}
 function isGameEnrolled(){const n=gameMyName().toLowerCase();return!!n&&gamePlayers.some(p=>p.name.toLowerCase()===n);}
+let _gamePreview=false;
 function openGameWelcome(){
   document.getElementById('pageLogin').style.display='none';
   document.getElementById('pageSALogin').style.display='none';
@@ -1655,9 +1663,25 @@ function openGameWelcome(){
   renderNonPartecipanti();
   updateGameWelcomeState();
 }
+// Anteprima riservata al Super Admin: nasconde la chrome dell'app e mostra il gioco solo a lui
+function openGamePreview(){
+  _gamePreview=true;
+  const ub=document.getElementById('userBar');if(ub)ub.style.display='none';
+  const ts=document.getElementById('tabsSide');if(ts)ts.style.display='none';
+  const pc=document.getElementById('pagesContainer');if(pc)pc.style.display='none';
+  openGameWelcome();
+}
 function closeGameWelcome(){
   document.getElementById('pageGameWelcome').style.display='none';
-  document.getElementById('pageLogin').style.display='flex';
+  if(_gamePreview&&currentUser){
+    _gamePreview=false;
+    const ub=document.getElementById('userBar');if(ub)ub.style.display='flex';
+    const ts=document.getElementById('tabsSide');if(ts)ts.style.display='flex';
+    const pc=document.getElementById('pagesContainer');if(pc)pc.style.display='';
+    showPage('superadmin',document.getElementById('tabSA'));
+  }else{
+    document.getElementById('pageLogin').style.display='flex';
+  }
 }
 function renderNonPartecipanti(){
   const el=document.getElementById('nonPartecipantiList');if(!el)return;
@@ -1667,7 +1691,7 @@ function renderNonPartecipanti(){
     : '<div style="font-style:italic;color:var(--ink-faded)">Al momento partecipano tutti.</div>';
 }
 function updateGameWelcomeState(){
-  const enrolled=isGameEnrolled();
+  const enrolled=_gamePreview||isGameEnrolled();
   document.getElementById('gameJoinBox').style.display=enrolled?'none':'block';
   document.getElementById('gameMainButtons').style.display=enrolled?'grid':'none';
   const fb=document.getElementById('gameFigurineBtn');if(fb)fb.style.display=enrolled?'block':'none';
@@ -1827,8 +1851,10 @@ function renderSA(){
 
 // === Pannello Super Admin: gestione gioco ===
 function renderSaGamePanel(){
-  const btn=document.getElementById('gameToggleBtn');
-  if(btn){btn.textContent=gameConfig.active?'ON':'OFF';btn.className='asb '+(gameConfig.active?'on':'off');btn.style.cursor='pointer';}
+  const st=gameConfig.status||'off';
+  const map={off:'gameStOff',test:'gameStTest',on:'gameStOn'};
+  ['gameStOff','gameStTest','gameStOn'].forEach(id=>{const b=document.getElementById(id);if(b){b.classList.remove('on');b.classList.add('off');}});
+  const active=document.getElementById(map[st]);if(active){active.classList.remove('off');active.classList.add('on');}
   const sd=document.getElementById('gameStartDate');if(sd&&gameConfig.startDate)sd.value=gameConfig.startDate;
   const ed=document.getElementById('gameEndDate');if(ed&&gameConfig.endDate)ed.value=gameConfig.endDate;
   const npl=document.getElementById('saNonPartecipantiList');
@@ -1882,11 +1908,13 @@ async function rejectFigurina(id){
   if(currentUser)addAudit(currentUser.name,'superadmin','delete',`Figurina rifiutata (${f.owner})`);
   renderSaFigurineQueue();
 }
-async function saToggleGame(){
-  gameConfig.active=!gameConfig.active;
+async function saSetGameStatus(s){
+  gameConfig.status=s;
+  gameConfig.active=(s==='on');
   await sv.gameConfig();
   renderSaGamePanel();refreshGameEntryBanner();
-  if(currentUser)addAudit(currentUser.name,'superadmin','settings','Gioco '+(gameConfig.active?'ATTIVATO':'disattivato'));
+  const labels={off:'disattivato (OFF)',test:'in PROVA (solo Super Admin)',on:'ATTIVATO per tutti (ON)'};
+  if(currentUser)addAudit(currentUser.name,'superadmin','settings','Gioco '+(labels[s]||s));
 }
 async function saSaveGameDates(){
   gameConfig.startDate=document.getElementById('gameStartDate').value||gameConfig.startDate;

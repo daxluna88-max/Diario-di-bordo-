@@ -521,6 +521,15 @@ body{padding:.8rem .3rem 3rem;}
     </div>
   </div>
 
+  <!-- MODAL: Missioni -->
+  <div class="att-mo" id="gameMissioniModal">
+    <div class="att-md" style="border-color:#0d3b66;max-width:520px">
+      <div class="att-mh" style="background:#0d3b66">🎯 Missioni & Punti</div>
+      <div class="att-mb"><div id="missioniContent"></div></div>
+      <div class="att-mf"><button class="bh" onclick="closeMissioniModal()">Chiudi</button></div>
+    </div>
+  </div>
+
   <!-- LOGIN SUPER ADMIN -->
 
   <div class="lp sa" id="pageSALogin">
@@ -1385,6 +1394,7 @@ const GAME_DISCLAIMER_DEFAULT='Partecipando al "Torneo della Flotta" autorizzo l
 let gameConfig={status:'off',active:false,startDate:'2026-06-15',endDate:'2026-10-04',nonPartecipanti:[],disclaimer:GAME_DISCLAIMER_DEFAULT}; // status: 'off' | 'test' (solo Super Admin) | 'on' (tutti)
 let gamePlayers=[]; // iscritti al gioco: {name, consentAt}
 let gameFigurine=[]; // figurine: {id, owner, url, raw, status:'pending'|'approved'|'rejected', caption, uploadedAt, reviewedAt, reviewedBy, rejectReason}
+let gameMsgReads={}; // letture messaggi per missione "Antenna Alzata": {nomeLower: {msgId: readTimestampMs}}
 let _barcheConAvvisoMan=[];  // barche con avvisi manutenzione attivi (per notifica mobile)
 let fabTimer=null;
 
@@ -1396,7 +1406,7 @@ let auditPage=0;
 // =============================================
 async function init(){
   // Un solo round-trip per tutte le chiavi (prima erano 20 richieste in serie)
-  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages','game-config','game-players','game-figurine']);
+  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages','game-config','game-players','game-figurine','game-msg-reads']);
   if(g['fleet-records'])records=g['fleet-records'];
   if(g['fleet-drivers'])drivers=g['fleet-drivers'];
   if(g['fleet-mezzi'])allMezzi=g['fleet-mezzi'];
@@ -1423,6 +1433,7 @@ async function init(){
   gameConfig.active=(gameConfig.status==='on');
   if(g['game-players'])gamePlayers=g['game-players'];
   if(g['game-figurine'])gameFigurine=g['game-figurine'];
+  if(g['game-msg-reads'])gameMsgReads=g['game-msg-reads'];
   purgeExpiredMessages();
   const now=new Date();
   const ds=now.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -1482,6 +1493,7 @@ const sv={
   gameConfig:()=>dbSet('game-config',gameConfig),
   gamePlayers:()=>dbSet('game-players',gamePlayers),
   gameFigurine:()=>dbSet('game-figurine',gameFigurine),
+  gameMsgReads:()=>dbSet('game-msg-reads',gameMsgReads),
 };
 
 async function getIP(){try{const r=await fetch('https://api.ipify.org?format=json');return(await r.json()).ip;}catch{return'N/D';}}
@@ -1723,9 +1735,101 @@ async function confirmGameJoin(){
   updateGameWelcomeState();
 }
 function openGameSection(which){
-  // Le sezioni vere arrivano nei blocchi successivi (Torneo, Missioni, Sondaggi)
-  const titles={benvenuto:'👋 Benvenuto',torneo:'🏆 Il Torneo',missioni:'🎯 Missioni',sondaggi:'⚖️ Sondaggi'};
+  if(which==='missioni'){openMissioniModal();return;}
+  const titles={benvenuto:'👋 Benvenuto',torneo:'🏆 Il Torneo',sondaggi:'⚖️ Sondaggi'};
   alert((titles[which]||'Sezione')+'\n\nIn arrivo nel prossimo aggiornamento del Torneo. La tua iscrizione è registrata!');
+}
+
+// =============================================
+// GIOCO: Punti & Missioni (Blocco 4)
+// =============================================
+function gameWeekKey(d){
+  const dt=new Date(d);if(isNaN(dt))return null;
+  const tmp=new Date(Date.UTC(dt.getFullYear(),dt.getMonth(),dt.getDate()));
+  const day=tmp.getUTCDay()||7;tmp.setUTCDate(tmp.getUTCDate()+4-day);
+  const yearStart=new Date(Date.UTC(tmp.getUTCFullYear(),0,1));
+  const week=Math.ceil(((tmp-yearStart)/86400000+1)/7);
+  return tmp.getUTCFullYear()+'-W'+String(week).padStart(2,'0');
+}
+function gameInPeriod(dateStr){
+  if(!dateStr)return true;
+  const d=String(dateStr).slice(0,10);
+  if(gameConfig.startDate&&d<gameConfig.startDate)return false;
+  if(gameConfig.endDate&&d>gameConfig.endDate)return false;
+  return true;
+}
+function computeGamePoints(name){
+  const key=String(name||'').toLowerCase();
+  const parts={ore:0,rifornimento:0,figurine:0,antenna:0,giurato:0};
+  const info={ore:{},rifornimento:{},figurine:{},antenna:{},giurato:{}};
+  // Ore Motore: registrazioni dell'autista — 30pt ogni 5 giorni di fila + 5pt bonus dopo le 12:00
+  const myRecs=records.filter(r=>r.autista&&r.autista.toLowerCase()===key&&gameInPeriod(r.data));
+  const days=[...new Set(myRecs.map(r=>r.data&&r.data.slice(0,10)).filter(Boolean))].sort();
+  let streaks=0,run=days.length?1:0;
+  for(let i=1;i<days.length;i++){
+    const diff=Math.round((new Date(days[i]+'T00:00:00')-new Date(days[i-1]+'T00:00:00'))/86400000);
+    run=(diff===1)?run+1:1;
+    if(run===5){streaks++;run=0;}
+  }
+  const afternoon=myRecs.filter(r=>{const t=r.salvato?new Date(r.salvato):null;return t&&!isNaN(t)&&t.getHours()>=12;}).length;
+  parts.ore=streaks*30+afternoon*5;
+  info.ore={giorni:days.length,streaks,afternoon};
+  // Figurine approvate: 25pt per settimana con almeno una approvata
+  const myFig=gameFigurine.filter(f=>f.owner&&f.owner.toLowerCase()===key&&f.status==='approved');
+  const figWeeks=new Set(myFig.map(f=>gameWeekKey(f.reviewedAt||f.uploadedAt)).filter(Boolean));
+  parts.figurine=figWeeks.size*25;
+  info.figurine={approvate:myFig.length,settimane:figWeeks.size};
+  // Antenna Alzata: 10pt per messaggio letto entro 6h dalla pubblicazione
+  const reads=gameMsgReads[key]||{};
+  let antennaCount=0;
+  Object.keys(reads).forEach(mid=>{
+    const msg=attMessages.find(m=>String(m.id)===String(mid));
+    const created=msg?msg.createdAt:Number(mid);
+    if(created&&(reads[mid]-created)<=6*3600*1000)antennaCount++;
+  });
+  parts.antenna=antennaCount*10;
+  info.antenna={letti:Object.keys(reads).length,inTempo:antennaCount};
+  // Mister Pieno: settimane in cui l'autista ha usato una barca che ha avuto un rifornimento nella stessa settimana
+  const myBoatWeeks={};
+  myRecs.forEach(r=>{const wk=gameWeekKey(r.data);if(!wk)return;(myBoatWeeks[wk]=myBoatWeeks[wk]||new Set()).add(r.mezzo);});
+  const fuelBoatWeeks={};
+  fuelRecords.filter(f=>gameInPeriod(f.data)).forEach(f=>{const wk=gameWeekKey(f.data);if(!wk)return;(fuelBoatWeeks[wk]=fuelBoatWeeks[wk]||new Set()).add(f.barca);});
+  let rifWeeks=0;
+  Object.keys(myBoatWeeks).forEach(wk=>{const fb=fuelBoatWeeks[wk];if(fb&&[...myBoatWeeks[wk]].some(b=>fb.has(b)))rifWeeks++;});
+  parts.rifornimento=rifWeeks*30;
+  info.rifornimento={settimane:rifWeeks};
+  // Il Giurato: voti sondaggi — disponibile dal blocco Sondaggi
+  parts.giurato=0;info.giurato={voti:0};
+  const total=parts.ore+parts.rifornimento+parts.figurine+parts.antenna+parts.giurato;
+  return {total,parts,info};
+}
+function openMissioniModal(){renderMissioni();document.getElementById('gameMissioniModal').classList.add('show');}
+function closeMissioniModal(){document.getElementById('gameMissioniModal').classList.remove('show');}
+function renderMissioni(){
+  const c=document.getElementById('missioniContent');if(!c)return;
+  const me=gameMyName();
+  if(!me){c.innerHTML='<p style="font-style:italic;color:var(--ink-faded);text-align:center;padding:1rem 0">Iscriviti al Torneo per vedere le tue missioni.</p>';return;}
+  const p=computeGamePoints(me);
+  const missions=[
+    {ic:'⏱️',nome:'Registrazione Ore Motore',rule:'30 pt ogni 5 giorni di fila + 5 pt se registri dopo le 12:00',pts:p.parts.ore,prog:`${p.info.ore.giorni} giorni · ${p.info.ore.streaks} serie da 5 · ${p.info.ore.afternoon} dopo le 12:00`},
+    {ic:'⛽',nome:'Mister Pieno — Rifornimento',rule:'30 pt a settimana',pts:p.parts.rifornimento,prog:`${p.info.rifornimento.settimane} settimane con rifornimento sulle tue barche`},
+    {ic:'📡',nome:'Antenna Alzata — Leggi i messaggi',rule:'10 pt per ogni messaggio letto entro 6 ore',pts:p.parts.antenna,prog:`${p.info.antenna.inTempo} in tempo su ${p.info.antenna.letti} letti`},
+    {ic:'📸',nome:'Fotografo di Bordo — Figurine',rule:'25 pt a settimana per figurine approvate',pts:p.parts.figurine,prog:`${p.info.figurine.approvate} approvate · ${p.info.figurine.settimane} settimane`},
+    {ic:'⚖️',nome:'Il Giurato — Vota i sondaggi',rule:'5 pt per ogni voto',pts:p.parts.giurato,prog:'Disponibile dai Sondaggi'},
+  ];
+  c.innerHTML=`<div style="text-align:center;margin-bottom:1rem">
+    <div style="font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;color:#0d3b66;line-height:1">${p.total}</div>
+    <div style="font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faded)">punti totali</div>
+  </div>`+missions.map(m=>`
+    <div style="border:1px solid var(--line);border-radius:6px;padding:.7rem .8rem;margin-bottom:.6rem;background:#fafaf8">
+      <div style="display:flex;align-items:center;gap:.55rem">
+        <span style="font-size:1.3rem;flex-shrink:0">${m.ic}</span>
+        <div style="flex:1;min-width:0"><div style="font-family:'Source Sans 3',sans-serif;font-weight:600;font-size:.88rem;color:var(--ink)">${m.nome}</div>
+        <div style="font-size:.7rem;color:var(--ink-faded);line-height:1.4">${m.rule}</div></div>
+        <div style="font-family:'Playfair Display',serif;font-weight:700;font-size:1.2rem;color:#0d3b66;flex-shrink:0">${m.pts}<span style="font-size:.58rem;font-weight:400;color:var(--ink-faded)"> pt</span></div>
+      </div>
+      <div style="font-size:.7rem;color:var(--blue);margin-top:.4rem">${m.prog}</div>
+    </div>`).join('');
 }
 
 // --- Figurine: Cloudinary watermark + .webp + download ---
@@ -2685,6 +2789,16 @@ function openAttModal(){
   if(!msgs.length){list.innerHTML="<p style='font-family:Source Sans 3,sans-serif;font-style:italic;color:var(--ink-faded);text-align:center;padding:1.5rem 0'>Nessun messaggio</p>";}
   else{list.innerHTML=msgs.map(m=>{const expLabel=m.expiresAt?'<div style="font-size:.65rem;color:var(--ink-faded);margin-top:.25rem">'+formatExpiry(m.expiresAt)+'</div>':'';return'<div class="att-msg"><div class="att-msg-barca">'+attTargetLabel(m.target)+'</div><div class="att-msg-text">'+m.text+'</div>'+expLabel+'</div>';}).join('');}
   document.getElementById('attModal').classList.add('show');
+  // Missione "Antenna Alzata": registra la lettura dei messaggi (solo autisti)
+  if(currentUser&&!currentUser.isAdmin&&!currentUser.isSA){recordMsgReads(currentUser.name,msgs);}
+}
+async function recordMsgReads(name,msgs){
+  if(!name||!msgs||!msgs.length)return;
+  const key=name.toLowerCase();
+  if(!gameMsgReads[key])gameMsgReads[key]={};
+  let changed=false;const now=Date.now();
+  msgs.forEach(m=>{if(m&&m.id!=null&&gameMsgReads[key][m.id]==null){gameMsgReads[key][m.id]=now;changed=true;}});
+  if(changed)await sv.gameMsgReads();
 }
 function closeAttModal(){document.getElementById('attModal').classList.remove('show');}
 document.getElementById('attModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeAttModal();});

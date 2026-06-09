@@ -1390,7 +1390,7 @@ let currentOTP=null,otpTimer=null,pendingPwChange=null,resetPwTarget=null;
 let dotItems=[],dotBarcaDotazioni={};  // dotazioni globali
 let manRecords=[];  // manutenzione
 // === GIOCO: Il Torneo della Flotta — Caccia alla Figurina ===
-const GAME_DISCLAIMER_DEFAULT='Partecipando al "Torneo della Flotta" autorizzo l\'utilizzo della mia immagine (foto e figurine) all\'interno del gioco, per le sole finalità ludiche interne alla flotta. So che la partecipazione è volontaria e che posso ritirarmi in qualsiasi momento contattando il Super Admin. I colleghi che non partecipano sono elencati nella pagina di benvenuto e la loro immagine non potrà essere usata.';
+const GAME_DISCLAIMER_DEFAULT='Questo gioco è destinato esclusivamente a scopi di intrattenimento tra colleghi di lavoro. L\'iniziativa non è in alcun modo collegata, sponsorizzata, sostenuta o amministrata da Como Classic Boats, che è pertanto sollevata da qualsiasi tipo di coinvolgimento o responsabilità. Inoltre, cliccando su "Partecipa", autorizzi il trattamento della tua immagine da parte dei colleghi di lavoro esclusivamente per le finalità di questo gioco e solo per uso interno tra colleghi.';
 let gameConfig={status:'off',active:false,startDate:'2026-06-15',endDate:'2026-10-04',nonPartecipanti:[],disclaimer:GAME_DISCLAIMER_DEFAULT}; // status: 'off' | 'test' (solo Super Admin) | 'on' (tutti)
 let gamePlayers=[]; // iscritti al gioco: {name, consentAt}
 let gameFigurine=[]; // figurine: {id, owner, url, raw, status:'pending'|'approved'|'rejected', caption, uploadedAt, reviewedAt, reviewedBy, rejectReason}
@@ -1665,7 +1665,11 @@ function refreshGameEntryBanner(){
   b.style.display=(gameConfig.status==='on')?'block':'none';
 }
 // Nome dell'iscritto memorizzato su questo dispositivo (gioco accessibile prima del login)
-function gameMyName(){try{return localStorage.getItem('ccb_game_me')||'';}catch{return'';}}
+function gameMyName(){
+  // Se un autista è loggato nel diario, l'identità di gioco è il suo nome
+  if(currentUser&&!currentUser.isAdmin&&!currentUser.isSA&&currentUser.name)return currentUser.name;
+  try{return localStorage.getItem('ccb_game_me')||'';}catch{return'';}
+}
 function isGameEnrolled(){const n=gameMyName().toLowerCase();return!!n&&gamePlayers.some(p=>p.name.toLowerCase()===n);}
 let _gamePreview=false;
 function openGameWelcome(){
@@ -1709,7 +1713,7 @@ function updateGameWelcomeState(){
   const fb=document.getElementById('gameFigurineBtn');if(fb)fb.style.display=enrolled?'block':'none';
 }
 function openGameConsent(){
-  document.getElementById('gameConsentText').textContent=gameConfig.disclaimer||GAME_DISCLAIMER_DEFAULT;
+  document.getElementById('gameConsentText').textContent=GAME_DISCLAIMER_DEFAULT;
   document.getElementById('gameConsentName').value=gameMyName();
   document.getElementById('gameConsentChk').checked=false;
   document.getElementById('gameConsentErr').classList.remove('show');
@@ -2810,9 +2814,9 @@ function toggleCustomExpiry(){
 async function addAttMsg(){
   const text=document.getElementById('attMsgText').value.trim();
   if(!text){alert('Inserisci il messaggio');return;}
-  // Leggi destinatari dalle checkbox
-  const allChecked=document.getElementById('attMsgTargetAll')?.checked;
-  const boatsChecked=[...document.querySelectorAll('.attMsgTargetBoat:checked')].map(c=>c.value);
+  // Leggi destinatari dalle righe selezionate
+  const allChecked=document.querySelector('.attMsgRowAll')?.dataset.sel==='1';
+  const boatsChecked=[...document.querySelectorAll('.attMsgRowBoat')].filter(r=>r.dataset.sel==='1').map(r=>r.dataset.boat);
   let target;
   if(allChecked){target='__all__';}
   else if(boatsChecked.length){target=boatsChecked;}
@@ -2824,10 +2828,7 @@ async function addAttMsg(){
   attMessages.push({id:Date.now(),target,text,expiresAt,createdAt:Date.now()});
   await saveAttMessages();
   document.getElementById('attMsgText').value='';document.getElementById('attMsgExpiry').value='permanent';toggleCustomExpiry();
-  // reset checkbox
-  const all=document.getElementById('attMsgTargetAll');if(all){all.checked=false;}
-  document.querySelectorAll('.attMsgTargetBoat').forEach(c=>{c.checked=false;c.disabled=false;c.parentElement.style.opacity='1';});
-  if(typeof refreshAttTargetRows==='function')refreshAttTargetRows();
+  resetAttTarget();
   renderAttMsgAdmin();updateAttBtn();
 }
 async function delAttMsg(id){if(!confirm('Eliminare messaggio?'))return;attMessages=attMessages.filter(m=>m.id!==id);await saveAttMessages();renderAttMsgAdmin();updateAttBtn();}
@@ -2841,40 +2842,33 @@ function populateAttMsgTarget(){
   const myMezzi=currentUser.isSA?allMezzi:getAdminMezzi();
   const allLabel=currentUser.isSA?'🚢 Tutte le barche':'🚢 Tutte le mie barche';
   const esc=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  let html='<label style="display:flex;align-items:center;gap:.6rem;padding:.45rem .5rem;cursor:pointer;border-radius:4px;font-family:\'Source Sans 3\',sans-serif;font-size:.95rem;font-weight:600;color:var(--red);border-bottom:1px solid var(--line-light)">'
-    +'<input type="checkbox" id="attMsgTargetAll" onchange="onAttTargetAllChange()" style="display:none">'
-    +'<span class="attMark" style="font-size:1.35rem;line-height:1;flex-shrink:0">⬜</span>'+allLabel+'</label>';
-  html+=myMezzi.map(m=>'<label class="attMsgTargetRow" style="display:flex;align-items:center;gap:.6rem;padding:.45rem .5rem;cursor:pointer;border-radius:4px;font-family:\'Source Sans 3\',sans-serif;font-size:.95rem;color:var(--ink);transition:background .12s">'
-    +'<input type="checkbox" class="attMsgTargetBoat" value="'+esc(m)+'" onchange="onAttTargetBoatChange()" style="display:none">'
-    +'<span class="attMark" style="font-size:1.35rem;line-height:1;flex-shrink:0">⬜</span>'
-    +'<span>'+esc(m)+'</span></label>').join('');
+  const rowStyle="display:flex;align-items:center;gap:.6rem;padding:.55rem .5rem;cursor:pointer;border-radius:4px;font-family:'Source Sans 3',sans-serif;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;";
+  let html='<div class="attMsgRowAll" data-sel="0" onclick="toggleAttAll()" style="'+rowStyle+'font-size:.95rem;font-weight:600;color:var(--red);border-bottom:1px solid var(--line-light)">'
+    +'<span class="attMark" style="font-size:1.4rem;line-height:1;flex-shrink:0">⬜</span><span>'+allLabel+'</span></div>';
+  html+=myMezzi.map(m=>'<div class="attMsgRowBoat" data-sel="0" data-boat="'+esc(m)+'" onclick="toggleAttBoat(this)" style="'+rowStyle+'font-size:.95rem;color:var(--ink)">'
+    +'<span class="attMark" style="font-size:1.4rem;line-height:1;flex-shrink:0">⬜</span><span>'+esc(m)+'</span></div>').join('');
   box.innerHTML=html||'<p style="font-size:.8rem;font-style:italic;color:var(--ink-faded);padding:.4rem 0">Nessuna barca disponibile.</p>';
-  refreshAttTargetRows();
 }
-// Evidenzia con ✅ le righe spuntate (feedback chiaro e ben visibile)
-function refreshAttTargetRows(){
-  const all=document.getElementById('attMsgTargetAll');
-  if(all){const m=all.parentElement.querySelector('.attMark');if(m)m.textContent=all.checked?'✅':'⬜';all.parentElement.style.background=all.checked?'rgba(192,57,43,.12)':'transparent';}
-  document.querySelectorAll('.attMsgTargetBoat').forEach(c=>{
-    const m=c.parentElement.querySelector('.attMark');if(m)m.textContent=c.checked?'✅':'⬜';
-    c.parentElement.style.background=c.checked?'rgba(192,57,43,.1)':'transparent';
-  });
+// Selezione destinatari senza checkbox native (clic affidabile su ogni dispositivo)
+function _attSetRow(el,sel){
+  if(!el)return;
+  el.dataset.sel=sel?'1':'0';
+  const m=el.querySelector('.attMark');if(m)m.textContent=sel?'✅':'⬜';
+  el.style.background=sel?'rgba(192,57,43,.12)':'transparent';
 }
-// Se spunto "Tutte" → deseleziono e disabilito le singole
-function onAttTargetAllChange(){
-  const all=document.getElementById('attMsgTargetAll');
-  document.querySelectorAll('.attMsgTargetBoat').forEach(c=>{
-    if(all.checked){c.checked=false;c.disabled=true;c.parentElement.style.opacity='.4';}
-    else{c.disabled=false;c.parentElement.style.opacity='1';}
-  });
-  refreshAttTargetRows();
+function toggleAttAll(){
+  const all=document.querySelector('.attMsgRowAll');if(!all)return;
+  const sel=all.dataset.sel!=='1';
+  _attSetRow(all,sel);
+  document.querySelectorAll('.attMsgRowBoat').forEach(r=>{_attSetRow(r,false);r.style.opacity=sel?'.45':'1';});
 }
-// Se spunto almeno una singola → "Tutte" si deseleziona da sola (mutuamente esclusive)
-function onAttTargetBoatChange(){
-  const all=document.getElementById('attMsgTargetAll');
-  const anyBoat=[...document.querySelectorAll('.attMsgTargetBoat')].some(c=>c.checked);
-  if(anyBoat&&all.checked){all.checked=false;onAttTargetAllChange();}
-  refreshAttTargetRows();
+function toggleAttBoat(el){
+  const all=document.querySelector('.attMsgRowAll');
+  if(all&&all.dataset.sel==='1'){_attSetRow(all,false);document.querySelectorAll('.attMsgRowBoat').forEach(r=>r.style.opacity='1');}
+  _attSetRow(el,el.dataset.sel!=='1');
+}
+function resetAttTarget(){
+  document.querySelectorAll('.attMsgRowAll,.attMsgRowBoat').forEach(r=>{_attSetRow(r,false);r.style.opacity='1';});
 }
 
 // =============================================

@@ -1669,7 +1669,9 @@ function showLoginErr(msg){const e=document.getElementById('loginErr');e.textCon
 function canAccessCisterna(){
   if(!currentUser)return false;
   if(currentUser.isAdmin||currentUser.isSA)return true;
-  return cisternaPerms[currentUser.name]===true;
+  const n=(currentUser.name||'').toLowerCase().trim();
+  // match tollerante (maiuscole/spazi) per evitare problemi di scrittura del nome
+  return Object.keys(cisternaPerms).some(k=>cisternaPerms[k]===true&&k.toLowerCase().trim()===n);
 }
 
 async function enterApp(){

@@ -661,6 +661,7 @@ body{padding:.8rem .3rem 3rem;}
     </div>
     <div id="fuelForm" style="display:none;position:relative;z-index:2;">
       <div class="field"><label class="fl">Barca</label><select id="fBarcoFuel"><option value="">— seleziona —</option></select></div>
+      <div class="field"><label class="fl">Autista</label><input type="text" id="fAutistaFuel" placeholder="Nome cognome"></div>
       <div class="field"><label class="fl">Data e Ora</label><input type="datetime-local" id="fDataFuel"></div>
       <div class="field"><label class="fl">Fornitori</label><select id="fFornitoreFuel"><option value="">— seleziona —</option></select></div>
       <div class="fd"><div class="pc"><div class="pi">⛽</div><div class="pl" id="pumpLabel">DIESEL</div><div class="pn" id="litriDisplay">0</div><div class="pu">Litri</div></div></div>
@@ -1575,7 +1576,7 @@ async function enterApp(){
   document.getElementById('tabsSide').style.display='flex';
   document.getElementById('fData').value=new Date().toISOString().slice(0,10);
   document.getElementById('fDataFuel').value=new Date().toISOString().slice(0,16);
-  if(!currentUser.isAdmin&&!currentUser.isSA)document.getElementById('fAutista').value=currentUser.name;
+  if(!currentUser.isAdmin&&!currentUser.isSA){document.getElementById('fAutista').value=currentUser.name;const _fa=document.getElementById('fAutistaFuel');if(_fa)_fa.value=currentUser.name;}
   document.getElementById('mediaUploadSection').style.display=(currentUser.isAdmin||currentUser.isSA)?'block':'none';
   document.querySelector('.side-tab.carburanti').style.display='flex';
   const _tg=document.getElementById('tabsGroup');
@@ -1762,11 +1763,12 @@ function gameInPeriod(dateStr){
   if(gameConfig.endDate&&d>gameConfig.endDate)return false;
   return true;
 }
+function gameMonthKey(d){const dt=new Date(d);if(isNaN(dt))return null;return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');}
 function computeGamePoints(name){
   const key=String(name||'').toLowerCase();
   const parts={ore:0,rifornimento:0,figurine:0,antenna:0,giurato:0};
   const info={ore:{},rifornimento:{},figurine:{},antenna:{},giurato:{}};
-  // Ore Motore: registrazioni dell'autista — 30pt ogni 5 giorni di fila + 5pt bonus dopo le 12:00
+  // --- Ore Motore: +30 per serie di 5 giorni di fila, -50 per ogni registrazione dopo le 12, +20 per spunta dotazioni completa ---
   const myRecs=records.filter(r=>r.autista&&r.autista.toLowerCase()===key&&gameInPeriod(r.data));
   const days=[...new Set(myRecs.map(r=>r.data&&r.data.slice(0,10)).filter(Boolean))].sort();
   let streaks=0,run=days.length?1:0;
@@ -1775,15 +1777,27 @@ function computeGamePoints(name){
     run=(diff===1)?run+1:1;
     if(run===5){streaks++;run=0;}
   }
-  const afternoon=myRecs.filter(r=>{const t=r.salvato?new Date(r.salvato):null;return t&&!isNaN(t)&&t.getHours()>=12;}).length;
-  parts.ore=streaks*30+afternoon*5;
-  info.ore={giorni:days.length,streaks,afternoon};
-  // Figurine approvate: 25pt per settimana con almeno una approvata
-  const myFig=gameFigurine.filter(f=>f.owner&&f.owner.toLowerCase()===key&&f.status==='approved');
-  const figWeeks=new Set(myFig.map(f=>gameWeekKey(f.reviewedAt||f.uploadedAt)).filter(Boolean));
-  parts.figurine=figWeeks.size*25;
-  info.figurine={approvate:myFig.length,settimane:figWeeks.size};
-  // Antenna Alzata: 10pt per messaggio letto entro 6h dalla pubblicazione
+  const after12=myRecs.filter(r=>{const t=r.salvato?new Date(r.salvato):null;return t&&!isNaN(t)&&t.getHours()>=12;}).length;
+  const serale=myRecs.filter(r=>{const d=r.dotazioni||{};return d.prosecco!=null&&d.bicchieri!=null&&d.acqua!=null&&d.carburante!=null;}).length;
+  parts.ore=streaks*30-after12*50+serale*20;
+  info.ore={giorni:days.length,streaks,after12,serale};
+  // --- Mister Pieno: rifornimenti attribuiti per nome, +30 a settimana ---
+  const myFuel=fuelRecords.filter(f=>f.autista&&f.autista.toLowerCase()===key&&gameInPeriod(f.data));
+  const fuelWeeks=new Set(myFuel.map(f=>gameWeekKey(f.data)).filter(Boolean));
+  parts.rifornimento=fuelWeeks.size*30;
+  info.rifornimento={rifornimenti:myFuel.length,settimane:fuelWeeks.size};
+  // --- Figurine: Fotografo (2/giorno x5 giorni -> +25/settimana) + Regista (mese costante -> +100) ---
+  const myFig=gameFigurine.filter(f=>f.owner&&f.owner.toLowerCase()===key);
+  const perDay={};
+  myFig.forEach(f=>{const d=(f.uploadedAt||'').slice(0,10);if(d&&gameInPeriod(d))perDay[d]=(perDay[d]||0)+1;});
+  const fullDays=Object.keys(perDay).filter(d=>perDay[d]>=2); // giorni con almeno 2 caricamenti
+  const weekFull={};fullDays.forEach(d=>{const wk=gameWeekKey(d);weekFull[wk]=(weekFull[wk]||0)+1;});
+  const fotografoWeeks=Object.keys(weekFull).filter(wk=>weekFull[wk]>=5).length;
+  const monthDays={};Object.keys(perDay).forEach(d=>{const mk=gameMonthKey(d);(monthDays[mk]=monthDays[mk]||new Set()).add(d);});
+  const registaMonths=Object.keys(monthDays).filter(mk=>monthDays[mk].size>=20).length;
+  parts.figurine=fotografoWeeks*25+registaMonths*100;
+  info.figurine={caricate:myFig.length,approvate:myFig.filter(f=>f.status==='approved').length,fotografoWeeks,registaMonths};
+  // --- Antenna Alzata: +10 per messaggio letto entro 6h dalla pubblicazione ---
   const reads=gameMsgReads[key]||{};
   let antennaCount=0;
   Object.keys(reads).forEach(mid=>{
@@ -1793,16 +1807,7 @@ function computeGamePoints(name){
   });
   parts.antenna=antennaCount*10;
   info.antenna={letti:Object.keys(reads).length,inTempo:antennaCount};
-  // Mister Pieno: settimane in cui l'autista ha usato una barca che ha avuto un rifornimento nella stessa settimana
-  const myBoatWeeks={};
-  myRecs.forEach(r=>{const wk=gameWeekKey(r.data);if(!wk)return;(myBoatWeeks[wk]=myBoatWeeks[wk]||new Set()).add(r.mezzo);});
-  const fuelBoatWeeks={};
-  fuelRecords.filter(f=>gameInPeriod(f.data)).forEach(f=>{const wk=gameWeekKey(f.data);if(!wk)return;(fuelBoatWeeks[wk]=fuelBoatWeeks[wk]||new Set()).add(f.barca);});
-  let rifWeeks=0;
-  Object.keys(myBoatWeeks).forEach(wk=>{const fb=fuelBoatWeeks[wk];if(fb&&[...myBoatWeeks[wk]].some(b=>fb.has(b)))rifWeeks++;});
-  parts.rifornimento=rifWeeks*30;
-  info.rifornimento={settimane:rifWeeks};
-  // Il Giurato: voti sondaggi — disponibile dal blocco Sondaggi
+  // --- Il Giurato: +5 per voto (dal blocco Sondaggi) ---
   parts.giurato=0;info.giurato={voti:0};
   const total=parts.ore+parts.rifornimento+parts.figurine+parts.antenna+parts.giurato;
   return {total,parts,info};
@@ -1815,11 +1820,11 @@ function renderMissioni(){
   if(!me){c.innerHTML='<p style="font-style:italic;color:var(--ink-faded);text-align:center;padding:1rem 0">Iscriviti al Torneo per vedere le tue missioni.</p>';return;}
   const p=computeGamePoints(me);
   const missions=[
-    {ic:'⏱️',nome:'Registrazione Ore Motore',rule:'30 pt ogni 5 giorni di fila + 5 pt se registri dopo le 12:00',pts:p.parts.ore,prog:`${p.info.ore.giorni} giorni · ${p.info.ore.streaks} serie da 5 · ${p.info.ore.afternoon} dopo le 12:00`},
-    {ic:'⛽',nome:'Mister Pieno — Rifornimento',rule:'30 pt a settimana',pts:p.parts.rifornimento,prog:`${p.info.rifornimento.settimane} settimane con rifornimento sulle tue barche`},
-    {ic:'📡',nome:'Antenna Alzata — Leggi i messaggi',rule:'10 pt per ogni messaggio letto entro 6 ore',pts:p.parts.antenna,prog:`${p.info.antenna.inTempo} in tempo su ${p.info.antenna.letti} letti`},
-    {ic:'📸',nome:'Fotografo di Bordo — Figurine',rule:'25 pt a settimana per figurine approvate',pts:p.parts.figurine,prog:`${p.info.figurine.approvate} approvate · ${p.info.figurine.settimane} settimane`},
-    {ic:'⚖️',nome:'Il Giurato — Vota i sondaggi',rule:'5 pt per ogni voto',pts:p.parts.giurato,prog:'Disponibile dai Sondaggi'},
+    {ic:'⏱️',nome:'Ore Motore (Spacca Minuto)',rule:'+30 ogni 5 giorni di fila · −50 per registrazione dopo le 12 · +20 spunta dotazioni',pts:p.parts.ore,prog:`${p.info.ore.giorni} giorni · ${p.info.ore.streaks} serie da 5 · ${p.info.ore.after12} dopo le 12 · ${p.info.ore.serale} spunte`},
+    {ic:'⛽',nome:'Mister Pieno — Rifornimento',rule:'+30 a settimana (registri il pieno a tuo nome)',pts:p.parts.rifornimento,prog:`${p.info.rifornimento.rifornimenti} rifornimenti · ${p.info.rifornimento.settimane} settimane`},
+    {ic:'📡',nome:'Antenna Alzata — Leggi i messaggi',rule:'+10 per messaggio letto entro 6 ore',pts:p.parts.antenna,prog:`${p.info.antenna.inTempo} in tempo su ${p.info.antenna.letti} letti`},
+    {ic:'📸',nome:'Fotografo / Regista — Figurine',rule:'+25 a settimana (2 figurine/giorno × 5 gg) · +100 al mese costante',pts:p.parts.figurine,prog:`${p.info.figurine.caricate} caricate · ${p.info.figurine.fotografoWeeks} sett. Fotografo · ${p.info.figurine.registaMonths} mesi Regista`},
+    {ic:'⚖️',nome:'Il Giurato — Vota i sondaggi',rule:'+5 per ogni voto',pts:p.parts.giurato,prog:'Disponibile dai Sondaggi'},
   ];
   c.innerHTML=`<div style="text-align:center;margin-bottom:1rem">
     <div style="font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;color:#0d3b66;line-height:1">${p.total}</div>
@@ -2333,7 +2338,7 @@ async function submitForm(){
   document.getElementById('fOre').value='';document.getElementById('fIntervento').value='';document.getElementById('fNote').value='';
   document.getElementById('fFoto').value='';document.getElementById('fotoPreview').innerHTML='';pendingFotos=[];
   document.getElementById('fPdf').value='';document.getElementById('pdfPreview').innerHTML='';pendingPdfs=[];
-  if(!currentUser.isAdmin&&!currentUser.isSA)document.getElementById('fAutista').value=currentUser.name;
+  if(!currentUser.isAdmin&&!currentUser.isSA){document.getElementById('fAutista').value=currentUser.name;const _fa=document.getElementById('fAutistaFuel');if(_fa)_fa.value=currentUser.name;}
   btn.textContent='✦ Salva nel registro';btn.disabled=false;
   renderDotazioniSera();
   const n=document.getElementById('successNote');n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2500);
@@ -2586,7 +2591,7 @@ async function submitFuel(){
   if(usaTessera&&!tesseraId){alert('Seleziona una tessera prepagata');return;}
   const tessera=tesseraId?tessereList.find(t=>t.id===tesseraId):null;
 
-  const rec={id:Date.now(),barca,data,tipo:selectedFuelType,litri,fornitori:tessera?'💳 '+tessera.nome:forn,note:document.getElementById('fNoteFuel').value.trim(),salvato:new Date().toISOString()};
+  const rec={id:Date.now(),barca,data,tipo:selectedFuelType,litri,fornitori:tessera?'💳 '+tessera.nome:forn,autista:document.getElementById('fAutistaFuel').value.trim(),note:document.getElementById('fNoteFuel').value.trim(),salvato:new Date().toISOString()};
   fuelRecords.unshift(rec);await sv.fuel();
   await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'save',`Rifornimento ${selectedFuelType.toUpperCase()} ${litri}L — ${barca}${tessera?' [💳 '+tessera.nome+']':''}`);
   if(selectedFuelType==='diesel'&&isCisternaCCB(forn)&&!tessera){
@@ -2607,7 +2612,7 @@ async function submitFuel(){
   }
 
   // Reset form
-  document.getElementById('fLitri').value='';document.getElementById('fNoteFuel').value='';document.getElementById('litriDisplay').textContent='0';
+  document.getElementById('fLitri').value='';document.getElementById('fNoteFuel').value='';document.getElementById('litriDisplay').textContent='0';if(!currentUser.isAdmin&&!currentUser.isSA)document.getElementById('fAutistaFuel').value=currentUser.name;
   const chk=document.getElementById('usaTesseraCheck');if(chk){chk.checked=false;toggleUsaTessera();}
   if(document.getElementById('fTesseraCosto'))document.getElementById('fTesseraCosto').value='';
   const n=document.getElementById('successNoteFuel');n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2500);

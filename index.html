@@ -530,6 +530,44 @@ body{padding:.8rem .3rem 3rem;}
     </div>
   </div>
 
+  <!-- DASHBOARD TORNEO (a tutto schermo) -->
+  <style>
+  #torneoDash{position:fixed;inset:0;z-index:500;display:none;flex-direction:column;overflow:hidden;
+    background:linear-gradient(180deg,#aee3f5 0%,#6cc4e6 22%,#2f95c9 48%,#1d6fa8 72%,#0e3f6b 100%);}
+  #torneoDash.show{display:flex;}
+  .td-head{position:relative;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.7rem 1rem;background:rgba(8,40,70,.55);color:#fff;backdrop-filter:blur(3px);}
+  .td-title{font-family:'Playfair Display',serif;font-style:italic;font-size:1.05rem;display:flex;align-items:center;gap:.4rem;}
+  .td-close{background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:6px;padding:.35rem .7rem;cursor:pointer;font-size:.85rem;}
+  .td-scroll{position:relative;z-index:5;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:.6rem .7rem 2rem;}
+  .td-finish{text-align:center;color:#fff;font-family:'Source Sans 3',sans-serif;font-size:.72rem;letter-spacing:.15em;opacity:.85;margin:.2rem 0 .7rem;}
+  .td-boat{position:relative;z-index:5;display:flex;align-items:center;gap:.55rem;background:rgba(255,255,255,.92);border-radius:30px;padding:.45rem .7rem;margin:0 auto .55rem;max-width:520px;box-shadow:0 4px 12px rgba(0,0,0,.18);animation:tdBob 3.5s ease-in-out infinite;}
+  .td-boat.me{outline:2px solid #ffd34d;box-shadow:0 4px 16px rgba(255,180,0,.5);}
+  .td-rank{font-size:1rem;font-weight:700;min-width:34px;text-align:center;font-family:'Playfair Display',serif;color:#0e3f6b;}
+  .td-ship{font-size:1.5rem;flex-shrink:0;}
+  .td-name{flex:1;min-width:0;font-family:'Source Sans 3',sans-serif;font-weight:600;font-size:.9rem;color:#10324f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .td-pts{font-family:'Playfair Display',serif;font-weight:700;color:#0e3f6b;font-size:1rem;}
+  .td-gia{font-size:.7rem;color:#2f6f9c;white-space:nowrap;}
+  .td-chest{background:none;border:none;cursor:pointer;font-size:1.5rem;animation:tdPulse 1.2s ease-in-out infinite;filter:drop-shadow(0 0 4px gold);}
+  .td-deco{position:absolute;z-index:1;pointer-events:none;opacity:.85;will-change:transform;}
+  .td-wave{position:absolute;left:0;right:0;bottom:0;height:120px;z-index:2;pointer-events:none;
+    background:radial-gradient(120% 100% at 50% 100%,rgba(255,255,255,.18),transparent 60%);}
+  @keyframes tdSwim{0%{transform:translateX(-12vw)}100%{transform:translateX(112vw)}}
+  @keyframes tdSwimR{0%{transform:translateX(112vw) scaleX(-1)}100%{transform:translateX(-12vw) scaleX(-1)}}
+  @keyframes tdBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  @keyframes tdPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+  @media(prefers-reduced-motion:reduce){.td-boat,.td-chest,.td-deco{animation:none!important;}}
+  </style>
+  <div id="torneoDash">
+    <div class="td-head">
+      <span class="td-title">🏆 Il Torneo della Flotta</span>
+      <span id="tdPeriod" style="font-size:.7rem;opacity:.85;font-family:'Source Sans 3',sans-serif"></span>
+      <button class="td-close" onclick="closeTorneoDash()">✕ Chiudi</button>
+    </div>
+    <div id="tdDeco"></div>
+    <div class="td-scroll"><div class="td-finish">🏁 ARRIVO · 4 Ottobre 🏁</div><div id="tdBoats"></div></div>
+    <div class="td-wave"></div>
+  </div>
+
   <!-- LOGIN SUPER ADMIN -->
 
   <div class="lp sa" id="pageSALogin">
@@ -922,6 +960,11 @@ body{padding:.8rem .3rem 3rem;}
     <div style="margin-top:1rem;position:relative;z-index:2;border-top:1px dashed var(--line);padding-top:.8rem">
       <label class="fl">📸 Figurine da approvare (<span id="saFigurinePendingCount">0</span>)</label>
       <div id="saFigurineQueue" style="margin-top:.5rem"></div>
+    </div>
+    <div style="margin-top:.9rem;position:relative;z-index:2;border-top:1px dashed var(--line);padding-top:.8rem">
+      <label class="fl">🎁 Omaggi figurine</label>
+      <p style="font-family:'Source Sans 3',sans-serif;font-size:.74rem;color:var(--ink-faded);margin:.3rem 0 .5rem;line-height:1.5">Distribuisce figurine bonus: ogni autista dal 4° posto in giù ha il 75% di probabilità di riceverne una.</p>
+      <button class="bh" onclick="saAssegnaOmaggi()">🎁 Assegna omaggi (75% dal 4° posto)</button>
     </div>
   </div>
 
@@ -1396,6 +1439,8 @@ let gameConfig={status:'off',active:false,startDate:'2026-06-15',endDate:'2026-1
 let gamePlayers=[]; // iscritti al gioco: {name, consentAt}
 let gameFigurine=[]; // figurine: {id, owner, url, raw, status:'pending'|'approved'|'rejected', caption, uploadedAt, reviewedAt, reviewedBy, rejectReason}
 let gameMsgReads={}; // letture messaggi per missione "Antenna Alzata": {nomeLower: {msgId: readTimestampMs}}
+let gameBonusFig={}; // figurine bonus (scrigni + omaggi SA): {nomeLower: numero}
+let gameChestsOpened={}; // scrigni aperti: {nomeLower: {giorno: true}}
 let _barcheConAvvisoMan=[];  // barche con avvisi manutenzione attivi (per notifica mobile)
 let fabTimer=null;
 
@@ -1407,7 +1452,7 @@ let auditPage=0;
 // =============================================
 async function init(){
   // Un solo round-trip per tutte le chiavi (prima erano 20 richieste in serie)
-  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages','game-config','game-players','game-figurine','game-msg-reads']);
+  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages','game-config','game-players','game-figurine','game-msg-reads','game-bonus-fig','game-chests-opened']);
   if(g['fleet-records'])records=g['fleet-records'];
   if(g['fleet-drivers'])drivers=g['fleet-drivers'];
   if(g['fleet-mezzi'])allMezzi=g['fleet-mezzi'];
@@ -1435,6 +1480,8 @@ async function init(){
   if(g['game-players'])gamePlayers=g['game-players'];
   if(g['game-figurine'])gameFigurine=g['game-figurine'];
   if(g['game-msg-reads'])gameMsgReads=g['game-msg-reads'];
+  if(g['game-bonus-fig'])gameBonusFig=g['game-bonus-fig'];
+  if(g['game-chests-opened'])gameChestsOpened=g['game-chests-opened'];
   purgeExpiredMessages();
   const now=new Date();
   const ds=now.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -1495,6 +1542,8 @@ const sv={
   gamePlayers:()=>dbSet('game-players',gamePlayers),
   gameFigurine:()=>dbSet('game-figurine',gameFigurine),
   gameMsgReads:()=>dbSet('game-msg-reads',gameMsgReads),
+  gameBonusFig:()=>dbSet('game-bonus-fig',gameBonusFig),
+  gameChestsOpened:()=>dbSet('game-chests-opened',gameChestsOpened),
 };
 
 async function getIP(){try{const r=await fetch('https://api.ipify.org?format=json');return(await r.json()).ip;}catch{return'N/D';}}
@@ -1741,8 +1790,119 @@ async function confirmGameJoin(){
 }
 function openGameSection(which){
   if(which==='missioni'){openMissioniModal();return;}
-  const titles={benvenuto:'👋 Benvenuto',torneo:'🏆 Il Torneo',sondaggi:'⚖️ Sondaggi'};
+  if(which==='torneo'){openTorneoDash();return;}
+  if(which==='benvenuto'){openGameWelcome();return;}
+  const titles={sondaggi:'⚖️ Sondaggi'};
   alert((titles[which]||'Sezione')+'\n\nIn arrivo nel prossimo aggiornamento del Torneo. La tua iscrizione è registrata!');
+}
+
+// =============================================
+// DASHBOARD TORNEO (Blocco 5)
+// =============================================
+function gameGiacenza(name){
+  const key=String(name||'').toLowerCase();
+  const appr=gameFigurine.filter(f=>f.owner&&f.owner.toLowerCase()===key&&f.status==='approved').length;
+  return appr+(gameBonusFig[key]||0);
+}
+function getLeaderboard(){
+  const lb=gamePlayers.map(p=>({name:p.name,points:computeGamePoints(p.name).total,giacenza:gameGiacenza(p.name)}));
+  // ordine: più punti in alto; a parità ordine alfabetico (tie-break "inserimenti retroattivi" nel Blocco 7)
+  lb.sort((a,b)=>b.points-a.points||a.name.localeCompare(b.name));
+  lb.forEach((e,i)=>e.rank=i+1);
+  return lb;
+}
+// Probabilità scrigno: 0 per i primi 3; 75% dal 4° in giù; +1% per ogni figurina oltre 10 (max 95%)
+function chestProbability(rank,giacenza){
+  if(rank<=3)return 0;
+  let p=0.75;
+  if(giacenza>10)p+=Math.min(giacenza-10,20)*0.01;
+  return Math.min(p,0.95);
+}
+// RNG deterministico (lo scrigno resta stabile nella giornata, varia di giorno in giorno)
+function _seededChance(seedStr){
+  let h=2166136261;for(let i=0;i<seedStr.length;i++){h^=seedStr.charCodeAt(i);h=Math.imul(h,16777619);}
+  return((h>>>0)%10000)/10000;
+}
+function hasChestToday(name,rank,giacenza){
+  const day=new Date().toISOString().slice(0,10);
+  return _seededChance(day+'|'+String(name).toLowerCase())<chestProbability(rank,giacenza);
+}
+function chestOpenedToday(name){
+  const day=new Date().toISOString().slice(0,10);const key=String(name).toLowerCase();
+  return!!(gameChestsOpened[key]&&gameChestsOpened[key][day]);
+}
+async function openChest(name){
+  const me=gameMyName();
+  if(!me||me.toLowerCase()!==String(name).toLowerCase()){alert('Puoi aprire solo il tuo scrigno!');return;}
+  if(chestOpenedToday(name)){alert('Hai già aperto lo scrigno di oggi 🐚');return;}
+  const day=new Date().toISOString().slice(0,10);const key=me.toLowerCase();
+  if(!gameChestsOpened[key])gameChestsOpened[key]={};
+  gameChestsOpened[key][day]=true;
+  gameBonusFig[key]=(gameBonusFig[key]||0)+1;
+  await sv.gameChestsOpened();await sv.gameBonusFig();
+  renderTorneoDash();
+  alert('🎁 Scrigno aperto! Hai trovato 1 figurina bonus 🐚');
+}
+// Decorazioni marine che variano nel corso della competizione (per settimana)
+function tdDecorations(){
+  const sets=[
+    ['🐟','🐠','🏝️','🐬','⛵'],
+    ['🦈','🐟','🐙','🏝️','🪼'],
+    ['🐬','🐠','🐢','🏝️','🐟'],
+    ['🐋','🐟','🦈','🌴','🐠'],
+  ];
+  const wk=parseInt((gameWeekKey(new Date())||'0-W0').split('W')[1]||'0',10);
+  const set=sets[wk%sets.length];
+  let html='';
+  for(let i=0;i<10;i++){
+    const e=set[i%set.length];
+    const top=8+Math.floor((i*9.3)%82);
+    const dur=10+((i*7)%16);
+    const delay=-((i*3)%18);
+    const rev=i%2===0;
+    html+=`<div class="td-deco" style="top:${top}%;font-size:${1.2+((i*0.17)%1.3).toFixed(2)}rem;animation:${rev?'tdSwim':'tdSwimR'} ${dur}s linear ${delay}s infinite">${e}</div>`;
+  }
+  return html;
+}
+function openTorneoDash(){
+  document.getElementById('tdPeriod').textContent=(gameConfig.startDate||'15/06')+' → '+(gameConfig.endDate||'04/10');
+  document.getElementById('tdDeco').innerHTML=tdDecorations();
+  renderTorneoDash();
+  document.getElementById('torneoDash').classList.add('show');
+}
+function closeTorneoDash(){document.getElementById('torneoDash').classList.remove('show');}
+function renderTorneoDash(){
+  const box=document.getElementById('tdBoats');if(!box)return;
+  const lb=getLeaderboard();
+  const me=(gameMyName()||'').toLowerCase();
+  if(!lb.length){box.innerHTML='<p style="text-align:center;color:#fff;font-style:italic;padding:2rem 0">Nessun autista iscritto al Torneo.</p>';return;}
+  const medals={1:'🥇',2:'🥈',3:'🥉'};
+  box.innerHTML=lb.map(e=>{
+    const isMe=e.name.toLowerCase()===me;
+    const chest=hasChestToday(e.name,e.rank,e.giacenza)&&!chestOpenedToday(e.name);
+    const chestBtn=chest?`<button class="td-chest" title="Scrigno con perle!" onclick="openChest('${e.name.replace(/'/g,"\\'")}')">🎁</button>`:'';
+    return`<div class="td-boat${isMe?' me':''}">
+      <span class="td-rank">${medals[e.rank]||('#'+e.rank)}</span>
+      <span class="td-ship">🚤</span>
+      <span class="td-name">${escHtml(e.name)}</span>
+      <span class="td-gia" title="Figurine in giacenza">🐚 ${e.giacenza}</span>
+      <span class="td-pts">${e.points}<span style="font-size:.6rem;font-weight:400"> pt</span></span>
+      ${chestBtn}
+    </div>`;
+  }).join('');
+}
+// Super Admin: assegna omaggi figurine (75% dal 4° posto in giù)
+async function saAssegnaOmaggi(){
+  const lb=getLeaderboard();
+  const eligibili=lb.filter(e=>e.rank>=4);
+  if(!eligibili.length){alert('Servono almeno 4 iscritti per assegnare omaggi dal 4° posto in giù.');return;}
+  if(!confirm('Assegnare omaggi figurine? Ogni autista dal 4° posto in giù ha il 75% di probabilità di riceverne una.'))return;
+  const granted=[];
+  eligibili.forEach(e=>{if(Math.random()<0.75){const k=e.name.toLowerCase();gameBonusFig[k]=(gameBonusFig[k]||0)+1;granted.push(e.name);}});
+  await sv.gameBonusFig();
+  if(currentUser)addAudit(currentUser.name,'superadmin','save','Omaggi figurine assegnati: '+(granted.join(', ')||'nessuno'));
+  renderSaGamePanel();
+  alert('🎁 Omaggio assegnato a:\n'+(granted.length?granted.join(', '):'nessuno (sorteggio 75%)'));
 }
 
 // =============================================

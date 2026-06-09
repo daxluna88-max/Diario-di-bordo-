@@ -530,6 +530,22 @@ body{padding:.8rem .3rem 3rem;}
     </div>
   </div>
 
+  <!-- MODAL: Sondaggi -->
+  <div class="att-mo" id="gameSondaggiModal">
+    <div class="att-md" style="border-color:#0d3b66;max-width:560px">
+      <div class="att-mh" style="background:#0d3b66">⚖️ Sondaggi — Vota la figurina</div>
+      <div class="att-mb">
+        <p style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);line-height:1.55;margin-bottom:.7rem">Vota la figurina più simpatica: <strong>+5 punti</strong> a voto. La più votata del mese vale <strong>+100</strong> e una figurina omaggio al suo autore. Si vota solo le figurine approvate dal Super Admin.</p>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.9rem">
+          <button class="bh" onclick="closeSondaggiModal();openMyFigurineModal()">📤 Carica figurina</button>
+          <button class="bh" onclick="closeSondaggiModal();openMyFigurineModal()">📥 Le mie figurine</button>
+        </div>
+        <div id="sondaggiContent"></div>
+      </div>
+      <div class="att-mf"><button class="bh" onclick="closeSondaggiModal()">Chiudi</button></div>
+    </div>
+  </div>
+
   <!-- DASHBOARD TORNEO (a tutto schermo) -->
   <style>
   #torneoDash{position:fixed;inset:0;z-index:500;display:none;flex-direction:column;overflow:hidden;
@@ -1452,6 +1468,7 @@ let gameMsgReads={}; // letture messaggi per missione "Antenna Alzata": {nomeLow
 let gameBonusFig={}; // figurine bonus (scrigni + omaggi SA): {nomeLower: numero}
 let gameChestsOpened={}; // scrigni aperti: {nomeLower: {giorno: true}}
 let gameFigurinePerms={}; // admin autorizzati ad approvare le figurine: {adminName: true}
+let gameVotes=[]; // voti sondaggio: {id, voter, figurinaId, week, ts}
 let _barcheConAvvisoMan=[];  // barche con avvisi manutenzione attivi (per notifica mobile)
 let fabTimer=null;
 
@@ -1463,7 +1480,7 @@ let auditPage=0;
 // =============================================
 async function init(){
   // Un solo round-trip per tutte le chiavi (prima erano 20 richieste in serie)
-  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages','game-config','game-players','game-figurine','game-msg-reads','game-bonus-fig','game-chests-opened','game-figurine-perms']);
+  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages','game-config','game-players','game-figurine','game-msg-reads','game-bonus-fig','game-chests-opened','game-figurine-perms','game-votes']);
   if(g['fleet-records'])records=g['fleet-records'];
   if(g['fleet-drivers'])drivers=g['fleet-drivers'];
   if(g['fleet-mezzi'])allMezzi=g['fleet-mezzi'];
@@ -1494,6 +1511,7 @@ async function init(){
   if(g['game-bonus-fig'])gameBonusFig=g['game-bonus-fig'];
   if(g['game-chests-opened'])gameChestsOpened=g['game-chests-opened'];
   if(g['game-figurine-perms'])gameFigurinePerms=g['game-figurine-perms'];
+  if(g['game-votes'])gameVotes=g['game-votes'];
   purgeExpiredMessages();
   const now=new Date();
   const ds=now.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -1557,6 +1575,7 @@ const sv={
   gameBonusFig:()=>dbSet('game-bonus-fig',gameBonusFig),
   gameChestsOpened:()=>dbSet('game-chests-opened',gameChestsOpened),
   gameFigurinePerms:()=>dbSet('game-figurine-perms',gameFigurinePerms),
+  gameVotes:()=>dbSet('game-votes',gameVotes),
 };
 
 async function getIP(){try{const r=await fetch('https://api.ipify.org?format=json');return(await r.json()).ip;}catch{return'N/D';}}
@@ -1804,9 +1823,50 @@ async function confirmGameJoin(){
 function openGameSection(which){
   if(which==='missioni'){openMissioniModal();return;}
   if(which==='torneo'){openTorneoDash();return;}
+  if(which==='sondaggi'){openSondaggiModal();return;}
   if(which==='benvenuto'){openGameWelcome();return;}
-  const titles={sondaggi:'⚖️ Sondaggi'};
-  alert((titles[which]||'Sezione')+'\n\nIn arrivo nel prossimo aggiornamento del Torneo. La tua iscrizione è registrata!');
+}
+
+// =============================================
+// SONDAGGI (Blocco 6)
+// =============================================
+function openSondaggiModal(){renderSondaggi();document.getElementById('gameSondaggiModal').classList.add('show');}
+function closeSondaggiModal(){document.getElementById('gameSondaggiModal').classList.remove('show');}
+function votesForFigurina(figId){return gameVotes.filter(v=>String(v.figurinaId)===String(figId)).length;}
+function renderSondaggi(){
+  const c=document.getElementById('sondaggiContent');if(!c)return;
+  const me=gameMyName();const meLow=(me||'').toLowerCase();
+  const wk=gameWeekKey(new Date());
+  const approved=gameFigurine.filter(f=>f.status==='approved');
+  if(!approved.length){c.innerHTML='<p style="font-style:italic;color:var(--ink-faded);text-align:center;padding:1rem 0">Nessuna figurina approvata da votare. Carica le tue e attendi l\'approvazione!</p>';return;}
+  const list=approved.map(f=>({f,votes:votesForFigurina(f.id)})).sort((a,b)=>b.votes-a.votes);
+  c.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.7rem">'+list.map(({f,votes})=>{
+    const mine=f.owner&&f.owner.toLowerCase()===meLow;
+    const voted=gameVotes.some(v=>v.voter&&v.voter.toLowerCase()===meLow&&String(v.figurinaId)===String(f.id)&&v.week===wk);
+    let btn;
+    if(mine)btn='<div style="font-size:.7rem;color:var(--ink-faded);text-align:center;padding:.35rem">La tua figurina</div>';
+    else if(voted)btn='<button class="bh" style="width:100%;font-size:.74rem" disabled>✓ Votata</button>';
+    else btn=`<button class="bh" style="width:100%;font-size:.74rem;background:#0d3b66;color:#fff;border-color:#0d3b66" onclick="castVote(${f.id})">🗳️ Vota (+5)</button>`;
+    return`<div style="border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fafaf8">
+      <img src="${f.url}" loading="lazy" style="width:100%;height:130px;object-fit:cover;display:block">
+      <div style="padding:.45rem .5rem">
+        <div style="font-size:.8rem;font-weight:600;color:var(--ink)">${escHtml(f.owner||'')}</div>
+        <div style="font-size:.72rem;color:var(--blue);margin:.2rem 0">🗳️ ${votes} ${votes===1?'voto':'voti'}</div>
+        ${btn}
+      </div>
+    </div>`;
+  }).join('')+'</div>';
+}
+async function castVote(figId){
+  const me=gameMyName();if(!me){alert('Iscriviti al Torneo per votare.');return;}
+  const fig=gameFigurine.find(f=>String(f.id)===String(figId));if(!fig||fig.status!=='approved')return;
+  if(fig.owner&&fig.owner.toLowerCase()===me.toLowerCase()){alert('Non puoi votare una tua figurina 😄');return;}
+  const wk=gameWeekKey(new Date());
+  if(gameVotes.some(v=>v.voter&&v.voter.toLowerCase()===me.toLowerCase()&&String(v.figurinaId)===String(figId)&&v.week===wk)){alert('Hai già votato questa figurina questa settimana.');return;}
+  gameVotes.push({id:Date.now(),voter:me,figurinaId:figId,week:wk,ts:new Date().toISOString()});
+  await sv.gameVotes();
+  renderSondaggi();
+  alert('🗳️ Voto registrato! +5 punti');
 }
 
 // =============================================
@@ -1968,8 +2028,13 @@ function computeGamePoints(name){
   const fotografoWeeks=Object.keys(weekFull).filter(wk=>weekFull[wk]>=5).length;
   const monthDays={};Object.keys(perDay).forEach(d=>{const mk=gameMonthKey(d);(monthDays[mk]=monthDays[mk]||new Set()).add(d);});
   const registaMonths=Object.keys(monthDays).filter(mk=>monthDays[mk].size>=20).length;
-  parts.figurine=fotografoWeeks*25+registaMonths*100;
-  info.figurine={caricate:myFig.length,approvate:myFig.filter(f=>f.status==='approved').length,fotografoWeeks,registaMonths};
+  // Premio mensile: +100 al proprietario della figurina più votata del mese
+  const votesByMonthFig={};
+  gameVotes.forEach(v=>{const mk=gameMonthKey(v.ts);if(!mk)return;(votesByMonthFig[mk]=votesByMonthFig[mk]||{});votesByMonthFig[mk][v.figurinaId]=(votesByMonthFig[mk][v.figurinaId]||0)+1;});
+  let premiVoti=0;
+  Object.keys(votesByMonthFig).forEach(mk=>{const counts=votesByMonthFig[mk];let bestId=null,best=0;Object.keys(counts).forEach(fid=>{if(counts[fid]>best){best=counts[fid];bestId=fid;}});if(bestId!=null){const fig=gameFigurine.find(f=>String(f.id)===String(bestId));if(fig&&fig.owner&&fig.owner.toLowerCase()===key)premiVoti++;}});
+  parts.figurine=fotografoWeeks*25+registaMonths*100+premiVoti*100;
+  info.figurine={caricate:myFig.length,approvate:myFig.filter(f=>f.status==='approved').length,fotografoWeeks,registaMonths,premiVoti};
   // --- Antenna Alzata: +10 per messaggio letto entro 6h dalla pubblicazione ---
   const reads=gameMsgReads[key]||{};
   let antennaCount=0;
@@ -1980,8 +2045,10 @@ function computeGamePoints(name){
   });
   parts.antenna=antennaCount*10;
   info.antenna={letti:Object.keys(reads).length,inTempo:antennaCount};
-  // --- Il Giurato: +5 per voto (dal blocco Sondaggi) ---
-  parts.giurato=0;info.giurato={voti:0};
+  // --- Il Giurato: +5 per ogni voto espresso ---
+  const myVotes=gameVotes.filter(v=>v.voter&&v.voter.toLowerCase()===key);
+  parts.giurato=myVotes.length*5;
+  info.giurato={voti:myVotes.length};
   const total=parts.ore+parts.rifornimento+parts.figurine+parts.antenna+parts.giurato;
   return {total,parts,info};
 }
@@ -1997,7 +2064,7 @@ function renderMissioni(){
     {ic:'⛽',nome:'Mister Pieno — Rifornimento',rule:'+30 a settimana (registri il pieno a tuo nome)',pts:p.parts.rifornimento,prog:`${p.info.rifornimento.rifornimenti} rifornimenti · ${p.info.rifornimento.settimane} settimane`},
     {ic:'📡',nome:'Antenna Alzata — Leggi i messaggi',rule:'+10 per messaggio letto entro 6 ore',pts:p.parts.antenna,prog:`${p.info.antenna.inTempo} in tempo su ${p.info.antenna.letti} letti`},
     {ic:'📸',nome:'Fotografo / Regista — Figurine',rule:'+25 a settimana (2 figurine/giorno × 5 gg) · +100 al mese costante',pts:p.parts.figurine,prog:`${p.info.figurine.caricate} caricate · ${p.info.figurine.fotografoWeeks} sett. Fotografo · ${p.info.figurine.registaMonths} mesi Regista`},
-    {ic:'⚖️',nome:'Il Giurato — Vota i sondaggi',rule:'+5 per ogni voto',pts:p.parts.giurato,prog:'Disponibile dai Sondaggi'},
+    {ic:'⚖️',nome:'Il Giurato — Vota i sondaggi',rule:'+5 per ogni voto · la figurina più votata del mese vale +100',pts:p.parts.giurato,prog:`${p.info.giurato.voti} voti espressi`},
   ];
   c.innerHTML=`<div style="text-align:center;margin-bottom:1rem">
     <div style="font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;color:#0d3b66;line-height:1">${p.total}</div>

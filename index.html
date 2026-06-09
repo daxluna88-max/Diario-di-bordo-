@@ -479,6 +479,7 @@ body{padding:.8rem .3rem 3rem;}
         <button class="lb" onclick="openGameSection('sondaggi')" style="background:#eef3f8;color:#0d3b66;border:1px solid #cdd9e6">⚖️ Sondaggi</button>
       </div>
       <button id="gameFigurineBtn" class="lb" onclick="openMyFigurineModal()" style="display:none;margin-top:.6rem;width:100%;background:linear-gradient(135deg,#1a6ca8,#0d3b66);color:#fff">📸 Le mie Figurine</button>
+      <button id="gameClassificaBtn" class="lb" onclick="openClassificaModal()" style="display:none;margin-top:.5rem;width:100%;background:#eef3f8;color:#0d3b66;border:1px solid #cdd9e6">📊 Classifica</button>
 
       <div class="sab" style="margin-top:1.4rem"><a onclick="closeGameWelcome()">← Torna al Diario di Bordo</a></div>
     </div>
@@ -543,6 +544,19 @@ body{padding:.8rem .3rem 3rem;}
         <div id="sondaggiContent"></div>
       </div>
       <div class="att-mf"><button class="bh" onclick="closeSondaggiModal()">Chiudi</button></div>
+    </div>
+  </div>
+
+  <!-- MODAL: Classifica -->
+  <div class="att-mo" id="gameClassificaModal">
+    <div class="att-md" style="border-color:#0d3b66;max-width:540px">
+      <div class="att-mh" style="background:#0d3b66">📊 Classifica</div>
+      <div class="att-mb">
+        <p style="font-family:'Source Sans 3',sans-serif;font-size:.74rem;color:var(--ink-faded);line-height:1.5;margin-bottom:.7rem">Aggiornamento in tempo reale. A parità di punti vince chi ha fatto <strong>meno inserimenti retroattivi</strong> (dati inseriti sempre sul momento).</p>
+        <div id="classificaContent"></div>
+        <div id="premiMeseContent" style="margin-top:1rem"></div>
+      </div>
+      <div class="att-mf"><button class="bh" onclick="closeClassificaModal()">Chiudi</button></div>
     </div>
   </div>
 
@@ -991,6 +1005,7 @@ body{padding:.8rem .3rem 3rem;}
       <label class="fl">🎁 Omaggi figurine</label>
       <p style="font-family:'Source Sans 3',sans-serif;font-size:.74rem;color:var(--ink-faded);margin:.3rem 0 .5rem;line-height:1.5">Distribuisce figurine bonus: ogni autista dal 4° posto in giù ha il 75% di probabilità di riceverne una.</p>
       <button class="bh" onclick="saAssegnaOmaggi()">🎁 Assegna omaggi (75% dal 4° posto)</button>
+      <button class="bh" onclick="saAssegnaPremiMese()" style="margin-top:.4rem">🏅 Assegna premi del mese (vincitori)</button>
     </div>
   </div>
 
@@ -1793,6 +1808,7 @@ function updateGameWelcomeState(){
   document.getElementById('gameJoinBox').style.display=enrolled?'none':'block';
   document.getElementById('gameMainButtons').style.display=enrolled?'grid':'none';
   const fb=document.getElementById('gameFigurineBtn');if(fb)fb.style.display=enrolled?'block':'none';
+  const cb=document.getElementById('gameClassificaBtn');if(cb)cb.style.display=enrolled?'block':'none';
 }
 function openGameConsent(){
   document.getElementById('gameConsentText').textContent=GAME_DISCLAIMER_DEFAULT;
@@ -1836,13 +1852,12 @@ function votesForFigurina(figId){return gameVotes.filter(v=>String(v.figurinaId)
 function renderSondaggi(){
   const c=document.getElementById('sondaggiContent');if(!c)return;
   const me=gameMyName();const meLow=(me||'').toLowerCase();
-  const wk=gameWeekKey(new Date());
   const approved=gameFigurine.filter(f=>f.status==='approved');
   if(!approved.length){c.innerHTML='<p style="font-style:italic;color:var(--ink-faded);text-align:center;padding:1rem 0">Nessuna figurina approvata da votare. Carica le tue e attendi l\'approvazione!</p>';return;}
   const list=approved.map(f=>({f,votes:votesForFigurina(f.id)})).sort((a,b)=>b.votes-a.votes);
   c.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.7rem">'+list.map(({f,votes})=>{
     const mine=f.owner&&f.owner.toLowerCase()===meLow;
-    const voted=gameVotes.some(v=>v.voter&&v.voter.toLowerCase()===meLow&&String(v.figurinaId)===String(f.id)&&v.week===wk);
+    const voted=gameVotes.some(v=>v.voter&&v.voter.toLowerCase()===meLow&&String(v.figurinaId)===String(f.id));
     let btn;
     if(mine)btn='<div style="font-size:.7rem;color:var(--ink-faded);text-align:center;padding:.35rem">La tua figurina</div>';
     else if(voted)btn='<button class="bh" style="width:100%;font-size:.74rem" disabled>✓ Votata</button>';
@@ -1861,12 +1876,70 @@ async function castVote(figId){
   const me=gameMyName();if(!me){alert('Iscriviti al Torneo per votare.');return;}
   const fig=gameFigurine.find(f=>String(f.id)===String(figId));if(!fig||fig.status!=='approved')return;
   if(fig.owner&&fig.owner.toLowerCase()===me.toLowerCase()){alert('Non puoi votare una tua figurina 😄');return;}
-  const wk=gameWeekKey(new Date());
-  if(gameVotes.some(v=>v.voter&&v.voter.toLowerCase()===me.toLowerCase()&&String(v.figurinaId)===String(figId)&&v.week===wk)){alert('Hai già votato questa figurina questa settimana.');return;}
-  gameVotes.push({id:Date.now(),voter:me,figurinaId:figId,week:wk,ts:new Date().toISOString()});
+  if(gameVotes.some(v=>v.voter&&v.voter.toLowerCase()===me.toLowerCase()&&String(v.figurinaId)===String(figId))){alert('Hai già votato questa figurina.');return;}
+  gameVotes.push({id:Date.now(),voter:me,figurinaId:figId,week:gameWeekKey(new Date()),ts:new Date().toISOString()});
   await sv.gameVotes();
   renderSondaggi();
   alert('🗳️ Voto registrato! +5 punti');
+}
+
+// =============================================
+// CLASSIFICA + PREMI DEL MESE (Blocco 7)
+// =============================================
+function openClassificaModal(){renderClassifica();document.getElementById('gameClassificaModal').classList.add('show');}
+function closeClassificaModal(){document.getElementById('gameClassificaModal').classList.remove('show');}
+function monthLeaders(){
+  const m=gameMonthKey(new Date());
+  const lb=getLeaderboard();
+  const general=lb[0]||null;
+  const rifBy={};fuelRecords.forEach(f=>{if(f.autista&&gameMonthKey(f.data)===m)rifBy[f.autista]=(rifBy[f.autista]||0)+1;});
+  let rifName=null,rifMax=0;Object.keys(rifBy).forEach(k=>{if(rifBy[k]>rifMax){rifMax=rifBy[k];rifName=k;}});
+  const vBy={};gameVotes.forEach(v=>{if(gameMonthKey(v.ts)===m)vBy[v.figurinaId]=(vBy[v.figurinaId]||0)+1;});
+  let figId=null,figMax=0;Object.keys(vBy).forEach(fid=>{if(vBy[fid]>figMax){figMax=vBy[fid];figId=fid;}});
+  const figOwner=figId!=null?((gameFigurine.find(f=>String(f.id)===String(figId))||{}).owner||null):null;
+  return {month:m,general,rif:{name:rifName,count:rifMax},fig:{owner:figOwner,votes:figMax}};
+}
+function renderClassifica(){
+  const c=document.getElementById('classificaContent');if(!c)return;
+  const lb=getLeaderboard();const me=(gameMyName()||'').toLowerCase();
+  if(!lb.length){c.innerHTML='<p style="font-style:italic;color:var(--ink-faded);text-align:center;padding:1rem 0">Nessun autista iscritto al Torneo.</p>';}
+  else{
+    const medals={1:'🥇',2:'🥈',3:'🥉'};
+    c.innerHTML='<div style="display:flex;flex-direction:column;gap:.3rem">'+lb.map(e=>`
+      <div style="display:flex;align-items:center;gap:.5rem;padding:.45rem .6rem;border-radius:6px;background:${e.name.toLowerCase()===me?'rgba(13,59,102,.1)':'#fafaf8'};border:1px solid var(--line)">
+        <span style="min-width:32px;text-align:center;font-weight:700;font-family:'Playfair Display',serif;color:#0d3b66">${medals[e.rank]||('#'+e.rank)}</span>
+        <span style="flex:1;font-family:'Source Sans 3',sans-serif;font-weight:600;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(e.name)}</span>
+        <span style="font-size:.64rem;color:var(--ink-faded)" title="Inserimenti retroattivi (tie-break)">↩︎${e.retro}</span>
+        <span style="font-family:'Playfair Display',serif;font-weight:700;color:#0d3b66">${e.points}<span style="font-size:.58rem;font-weight:400"> pt</span></span>
+      </div>`).join('')+'</div>';
+  }
+  const ml=monthLeaders();const pc=document.getElementById('premiMeseContent');
+  if(pc){
+    pc.innerHTML=`<div style="border-top:1px dashed var(--line);padding-top:.7rem">
+      <div style="font-family:'Playfair Display',serif;font-style:italic;color:#0d3b66;margin-bottom:.5rem">🏅 Premi del mese (${ml.month})</div>
+      <div style="font-size:.82rem;color:var(--ink);line-height:1.8">
+        🏆 In testa alla classifica: <strong>${ml.general?escHtml(ml.general.name):'—'}</strong><br>
+        ⛽ Re del Rifornimento: <strong>${ml.rif.name?escHtml(ml.rif.name):'—'}</strong> ${ml.rif.count?`(${ml.rif.count} pieni)`:''}<br>
+        ⚖️ Figurina più votata: <strong>${ml.fig.owner?escHtml(ml.fig.owner):'—'}</strong> ${ml.fig.votes?`(${ml.fig.votes} voti)`:''}
+      </div>
+      <div style="font-size:.7rem;color:var(--ink-faded);margin-top:.4rem">A fine mese i vincitori ricevono una figurina omaggio (assegnata dal Super Admin).</div>
+    </div>`;
+  }
+}
+// Super Admin: assegna 1 figurina omaggio ai vincitori del mese (classifica, rifornimento, figurina più votata)
+async function saAssegnaPremiMese(){
+  const ml=monthLeaders();
+  const winners=new Set();
+  if(ml.general)winners.add(ml.general.name.toLowerCase());
+  if(ml.rif.name)winners.add(ml.rif.name.toLowerCase());
+  if(ml.fig.owner)winners.add(ml.fig.owner.toLowerCase());
+  if(!winners.size){alert('Nessun vincitore da premiare questo mese.');return;}
+  const names=[...winners];
+  if(!confirm('Assegnare 1 figurina omaggio a: '+names.join(', ')+'?'))return;
+  names.forEach(k=>{gameBonusFig[k]=(gameBonusFig[k]||0)+1;});
+  await sv.gameBonusFig();
+  if(currentUser)addAudit(currentUser.name,'superadmin','save','Premi del mese assegnati: '+names.join(', '));
+  alert('🏅 Figurine omaggio assegnate ai vincitori del mese.');
 }
 
 // =============================================
@@ -1877,10 +1950,17 @@ function gameGiacenza(name){
   const appr=gameFigurine.filter(f=>f.owner&&f.owner.toLowerCase()===key&&f.status==='approved').length;
   return appr+(gameBonusFig[key]||0);
 }
+// Inserimenti retroattivi: registrazioni/rifornimenti salvati in un giorno successivo alla data a cui si riferiscono
+function retroInsertions(name){
+  const key=String(name||'').toLowerCase();let n=0;
+  records.forEach(r=>{if(r.autista&&r.autista.toLowerCase()===key&&r.data&&r.salvato&&r.salvato.slice(0,10)>r.data.slice(0,10))n++;});
+  fuelRecords.forEach(f=>{if(f.autista&&f.autista.toLowerCase()===key&&f.data&&f.salvato&&f.salvato.slice(0,10)>f.data.slice(0,10))n++;});
+  return n;
+}
 function getLeaderboard(){
-  const lb=gamePlayers.map(p=>({name:p.name,points:computeGamePoints(p.name).total,giacenza:gameGiacenza(p.name)}));
-  // ordine: più punti in alto; a parità ordine alfabetico (tie-break "inserimenti retroattivi" nel Blocco 7)
-  lb.sort((a,b)=>b.points-a.points||a.name.localeCompare(b.name));
+  const lb=gamePlayers.map(p=>({name:p.name,points:computeGamePoints(p.name).total,giacenza:gameGiacenza(p.name),retro:retroInsertions(p.name)}));
+  // ordine: più punti; a parità vince chi ha MENO inserimenti retroattivi; poi alfabetico
+  lb.sort((a,b)=>b.points-a.points||a.retro-b.retro||a.name.localeCompare(b.name));
   lb.forEach((e,i)=>e.rank=i+1);
   return lb;
 }

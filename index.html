@@ -588,42 +588,61 @@ body{padding:.8rem .3rem 3rem;}
 
   <!-- DASHBOARD TORNEO (a tutto schermo) -->
   <style>
-  #torneoDash{position:fixed;inset:0;z-index:500;display:none;flex-direction:column;overflow:hidden;
-    background:linear-gradient(180deg,#78c8f0 0%,#3aaae0 18%,#1a7ccc 42%,#0d5aa8 68%,#073880 100%);}
+  #torneoDash{position:fixed;inset:0;z-index:500;display:none;flex-direction:column;overflow:hidden;}
   #torneoDash.show{display:flex;}
-  .td-head{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.7rem 1rem;background:rgba(5,25,55,.65);color:#fff;backdrop-filter:blur(4px);}
+  .td-head{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.7rem 1rem;background:rgba(5,25,55,.75);color:#fff;backdrop-filter:blur(4px);}
   .td-title{font-family:'Playfair Display',serif;font-style:italic;font-size:1.05rem;display:flex;align-items:center;gap:.4rem;}
   .td-close{background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:6px;padding:.35rem .7rem;cursor:pointer;font-size:.85rem;}
-  .td-scroll{position:relative;z-index:4;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:.6rem .7rem 9rem;}
-  .td-finish{text-align:center;color:rgba(255,255,255,.9);font-family:'Source Sans 3',sans-serif;font-size:.72rem;letter-spacing:.15em;margin:.2rem 0 .9rem;}
-  /* Leaderboard entries con barche SVG */
-  .td-entry{display:flex;align-items:center;gap:.45rem;background:rgba(255,255,255,.88);border-radius:14px;padding:.42rem .6rem;margin:0 auto .5rem;max-width:520px;box-shadow:0 3px 14px rgba(0,0,0,.22);animation:tdBob 3.6s ease-in-out infinite;}
-  .td-entry.me{outline:2.5px solid #ffd34d;box-shadow:0 4px 18px rgba(255,180,0,.55);}
-  .td-entry-rank{font-size:1.05rem;min-width:26px;text-align:center;flex-shrink:0;}
-  .td-entry-boat{width:68px;flex-shrink:0;display:flex;justify-content:center;align-items:center;}
-  .td-boat-svg{width:68px;height:58px;overflow:visible;}
+  /* Ocean stage */
+  .td-stage{flex:1;position:relative;overflow:hidden;
+    background:linear-gradient(180deg,#c0e8f8 0%,#7ec8f0 12%,#3aaae0 28%,#1a7ccc 50%,#0d5aa8 72%,#063575 100%);}
+  .td-stage-scroll{position:absolute;inset:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;}
+  .td-race-scene{height:100%;position:relative;min-width:100%;}
+  /* Boats on water */
+  .td-sea-boat{position:absolute;bottom:158px;width:88px;margin-left:-44px;display:flex;flex-direction:column;align-items:center;animation:tdBob 3.6s ease-in-out infinite;animation-fill-mode:both;}
+  .td-sea-rank{text-align:center;font-size:.82rem;color:rgba(255,255,255,.95);text-shadow:0 1px 5px rgba(0,0,0,.9);margin-bottom:-2px;font-weight:700;line-height:1.1;}
+  .td-boat-stage-svg{width:88px;height:74px;overflow:visible;filter:drop-shadow(0 4px 9px rgba(0,0,0,.4));}
+  .td-sea-boat-me .td-boat-stage-svg{filter:drop-shadow(0 0 12px #ffd34d) drop-shadow(0 4px 9px rgba(0,0,0,.4));}
+  /* Race markers */
+  .td-start-marker{position:absolute;left:8px;bottom:158px;display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .td-finish-island{position:absolute;right:8px;bottom:128px;display:flex;flex-direction:column;align-items:center;gap:2px;}
+  /* Deco layer */
+  .td-deco{position:absolute;z-index:1;pointer-events:none;opacity:.88;will-change:transform;}
+  .td-whale{position:absolute;z-index:2;pointer-events:none;}
+  /* Waves */
+  .td-waves-wrap{position:absolute;left:0;right:0;bottom:0;height:162px;z-index:3;pointer-events:none;overflow:hidden;}
+  .td-wave-svg{position:absolute;bottom:0;width:200%;left:0;}
+  /* Bottom leaderboard sheet */
+  .td-lb-bar{position:relative;z-index:10;background:rgba(5,22,55,.92);backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,.15);color:#fff;}
+  .td-lb-handle{display:flex;align-items:center;gap:.55rem;padding:.55rem 1rem .48rem;cursor:pointer;user-select:none;}
+  .td-lb-handle-pill{width:36px;height:4px;background:rgba(255,255,255,.28);border-radius:2px;flex-shrink:0;}
+  .td-lb-handle-text{flex:1;font-family:'Source Sans 3',sans-serif;font-size:.88rem;font-weight:600;letter-spacing:.02em;}
+  .td-lb-chevron-icon{font-size:.65rem;color:rgba(255,255,255,.6);transition:transform .3s;}
+  .td-lb-chevron-icon.open{transform:rotate(180deg);}
+  .td-lb-panel{max-height:0;overflow:hidden;transition:max-height .42s cubic-bezier(.4,0,.2,1);}
+  .td-lb-panel.open{max-height:55vh;overflow-y:auto;padding-bottom:.5rem;}
+  /* Leaderboard entries */
+  .td-entry{display:flex;align-items:center;gap:.45rem;background:rgba(255,255,255,.9);border-radius:12px;padding:.4rem .55rem;margin:.3rem .6rem;max-width:calc(100% - 1.2rem);box-shadow:0 2px 10px rgba(0,0,0,.2);}
+  .td-entry.me{outline:2.5px solid #ffd34d;box-shadow:0 3px 14px rgba(255,180,0,.5);}
+  .td-entry-rank{font-size:1.0rem;min-width:26px;text-align:center;flex-shrink:0;}
+  .td-entry-boat{width:54px;flex-shrink:0;display:flex;justify-content:center;align-items:center;}
+  .td-boat-svg{width:54px;height:45px;overflow:visible;}
   .td-entry-info{flex:1;min-width:0;}
   .td-entry-name{font-family:'Source Sans 3',sans-serif;font-weight:700;font-size:.86rem;color:#0a2a3a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .td-entry-stats{display:flex;gap:.45rem;flex-wrap:wrap;font-family:'Source Sans 3',sans-serif;font-size:.7rem;color:#2860a0;margin-top:.08rem;}
-  .td-pts-lbl{font-family:'Playfair Display',serif;font-weight:700;color:#0d3b66;font-size:.86rem;}
-  .td-chest{background:none;border:none;cursor:pointer;font-size:1.35rem;animation:tdPulse 1.2s ease-in-out infinite;filter:drop-shadow(0 0 4px gold);flex-shrink:0;}
-  /* Marine decorations */
-  .td-deco{position:absolute;z-index:1;pointer-events:none;opacity:.88;will-change:transform;}
-  .td-island-wrap{position:absolute;top:52px;right:6px;width:95px;z-index:3;pointer-events:none;}
-  .td-whale{position:absolute;z-index:2;pointer-events:none;}
-  /* Onde animate */
-  .td-waves-wrap{position:absolute;left:0;right:0;bottom:0;height:145px;z-index:5;pointer-events:none;overflow:hidden;}
-  .td-wave-svg{position:absolute;bottom:0;width:200%;left:0;}
+  .td-entry-stats{display:flex;gap:.45rem;font-family:'Source Sans 3',sans-serif;font-size:.7rem;color:#2860a0;margin-top:.06rem;}
+  .td-pts-lbl{font-family:'Playfair Display',serif;font-weight:700;color:#0d3b66;font-size:.84rem;}
+  .td-chest{background:none;border:none;cursor:pointer;font-size:1.25rem;animation:tdPulse 1.2s ease-in-out infinite;filter:drop-shadow(0 0 4px gold);flex-shrink:0;}
   /* Animazioni */
   @keyframes tdSwim{0%{transform:translateX(-15vw)}100%{transform:translateX(115vw)}}
   @keyframes tdSwimR{0%{transform:translateX(115vw) scaleX(-1)}100%{transform:translateX(-15vw) scaleX(-1)}}
-  @keyframes tdBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  @keyframes tdBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
   @keyframes tdPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
   @keyframes tdWave1{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
   @keyframes tdWave2{0%{transform:translateX(-50%)}100%{transform:translateX(0)}}
+  @keyframes tdWave3{0%{transform:translateX(-25%)}100%{transform:translateX(-75%)}}
   @keyframes tdWhaleSwim{0%{left:110%}100%{left:-20%}}
   @keyframes tdSpout{0%,55%,100%{opacity:0;transform:scaleY(0)}68%,82%{opacity:1;transform:scaleY(1)}}
-  @media(prefers-reduced-motion:reduce){.td-entry,.td-chest,.td-deco,.td-whale,.td-wave-svg{animation:none!important;}}
+  @media(prefers-reduced-motion:reduce){.td-sea-boat,.td-chest,.td-deco,.td-whale,.td-wave-svg{animation:none!important;}.td-sea-boat{transform:none!important;}}
   </style>
   <div id="torneoDash">
     <div class="td-head">
@@ -631,10 +650,27 @@ body{padding:.8rem .3rem 3rem;}
       <span id="tdPeriod" style="font-size:.7rem;opacity:.85;font-family:'Source Sans 3',sans-serif"></span>
       <button class="td-close" onclick="closeTorneoDash()">✕ Chiudi</button>
     </div>
-    <div id="tdDeco" style="position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden"></div>
-    <div class="td-island-wrap" id="tdIsland"></div>
-    <div class="td-scroll"><div class="td-finish" id="tdFinishLine">🏁 ARRIVO · 4 Ottobre 🏁</div><div id="tdBoats"></div></div>
-    <div class="td-waves-wrap" id="tdWaves"></div>
+    <div class="td-stage">
+      <div class="td-stage-scroll" id="tdStageScroll">
+        <div class="td-race-scene" id="tdRaceScene">
+          <div class="td-start-marker" id="tdStartMarker"></div>
+          <div id="tdBoatLayer"></div>
+          <div class="td-finish-island" id="tdIsland"></div>
+        </div>
+      </div>
+      <div id="tdDeco" style="position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden"></div>
+      <div class="td-waves-wrap" id="tdWaves"></div>
+    </div>
+    <div class="td-lb-bar">
+      <div class="td-lb-handle" onclick="toggleTdLeaderboard()">
+        <div class="td-lb-handle-pill"></div>
+        <span class="td-lb-handle-text">📊 Classifica</span>
+        <span class="td-lb-chevron-icon" id="tdLbChevron">▲</span>
+      </div>
+      <div class="td-lb-panel" id="tdLbPanel">
+        <div id="tdBoats"></div>
+      </div>
+    </div>
   </div>
 
   <!-- LOGIN SUPER ADMIN -->
@@ -2147,9 +2183,77 @@ const GAME_DEMO=[
   {name:'Sara Gallo',points:120,giacenza:18,retro:0,img:'https://i.pravatar.cc/100?img=20'},
   {name:'Paolo Conti',points:60,giacenza:25,retro:1,img:'https://i.pravatar.cc/100?img=8'},
 ];
+function _tdBoatColors(rank){
+  const rp=[
+    {sail:'#FFD700',jib:'#FFF3A0',hull:'#1a5c8a',flag:'#e04000',txt:'#5a3000'},
+    {sail:'#D8E8F5',jib:'#F0F5FA',hull:'#4a5c7a',flag:'#1a5c9a',txt:'#1a3050'},
+    {sail:'#E89050',jib:'#F5D0A0',hull:'#6a3a10',flag:'#c03010',txt:'#4a2000'},
+  ];
+  const ep=[
+    {sail:'#90CBF0',jib:'#D8EEF8',hull:'#0d4a7a',flag:'#1a80c4',txt:'#082a50'},
+    {sail:'#8AE0B8',jib:'#C8F5E0',hull:'#0a5a3a',flag:'#1a9a60',txt:'#054030'},
+    {sail:'#D8B8F0',jib:'#EEE0FA',hull:'#4a1a6a',flag:'#8a3aaa',txt:'#35104a'},
+    {sail:'#F0E090',jib:'#FAF5D0',hull:'#6a5a0a',flag:'#c0a010',txt:'#504000'},
+    {sail:'#F0B0A0',jib:'#FAE0D8',hull:'#6a2010',flag:'#c03a10',txt:'#501008'},
+  ];
+  return rank<=3?rp[rank-1]:ep[(rank-4)%ep.length];
+}
+function _tdBoatSvgHtml(e,cls){
+  const c=_tdBoatColors(e.rank);
+  const fname=e.name.split(' ')[0];
+  const fsize=fname.length>9?5.8:fname.length>6?6.8:7.8;
+  return`<svg class="${cls}" viewBox="0 0 100 82" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <line x1="62" y1="3" x2="62" y2="66" stroke="#5a3010" stroke-width="2.5" stroke-linecap="round"/>
+    <polygon points="62,5 62,64 10,64" fill="${c.sail}" stroke="rgba(0,0,0,.12)" stroke-width="1"/>
+    <text transform="rotate(-52,37,43)" x="37" y="47" text-anchor="middle" dominant-baseline="middle" font-family="'Source Sans 3',Arial,sans-serif" font-size="${fsize}" font-weight="700" fill="${c.txt}">${escHtml(fname)}</text>
+    <polygon points="62,20 62,64 92,64" fill="${c.jib}" stroke="rgba(0,0,0,.1)" stroke-width="1"/>
+    <polygon points="62,3 62,15 75,9" fill="${c.flag}"/>
+    <path d="M6,66 Q52,83 96,66 L91,73 Q52,91 11,73 Z" fill="${c.hull}"/>
+    <ellipse cx="50" cy="76" rx="38" ry="4" fill="rgba(255,255,255,.2)"/>
+  </svg>`;
+}
+function renderBoatStage(lb){
+  const scene=document.getElementById('tdRaceScene');
+  const layer=document.getElementById('tdBoatLayer');
+  if(!scene||!layer)return;
+  const n=lb.length;
+  const demo=_gameDemo&&!gamePlayers.length;
+  const me=(gameMyName()||'').toLowerCase();
+  const medals={1:'🥇',2:'🥈',3:'🥉'};
+  if(!n){layer.innerHTML='';scene.style.width='';return;}
+  const leftMargin=55;
+  const rightMargin=175;
+  const minSpacing=110;
+  const screenW=window.innerWidth||375;
+  const sceneW=Math.max(screenW,leftMargin+n*minSpacing+rightMargin);
+  scene.style.width=sceneW+'px';
+  const xRight=sceneW-rightMargin;
+  const xLeft=leftMargin+44;
+  layer.innerHTML=lb.map((e,i)=>{
+    const t=n>1?(e.rank-1)/(n-1):0;
+    const xPx=Math.round(xRight-t*(xRight-xLeft));
+    const isMe=!demo&&e.name.toLowerCase()===me;
+    return`<div class="td-sea-boat${isMe?' td-sea-boat-me':''}" style="left:${xPx}px;animation-delay:${(i*0.38).toFixed(2)}s">
+      <div class="td-sea-rank">${medals[e.rank]||('#'+e.rank)}</div>
+      ${_tdBoatSvgHtml(e,'td-boat-stage-svg')}
+    </div>`;
+  }).join('');
+  const scrollEl=document.getElementById('tdStageScroll');
+  if(scrollEl&&sceneW>screenW){
+    setTimeout(()=>{scrollEl.scrollLeft=sceneW-screenW+40;},100);
+  }
+}
+function toggleTdLeaderboard(){
+  const panel=document.getElementById('tdLbPanel');
+  const chevron=document.getElementById('tdLbChevron');
+  if(!panel)return;
+  const open=panel.classList.toggle('open');
+  if(chevron)chevron.classList.toggle('open',open);
+}
 function initTdIsland(){
   const el=document.getElementById('tdIsland');if(!el)return;
-  el.innerHTML=`<svg viewBox="0 0 110 95" xmlns="http://www.w3.org/2000/svg" style="width:95px;height:auto" aria-hidden="true">
+  el.innerHTML=`<div style="font-family:'Source Sans 3',sans-serif;font-size:.55rem;letter-spacing:.1em;color:rgba(255,255,255,.75);text-align:center;margin-bottom:2px">🏁 ARRIVO</div>
+  <svg viewBox="0 0 110 95" xmlns="http://www.w3.org/2000/svg" style="width:90px;height:auto" aria-hidden="true">
     <ellipse cx="55" cy="82" rx="52" ry="14" fill="#7a5a20"/>
     <ellipse cx="55" cy="78" rx="42" ry="10" fill="#d4a840"/>
     <ellipse cx="55" cy="75" rx="34" ry="7" fill="#e8c860"/>
@@ -2169,18 +2273,20 @@ function initTdIsland(){
 }
 function initTdWaves(){
   const el=document.getElementById('tdWaves');if(!el)return;
-  const p1='M0,45 C240,12 480,78 720,45 C960,12 1200,78 1440,45 C1680,12 1920,78 2160,45 C2400,12 2640,78 2880,45 L2880,150 L0,150 Z';
-  const p2='M0,60 C200,22 400,98 600,60 C800,22 1000,98 1200,60 C1400,22 1600,98 1800,60 C2000,22 2200,98 2400,60 C2600,22 2800,98 2880,60 L2880,150 L0,150 Z';
+  const p1='M0,40 C240,8 480,72 720,40 C960,8 1200,72 1440,40 C1680,8 1920,72 2160,40 C2400,8 2640,72 2880,40 L2880,162 L0,162 Z';
+  const p2='M0,58 C160,26 360,90 560,58 C760,26 960,90 1160,58 C1360,26 1560,90 1760,58 C1960,26 2160,90 2360,58 C2560,26 2760,90 2880,58 L2880,162 L0,162 Z';
+  const p3='M0,72 C120,52 240,92 400,72 C560,52 720,92 880,72 C1040,52 1200,92 1360,72 C1520,52 1680,92 1840,72 C2000,52 2160,92 2320,72 C2480,52 2640,92 2880,72 L2880,162 L0,162 Z';
+  const foam='M0,40 C240,8 480,72 720,40 C960,8 1200,72 1440,40 C1680,8 1920,72 2160,40 C2400,8 2640,72 2880,40';
   el.innerHTML=
-    `<svg class="td-wave-svg" viewBox="0 0 2880 150" preserveAspectRatio="none" style="height:140px;animation:tdWave1 13s linear infinite"><path d="${p1}" fill="rgba(8,45,100,.42)"/></svg>`+
-    `<svg class="td-wave-svg" viewBox="0 0 2880 150" preserveAspectRatio="none" style="height:120px;animation:tdWave2 9s linear infinite"><path d="${p2}" fill="rgba(255,255,255,.22)"/></svg>`+
-    `<svg class="td-wave-svg" viewBox="0 0 2880 150" preserveAspectRatio="none" style="height:100px;animation:tdWave1 6s linear infinite"><path d="${p1}" fill="rgba(20,80,160,.32)"/></svg>`;
+    `<svg class="td-wave-svg" viewBox="0 0 2880 162" preserveAspectRatio="none" style="height:157px;animation:tdWave1 14s linear infinite"><path d="${p1}" fill="rgba(8,45,110,.45)"/><path d="${foam}" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="3.5"/></svg>`+
+    `<svg class="td-wave-svg" viewBox="0 0 2880 162" preserveAspectRatio="none" style="height:136px;animation:tdWave2 9s linear infinite"><path d="${p2}" fill="rgba(255,255,255,.18)"/></svg>`+
+    `<svg class="td-wave-svg" viewBox="0 0 2880 162" preserveAspectRatio="none" style="height:112px;animation:tdWave3 6s linear infinite"><path d="${p3}" fill="rgba(18,80,170,.3)"/></svg>`;
 }
 function initTdWhale(){
   const deco=document.getElementById('tdDeco');if(!deco)return;
   const div=document.createElement('div');
   div.className='td-whale';
-  div.style.cssText='bottom:110px;animation:tdWhaleSwim 38s linear 6s infinite';
+  div.style.cssText='bottom:118px;animation:tdWhaleSwim 40s linear 7s infinite';
   div.innerHTML=`<svg viewBox="0 0 110 65" xmlns="http://www.w3.org/2000/svg" style="width:78px;height:auto" aria-hidden="true">
     <path d="M15,32 Q5,39 10,49 Q18,43 15,32" fill="#1a5c8a"/>
     <ellipse cx="58" cy="42" rx="45" ry="16" fill="#1a5c8a"/>
@@ -2196,11 +2302,19 @@ function initTdWhale(){
 function openTorneoDash(){
   const isDemo=_gameDemo&&!gamePlayers.length;
   document.getElementById('tdPeriod').textContent=isDemo?'🎬 Anteprima (dati di esempio)':((gameConfig.startDate||'15/06')+' → '+(gameConfig.endDate||'04/10'));
-  document.getElementById('tdDeco').innerHTML=tdDecorations();
-  initTdWhale();
+  const sm=document.getElementById('tdStartMarker');
+  if(sm)sm.innerHTML='<div style="font-size:.55rem;color:rgba(255,255,255,.6);letter-spacing:.08em;text-align:center;margin-bottom:3px">PARTENZA</div><div style="font-size:1.4rem;text-align:center">🏳️</div>';
+  const deco=document.getElementById('tdDeco');
+  if(deco){deco.innerHTML=tdDecorations();initTdWhale();}
   initTdIsland();
   initTdWaves();
+  const lb=getLeaderboard();
+  renderBoatStage(lb);
   renderTorneoDash();
+  const panel=document.getElementById('tdLbPanel');
+  const chevron=document.getElementById('tdLbChevron');
+  if(panel)panel.classList.remove('open');
+  if(chevron)chevron.classList.remove('open');
   document.getElementById('torneoDash').classList.add('show');
 }
 function closeTorneoDash(){document.getElementById('torneoDash').classList.remove('show');}
@@ -2209,42 +2323,15 @@ function renderTorneoDash(){
   const lb=getLeaderboard();
   const demo=_gameDemo&&!gamePlayers.length;
   const me=(gameMyName()||'').toLowerCase();
-  if(!lb.length){box.innerHTML='<p style="text-align:center;color:#fff;font-style:italic;padding:2rem 0">Nessun autista iscritto al Torneo.</p>';return;}
+  if(!lb.length){box.innerHTML='<p style="color:rgba(255,255,255,.7);text-align:center;padding:1rem;font-style:italic">Nessun autista iscritto.</p>';return;}
   const medals={1:'🥇',2:'🥈',3:'🥉'};
-  // Sail/hull color palettes per rank
-  const rankPalette=[
-    {sail:'#FFD700',jib:'#FFF3A0',hull:'#1a5c8a',flag:'#e04000',txt:'#5a3000'},
-    {sail:'#D8E8F5',jib:'#F0F5FA',hull:'#4a5c7a',flag:'#1a5c9a',txt:'#1a3050'},
-    {sail:'#E89050',jib:'#F5D0A0',hull:'#6a3a10',flag:'#c03010',txt:'#4a2000'},
-  ];
-  const extraPalette=[
-    {sail:'#90CBF0',jib:'#D8EEF8',hull:'#0d4a7a',flag:'#1a80c4',txt:'#082a50'},
-    {sail:'#8AE0B8',jib:'#C8F5E0',hull:'#0a5a3a',flag:'#1a9a60',txt:'#054030'},
-    {sail:'#D8B8F0',jib:'#EEE0FA',hull:'#4a1a6a',flag:'#8a3aaa',txt:'#35104a'},
-    {sail:'#F0E090',jib:'#FAF5D0',hull:'#6a5a0a',flag:'#c0a010',txt:'#504000'},
-    {sail:'#F0B0A0',jib:'#FAE0D8',hull:'#6a2010',flag:'#c03a10',txt:'#501008'},
-  ];
-  function boatSvg(e){
-    const c=e.rank<=3?rankPalette[e.rank-1]:extraPalette[(e.rank-4)%extraPalette.length];
-    const fname=e.name.split(' ')[0];
-    const fsize=fname.length>9?5.8:fname.length>6?6.8:7.8;
-    return`<svg class="td-boat-svg" viewBox="0 0 100 82" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <line x1="62" y1="3" x2="62" y2="66" stroke="#5a3010" stroke-width="2.5" stroke-linecap="round"/>
-      <polygon points="62,5 62,64 10,64" fill="${c.sail}" stroke="rgba(0,0,0,.12)" stroke-width="1"/>
-      <text transform="rotate(-52,37,43)" x="37" y="47" text-anchor="middle" dominant-baseline="middle" font-family="'Source Sans 3',Arial,sans-serif" font-size="${fsize}" font-weight="700" fill="${c.txt}">${escHtml(fname)}</text>
-      <polygon points="62,20 62,64 92,64" fill="${c.jib}" stroke="rgba(0,0,0,.1)" stroke-width="1"/>
-      <polygon points="62,3 62,15 75,9" fill="${c.flag}"/>
-      <path d="M6,66 Q52,83 96,66 L91,73 Q52,91 11,73 Z" fill="${c.hull}"/>
-      <ellipse cx="50" cy="76" rx="38" ry="4" fill="rgba(255,255,255,.2)"/>
-    </svg>`;
-  }
-  box.innerHTML=(demo?'<div class="td-finish" style="color:#ffd34d;margin-bottom:.8rem">🎬 Anteprima dimostrativa</div>':'')+lb.map((e,i)=>{
+  box.innerHTML=(demo?'<div style="color:#ffd34d;font-size:.72rem;text-align:center;padding:.4rem .4rem .1rem">🎬 Anteprima dimostrativa</div>':'')+lb.map(e=>{
     const isMe=!demo&&e.name.toLowerCase()===me;
     const chest=(demo?e.rank>=4:(hasChestToday(e.name,e.rank,e.giacenza)&&!chestOpenedToday(e.name)));
     const chestBtn=chest?(demo?'<span class="td-chest">🎁</span>':`<button class="td-chest" onclick="openChest('${e.name.replace(/'/g,"\\'")}')">🎁</button>`):'';
-    return`<div class="td-entry${isMe?' me':''}" style="animation-delay:${(i*0.35).toFixed(2)}s">
+    return`<div class="td-entry${isMe?' me':''}">
       <span class="td-entry-rank">${medals[e.rank]||('#'+e.rank)}</span>
-      <div class="td-entry-boat">${boatSvg(e)}</div>
+      <div class="td-entry-boat">${_tdBoatSvgHtml(e,'td-boat-svg')}</div>
       <div class="td-entry-info">
         <div class="td-entry-name">${escHtml(e.name)}</div>
         <div class="td-entry-stats"><span class="td-pts-lbl">${e.points} pt</span><span>🐚 ${e.giacenza}</span></div>

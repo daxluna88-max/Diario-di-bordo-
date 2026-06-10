@@ -1870,7 +1870,8 @@ function renderNonPartecipanti(){
     : '<div style="font-style:italic;color:var(--ink-faded)">Al momento partecipano tutti! 🎉</div>';
 }
 function updateGameWelcomeState(){
-  const enrolled=_gamePreview||isGameEnrolled();
+  // In anteprima l'SA vede la pagina come un autista non iscritto (Partecipa + disclaimer visibili)
+  const enrolled=!_gamePreview&&isGameEnrolled();
   document.getElementById('gameJoinBox').style.display=enrolled?'none':'block';
   document.getElementById('gameMainButtons').style.display=enrolled?'grid':'none';
   const fb=document.getElementById('gameFigurineBtn');if(fb)fb.style.display=enrolled?'block':'none';
@@ -1889,6 +1890,8 @@ async function confirmGameJoin(){
   const name=document.getElementById('gameConsentName').value.trim().replace(/\s+/g,' ');
   if(!name||name.split(' ').length<2){err.textContent='Inserisci nome e cognome.';err.classList.add('show');return;}
   if(!document.getElementById('gameConsentChk').checked){err.textContent='Devi accettare il disclaimer per partecipare.';err.classList.add('show');return;}
+  // In preview: simula l'iscrizione senza salvare dati reali
+  if(_gamePreview){closeGameConsent();document.getElementById('gameMainButtons').style.display='grid';document.getElementById('gameJoinBox').style.display='none';const fb=document.getElementById('gameFigurineBtn');if(fb)fb.style.display='block';const cb=document.getElementById('gameClassificaBtn');if(cb)cb.style.display='block';return;}
   const low=name.toLowerCase();
   if(!gamePlayers.some(p=>p.name.toLowerCase()===low)){
     gamePlayers.push({name,consentAt:new Date().toISOString()});

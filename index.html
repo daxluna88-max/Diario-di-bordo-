@@ -465,10 +465,13 @@ body{padding:.8rem .3rem 3rem;}
         <div style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;font-style:italic;color:var(--ink-faded);margin-top:.5rem">Non partecipano al gioco e non si potrà usare la loro immagine.</div>
       </div>
 
-      <!-- Pulsante Partecipa (pre-iscrizione) -->
+      <!-- Pulsante Partecipa + Disclaimer visibile (pre-iscrizione) -->
       <div id="gameJoinBox" style="margin-top:1.2rem">
-        <button class="lb dark" onclick="openGameConsent()" style="width:100%;background:linear-gradient(135deg,#1a6ca8,#0d3b66)">✅ Partecipa</button>
-        <div style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink-faded);text-align:center;margin-top:.4rem">Iscrivendoti accetti il disclaimer sui diritti d'immagine.</div>
+        <div style="background:#fff8e1;border:2px solid #e6a817;border-radius:8px;padding:1rem 1.1rem;margin-bottom:1rem">
+          <div style="font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;color:#7a4f00;margin-bottom:.5rem">📜 Disclaimer</div>
+          <p style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:#4a3000;line-height:1.6;margin:0">Questo gioco è destinato esclusivamente a scopi di intrattenimento tra colleghi di lavoro. L'iniziativa non è in alcun modo collegata, sponsorizzata, sostenuta o amministrata da Como Classic Boats, che è pertanto sollevata da qualsiasi tipo di coinvolgimento o responsabilità. Inoltre, cliccando su <strong>"Partecipa"</strong>, autorizzi il trattamento della tua immagine da parte dei colleghi di lavoro esclusivamente per le finalità di questo gioco e solo per uso interno tra colleghi.</p>
+        </div>
+        <button class="lb dark" onclick="openGameConsent()" style="width:100%;background:linear-gradient(135deg,#1a6ca8,#0d3b66);font-size:1.05rem;padding:.75rem">✅ Partecipa</button>
       </div>
 
       <!-- 4 pulsanti principali (dopo iscrizione) -->
@@ -1523,7 +1526,7 @@ let currentOTP=null,otpTimer=null,pendingPwChange=null,resetPwTarget=null;
 let dotItems=[],dotBarcaDotazioni={};  // dotazioni globali
 let manRecords=[];  // manutenzione
 // === GIOCO: Il Torneo della Flotta — Caccia alla Figurina ===
-const GAME_DISCLAIMER_DEFAULT='Questo gioco è destinato esclusivamente a scopi di intrattenimento tra colleghi di lavoro. L\'iniziativa non è in alcun modo collegata, sponsorizzata, sostenuta o amministrata da Como Classic Boats, che è pertanto sollevata da qualsiasi tipo di coinvolgimento o responsabilità. Inoltre, cliccando su "Partecipa", autorizzi il trattamento della tua immagine da parte dei colleghi di lavoro esclusivamente per le finalità di questo gioco e solo per uso interno tra colleghi.';
+const GAME_DISCLAIMER_DEFAULT="Questo gioco è destinato esclusivamente a scopi di intrattenimento tra colleghi di lavoro. L'iniziativa non è in alcun modo collegata, sponsorizzata, sostenuta o amministrata da Como Classic Boats, che è pertanto sollevata da qualsiasi tipo di coinvolgimento o responsabilità. Inoltre, cliccando su 'Partecipa', autorizzi il trattamento della tua immagine da parte dei colleghi di lavoro esclusivamente per le finalità di questo gioco e solo per uso interno tra colleghi.";
 let gameConfig={status:'off',active:false,startDate:'2026-06-15',endDate:'2026-10-04',nonPartecipanti:[],disclaimer:GAME_DISCLAIMER_DEFAULT}; // status: 'off' | 'test' (solo Super Admin) | 'on' (tutti)
 let gamePlayers=[]; // iscritti al gioco: {name, consentAt}
 let gameFigurine=[]; // figurine: {id, owner, url, raw, status:'pending'|'approved'|'rejected', caption, uploadedAt, reviewedAt, reviewedBy, rejectReason}

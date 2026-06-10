@@ -949,6 +949,13 @@ body{padding:.8rem .3rem 3rem;}
     <div id="adminTessereRiepilogo"></div>
   </div>
 
+  <!-- PROVA GIOCO: visibile solo ad admin autorizzati — RIMUOVERE PRIMA DEL DEPLOY FINALE -->
+  <div class="as" id="adminGamePreviewSection" style="display:none">
+    <div class="ast">🎮 Torneo — Anteprima</div>
+    <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Prova il gioco come se fossi un autista. I dati sono di esempio, nulla viene salvato.</p>
+    <button class="bh" onclick="openGamePreview()" style="background:#0d3b66;color:#fff;border-color:#0d3b66;position:relative;z-index:2">🎮 Prova il gioco (solo tu)</button>
+  </div>
+
   <div class="as">
     <div class="ast">⚠️ Messaggi di Attenzione</div>
     <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Inserisci messaggi per gli autisti. Scegli una barca specifica o tutte, e imposta durata o scadenza.</p>
@@ -1007,8 +1014,8 @@ body{padding:.8rem .3rem 3rem;}
       <div class="field" style="flex:1;min-width:130px"><label class="fl">Fine</label><input type="date" id="gameEndDate" onchange="saSaveGameDates()" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
     </div>
     <div style="margin-top:.7rem;position:relative;z-index:2">
-      <label class="fl">Chi NON partecipa al gioco</label>
-      <p style="font-family:'Source Sans 3',sans-serif;font-size:.74rem;color:var(--ink-faded);margin:.3rem 0 .4rem;line-height:1.5">Spunta gli autisti (dalla lista registrati) che NON partecipano: compariranno nella pagina di benvenuto e la loro immagine non potrà essere usata.</p>
+      <label class="fl">Chi NON si è ancora iscritto al gioco</label>
+      <p style="font-family:'Source Sans 3',sans-serif;font-size:.74rem;color:var(--ink-faded);margin:.3rem 0 .4rem;line-height:1.5">Lista automatica: tutti gli autisti registrati che non hanno ancora cliccato "Partecipa". Man mano che si iscrivono, escono dalla lista.</p>
       <div id="saNonPartecipantiList" style="margin-top:.4rem;max-height:240px;overflow-y:auto;border:1px solid var(--line);border-radius:4px;padding:.3rem .5rem"></div>
     </div>
     <div style="margin-top:.9rem;position:relative;z-index:2">
@@ -1850,12 +1857,17 @@ function closeGameWelcome(){
 function nonPartName(p){return(typeof p==='string')?p:(((p&&p.nome)||'')+' '+((p&&p.cognome)||'')).trim();}
 function nonPartList(){return(gameConfig.nonPartecipanti||[]).map(nonPartName).filter(Boolean);}
 function isNonPartecipante(name){const n=String(name||'').toLowerCase().trim();return nonPartList().some(x=>x.toLowerCase().trim()===n);}
+// Non-partecipanti automatici: tutti i driver registrati che non si sono ancora iscritti al torneo
+function autoNonPartList(){
+  const enrolled=new Set(gamePlayers.map(p=>p.name.toLowerCase().trim()));
+  return drivers.filter(d=>!enrolled.has(d.name.toLowerCase().trim())).map(d=>d.name);
+}
 function renderNonPartecipanti(){
   const el=document.getElementById('nonPartecipantiList');if(!el)return;
-  const list=nonPartList();
+  const list=autoNonPartList();
   el.innerHTML=list.length
     ? list.map(n=>`<div>• ${escHtml(n)}</div>`).join('')
-    : '<div style="font-style:italic;color:var(--ink-faded)">Al momento partecipano tutti.</div>';
+    : '<div style="font-style:italic;color:var(--ink-faded)">Al momento partecipano tutti! 🎉</div>';
 }
 function updateGameWelcomeState(){
   const enrolled=_gamePreview||isGameEnrolled();
@@ -1877,11 +1889,7 @@ async function confirmGameJoin(){
   const name=document.getElementById('gameConsentName').value.trim().replace(/\s+/g,' ');
   if(!name||name.split(' ').length<2){err.textContent='Inserisci nome e cognome.';err.classList.add('show');return;}
   if(!document.getElementById('gameConsentChk').checked){err.textContent='Devi accettare il disclaimer per partecipare.';err.classList.add('show');return;}
-  // Blocca l'iscrizione se il nome è nella lista non-partecipanti
   const low=name.toLowerCase();
-  if(isNonPartecipante(name)){
-    err.textContent='Questo nominativo risulta tra i NON partecipanti. Contatta il Super Admin.';err.classList.add('show');return;
-  }
   if(!gamePlayers.some(p=>p.name.toLowerCase()===low)){
     gamePlayers.push({name,consentAt:new Date().toISOString()});
     await sv.gamePlayers();
@@ -2541,31 +2549,12 @@ async function saSaveGameDates(){
   gameConfig.endDate=document.getElementById('gameEndDate').value||gameConfig.endDate;
   await sv.gameConfig();
 }
-// Lista autisti registrati con spunta "non partecipa"
+// Lista automatica: chi non si è ancora iscritto (read-only)
 function renderSaNonPartecipanti(){
   const c=document.getElementById('saNonPartecipantiList');if(!c)return;
-  const list=[...drivers].sort((a,b)=>a.name.localeCompare(b.name));
-  if(!list.length){c.innerHTML='<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded)">Nessun autista registrato.</p>';return;}
-  const npSet=new Set(nonPartList().map(n=>n.toLowerCase().trim()));
-  c.innerHTML=list.map(d=>{
-    const checked=npSet.has(d.name.toLowerCase().trim());
-    return`<label style="display:flex;align-items:center;gap:.5rem;padding:.28rem .1rem;cursor:pointer;border-bottom:1px dashed var(--line-light);font-family:'Source Sans 3',sans-serif;font-size:.86rem;color:var(--ink)"><input type="checkbox" ${checked?'checked':''} onchange="toggleNonPartecipante('${d.name.replace(/'/g,"\\'")}',this.checked)" style="accent-color:var(--purple);width:16px;height:16px;cursor:pointer">${escHtml(d.name)}</label>`;
-  }).join('');
-}
-async function toggleNonPartecipante(name,val){
-  // normalizza la lista a nomi (gestendo eventuale vecchio formato)
-  let list=nonPartList();
-  const low=name.toLowerCase().trim();
-  if(val){
-    if(!list.some(n=>n.toLowerCase().trim()===low))list.push(name);
-    gamePlayers=gamePlayers.filter(p=>p.name.toLowerCase().trim()!==low); // se iscritto, lo tolgo
-  }else{
-    list=list.filter(n=>n.toLowerCase().trim()!==low);
-  }
-  gameConfig.nonPartecipanti=list;
-  const ok=await sv.gameConfig();await sv.gamePlayers();
-  if(!ok)alert('⚠️ Salvataggio non riuscito (connessione). Riprova.');
-  renderSaGamePanel();
+  const list=autoNonPartList().sort((a,b)=>a.localeCompare(b));
+  if(!list.length){c.innerHTML='<p style="font-style:italic;font-size:.82rem;color:var(--green)">✅ Tutti gli autisti si sono iscritti!</p>';return;}
+  c.innerHTML=list.map(n=>`<div style="padding:.25rem .1rem;border-bottom:1px dashed var(--line-light);font-family:'Source Sans 3',sans-serif;font-size:.86rem;color:var(--ink-faded)">⏳ ${escHtml(n)}</div>`).join('');
 }
 async function saRemoveGamePlayer(i){
   if(!gamePlayers[i])return;
@@ -2916,6 +2905,9 @@ function getAdminDrivers(){
 function renderAdmin(){
   const myMezzi=getAdminMezzi();
   const myDrivers=getAdminDrivers();
+  // Prova gioco: visibile solo ad admin "jp" — RIMUOVERE PRIMA DEL DEPLOY FINALE
+  const gpSec=document.getElementById('adminGamePreviewSection');
+  if(gpSec){const isJp=currentUser&&(currentUser.name||'').toLowerCase().replace(/\s/g,'').startsWith('jp');gpSec.style.display=isJp?'block':'none';}
   // Sezione approvazione figurine: visibile solo agli admin autorizzati dal Super Admin
   const figSec=document.getElementById('adminFigurineSection');
   if(figSec){const show=currentUser&&currentUser.isAdmin&&!currentUser.isSA&&canApproveFigurine();figSec.style.display=show?'block':'none';if(show){renderFigurineQueue();populateStaffFigOwners();}}

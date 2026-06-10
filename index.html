@@ -386,6 +386,7 @@ body{padding:.8rem .3rem 3rem;}
   0%,100%{opacity:1;}50%{opacity:.5;}
 }
 /* GIOCO */
+#giocoGate,#giocoMain{position:relative;z-index:1;}
 .gioco-disclaimer{background:#fff8f0;border:1.5px solid var(--orange);border-radius:6px;padding:.9rem 1rem;margin-bottom:1rem;font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);line-height:1.55;position:relative;z-index:2;}
 .gioco-disclaimer-title{font-weight:700;color:var(--orange);margin-bottom:.4rem;font-size:.8rem;}
 .gioco-btn-partecipa{width:100%;background:linear-gradient(135deg,#2ecc71,#27ae60);color:#fff;border:none;padding:1.1rem;font-family:'Playfair Display',serif;font-size:1.1rem;font-style:italic;cursor:pointer;border-radius:6px;margin-top:.8rem;transition:all .2s;box-shadow:0 4px 12px rgba(46,204,113,.3);position:relative;z-index:2;}
@@ -2418,6 +2419,16 @@ function openAttModal(){
   if(!msgs.length){list.innerHTML="<p style='font-family:Source Sans 3,sans-serif;font-style:italic;color:var(--ink-faded);text-align:center;padding:1.5rem 0'>Nessun messaggio</p>";}
   else{list.innerHTML=msgs.map(m=>{const expLabel=m.expiresAt?'<div style="font-size:.65rem;color:var(--ink-faded);margin-top:.25rem">'+formatExpiry(m.expiresAt)+'</div>':'';return'<div class="att-msg"><div class="att-msg-barca">'+attTargetLabel(m.target)+'</div><div class="att-msg-text">'+m.text+'</div>'+expLabel+'</div>';}).join('');}
   document.getElementById('attModal').classList.add('show');
+  // Punti gioco: +10 per lettura messaggi, max 1 volta ogni 12 ore
+  if(msgs.length&&currentUser&&giocoIsParticipant(currentUser.name)){
+    const name=currentUser.name;
+    const log=(gamePoints[name]&&gamePoints[name].log)||[];
+    const last=log.find(l=>l.desc==='Lettura messaggi');
+    const twelveH=12*60*60*1000;
+    if(!last||Date.now()-new Date(last.ts).getTime()>twelveH){
+      giocoAddPoints(name,10,'Lettura messaggi');
+    }
+  }
 }
 function closeAttModal(){document.getElementById('attModal').classList.remove('show');}
 document.getElementById('attModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeAttModal();});
@@ -3195,27 +3206,24 @@ function giocoIsNonPart(name){return gameNonParts.includes(name);}
 function renderGiocoPage(){
   if(!currentUser)return;
   const name=currentUser.name;
-  // Aggiorna lista non partecipanti
+  // Non-partecipanti = tutti i driver non ancora iscritti (automatico)
+  const autoNonParts=drivers.filter(d=>!gameParticipants.includes(d.name)).map(d=>d.name);
   const nlEl=document.getElementById('giocoNonPartsList');
   if(nlEl){
-    if(gameNonParts.length){
-      nlEl.innerHTML=gameNonParts.map(n=>`<div class="gioco-non-part-item">⛔ ${n}</div>`).join('');
+    if(autoNonParts.length){
+      nlEl.innerHTML=autoNonParts.map(n=>`<div class="gioco-non-part-item">⛔ ${n}</div>`).join('');
     }else{
-      nlEl.innerHTML='<div style="font-family:\'Source Sans 3\',sans-serif;font-size:.82rem;color:var(--ink-faded);font-style:italic">Nessun non-partecipante registrato.</div>';
+      nlEl.innerHTML='<div style="font-family:\'Source Sans 3\',sans-serif;font-size:.82rem;color:var(--green);font-style:italic">Al momento non partecipa nessuno.</div>';
     }
-  }
-  if(giocoIsNonPart(name)){
-    const el=document.getElementById('giocoNonPartNote');if(el)el.style.display='block';
-    const ps=document.getElementById('giocoParticipaSection');if(ps)ps.style.display='none';
-    document.getElementById('giocoGate').style.display='block';
-    document.getElementById('giocoMain').style.display='none';
-    return;
   }
   if(giocoIsParticipant(name)){
     document.getElementById('giocoGate').style.display='none';
     document.getElementById('giocoMain').style.display='block';
     renderGiocoHome();
   }else{
+    // Mostra gate con disclaimer e pulsante Partecipa
+    const el=document.getElementById('giocoNonPartNote');if(el)el.style.display='none';
+    const ps=document.getElementById('giocoParticipaSection');if(ps)ps.style.display='block';
     document.getElementById('giocoGate').style.display='block';
     document.getElementById('giocoMain').style.display='none';
   }
@@ -3293,7 +3301,10 @@ function giocoRankList(){
 function renderTorneo(){
   const el=document.getElementById('torneoCanvas');
   if(!el)return;
-  const ranked=giocoRankList();
+  const ranked=giocoRankList(); // solo partecipanti, ordinati per pts
+  const partNames=ranked.map(p=>p.name);
+  // Autisti non ancora iscritti mostrati "al via" in fondo
+  const nonPartRows=drivers.filter(d=>!partNames.includes(d.name)).map(d=>({name:d.name,pts:0,stickers:0,nonPart:true}));
   const boats=['⛵','🚤','🛥️','🛶','⛴️','🚢'];
   el.innerHTML=`<div class="torneo-sea-wrap">
     <div style="padding:.8rem 1rem .4rem"><div style="font-family:'Playfair Display',serif;font-size:1rem;font-style:italic;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.4)">🏆 Il Torneo della Flotta</div></div>
@@ -3313,6 +3324,16 @@ function renderTorneo(){
           <span class="torneo-sticker-count">🎴 ${stickerCount}</span>
           ${canChest&&isMe?`<span class="torneo-chest" onclick="giocoOpenChest()" title="Probabilità: ${chestProb}%">🗝️</span>`:''}
         </div>
+      </div>`;
+    }).join('')}
+    ${nonPartRows.length?`<div style="padding:.3rem 1rem .2rem;border-top:1px solid rgba(255,255,255,.12);margin-top:.2rem"><div style="font-family:'Source Sans 3',sans-serif;font-size:.62rem;color:rgba(255,255,255,.35);letter-spacing:.05em;text-transform:uppercase">Al via — in attesa di iscrizione</div></div>`:''}
+    ${nonPartRows.map((p,i)=>{
+      const isMe=currentUser&&p.name===currentUser.name;
+      return`<div class="torneo-boat-row${isMe?' me-row':''}" style="opacity:.4">
+        <span class="torneo-rank-badge">—</span>
+        <span class="torneo-boat-icon" style="filter:grayscale(1);animation:none">⛵</span>
+        <span class="torneo-driver-name" style="color:rgba(255,255,255,.6)">${p.name}${isMe?' 👤':''}</span>
+        <span class="torneo-pts-badge" style="font-size:.6rem;opacity:.7">non iscritto</span>
       </div>`;
     }).join('')}
     <div class="torneo-waves"></div>
@@ -3367,9 +3388,9 @@ function renderSondaggio(){
         <img class="sond-figurina-img" src="${s.url}" alt="Figurina" onerror="this.src=''">
         <div class="sond-figurina-info">
           <div style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;font-weight:600;color:var(--ink);margin-bottom:.3rem">📸 ${s.owner}</div>
-          <div style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink-faded);margin-bottom:.3rem">Media voti: ${giocoAvgVote(s)} / 5</div>
+          <div style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink-faded);margin-bottom:.3rem">Media voti: ${giocoAvgVote(s)} / 10</div>
           <div class="sond-vote-scale">
-            ${[1,2,3,4,5].map(v=>`<button class="sond-vote-btn${myVote===v?' sel':''}" onclick="giocoVota('${s.id}',${v})">${v}</button>`).join('')}
+            ${[1,2,3,4,5,6,7,8,9,10].map(v=>`<button class="sond-vote-btn${myVote===v?' sel':''}" onclick="giocoVota('${s.id}',${v})">${v}</button>`).join('')}
           </div>
         </div>
       </div>`;
@@ -3482,7 +3503,7 @@ function renderGiocoSA(){
     sec.style.cssText='margin-top:2rem;padding-top:1.5rem;border-top:2px dashed var(--line)';
     const parent=pg.querySelector('.pcon')||pg;parent.appendChild(sec);
   }
-  const ranked=giocoRankList();
+  const autoNonParts=drivers.filter(d=>!gameParticipants.includes(d.name)).map(d=>d.name);
   sec.innerHTML=`
     <div class="ph"><span class="ph-title" style="color:var(--blue)">🏆 Gestione Torneo della Flotta</span></div>
     <div style="margin-bottom:1rem">
@@ -3490,15 +3511,8 @@ function renderGiocoSA(){
       ${gameParticipants.length?gameParticipants.map(n=>{const pts=gamePoints[n]?gamePoints[n].total:0;const st=gameStickers.filter(s=>s.owner===n).length;return`<div class="dr"><div class="dn">${n}</div><span style="font-size:.75rem;color:var(--ink-faded)">${pts}pt · 🎴${st}</span><button class="bh red" onclick="saGiocoRimuoviPartecipante('${n}')">× rimuovi</button></div>`;}).join(''):`<div style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);font-style:italic;padding:.4rem 0">Nessun partecipante.</div>`}
     </div>
     <div style="margin-bottom:1rem">
-      <div style="font-family:'Playfair Display',serif;font-size:.85rem;font-style:italic;color:var(--ink-faded);margin-bottom:.4rem">Non partecipanti (${gameNonParts.length})</div>
-      ${gameNonParts.map((n,i)=>`<div class="dr"><div class="dn">${n}</div><button class="bh red" onclick="saGiocoRimuoviNonPart(${i})">× rimuovi</button></div>`).join('')}
-      <div style="display:flex;gap:.4rem;margin-top:.5rem">
-        <select id="saGiocoNPSelect" style="flex:1;font-family:'Source Sans 3',sans-serif;font-size:.82rem;border:1px solid var(--line);border-radius:3px;padding:.35rem">
-          <option value="">Scegli autista…</option>
-          ${drivers.filter(d=>!gameNonParts.includes(d.name)).map(d=>`<option value="${d.name}">${d.name}</option>`).join('')}
-        </select>
-        <button class="bh" onclick="saGiocoAggiungiNonPart()">+ Aggiungi</button>
-      </div>
+      <div style="font-family:'Playfair Display',serif;font-size:.85rem;font-style:italic;color:var(--ink-faded);margin-bottom:.4rem">Non ancora iscritti (${autoNonParts.length})</div>
+      ${autoNonParts.length?autoNonParts.map(n=>`<div style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);padding:.2rem .4rem">⏳ ${n}</div>`).join(''):`<div style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--green);font-style:italic;padding:.4rem 0">Tutti gli autisti si sono iscritti!</div>`}
     </div>
     <div style="margin-bottom:1rem">
       <div style="font-family:'Playfair Display',serif;font-size:.85rem;font-style:italic;color:var(--ink-faded);margin-bottom:.4rem">Assegna omaggio manuale</div>
@@ -3514,25 +3528,6 @@ function renderGiocoSA(){
   `;
 }
 
-async function saGiocoAggiungiNonPart(){
-  const sel=document.getElementById('saGiocoNPSelect');
-  if(!sel||!sel.value)return;
-  const n=sel.value;
-  if(gameNonParts.includes(n)){alert('Già nella lista.');return;}
-  gameNonParts.push(n);
-  await svGame.nonParts();
-  await addAudit(currentUser.name,'superadmin','gioco',`${n} aggiunto a non-partecipanti`);
-  renderGiocoSA();
-}
-
-async function saGiocoRimuoviNonPart(i){
-  const n=gameNonParts[i];
-  if(!confirm(`Rimuovere ${n} dalla lista non-partecipanti?`))return;
-  gameNonParts.splice(i,1);
-  await svGame.nonParts();
-  await addAudit(currentUser.name,'superadmin','gioco',`${n} rimosso da non-partecipanti`);
-  renderGiocoSA();
-}
 
 async function saGiocoRimuoviPartecipante(name){
   if(!confirm(`Rimuovere ${name} dai partecipanti al gioco?`))return;

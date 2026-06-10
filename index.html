@@ -474,15 +474,41 @@ body{padding:.8rem .3rem 3rem;}
         <button class="lb dark" onclick="openGameConsent()" style="width:100%;background:linear-gradient(135deg,#1a6ca8,#0d3b66);font-size:1.05rem;padding:.75rem">✅ Partecipa</button>
       </div>
 
-      <!-- 4 pulsanti principali (dopo iscrizione) -->
-      <div id="gameMainButtons" style="display:none;margin-top:1.2rem;grid-template-columns:1fr 1fr;gap:.6rem">
-        <button class="lb" onclick="openGameSection('benvenuto')" style="background:#eef3f8;color:#0d3b66;border:1px solid #cdd9e6">👋 Benvenuto</button>
-        <button class="lb" onclick="openGameSection('torneo')" style="background:#eef3f8;color:#0d3b66;border:1px solid #cdd9e6">🏆 Il Torneo</button>
-        <button class="lb" onclick="openGameSection('missioni')" style="background:#eef3f8;color:#0d3b66;border:1px solid #cdd9e6">🎯 Missioni</button>
-        <button class="lb" onclick="openGameSection('sondaggi')" style="background:#eef3f8;color:#0d3b66;border:1px solid #cdd9e6">⚖️ Sondaggi</button>
+      <!-- Pulsanti principali (dopo iscrizione) -->
+      <div id="gameMainButtons" style="display:none;margin-top:1.4rem;flex-direction:column;gap:.55rem">
+        <!-- CTA principale: Torneo -->
+        <button onclick="openGameSection('torneo')" style="width:100%;display:flex;align-items:center;gap:.9rem;padding:.85rem 1.1rem;background:linear-gradient(135deg,#0d3b66,#1a6ca8);color:#fff;border:none;border-radius:12px;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:1rem;font-weight:700;box-shadow:0 4px 14px rgba(13,59,102,.35)">
+          <span style="font-size:1.8rem;line-height:1">🏆</span>
+          <div style="text-align:left">
+            <div>Il Torneo della Flotta</div>
+            <div style="font-size:.72rem;font-weight:400;opacity:.82;margin-top:.1rem">Vedi la gara e la tua barca</div>
+          </div>
+          <span style="margin-left:auto;font-size:1.1rem;opacity:.7">›</span>
+        </button>
+        <!-- Riga: Missioni + Sondaggi -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem">
+          <button onclick="openGameSection('missioni')" style="display:flex;flex-direction:column;align-items:center;gap:.3rem;padding:.75rem .5rem;background:#eef5ff;color:#0d3b66;border:1.5px solid #ccd9ee;border-radius:12px;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:.9rem;font-weight:600">
+            <span style="font-size:1.6rem">🎯</span>Missioni
+          </button>
+          <button onclick="openGameSection('sondaggi')" style="display:flex;flex-direction:column;align-items:center;gap:.3rem;padding:.75rem .5rem;background:#eef5ff;color:#0d3b66;border:1.5px solid #ccd9ee;border-radius:12px;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:.9rem;font-weight:600">
+            <span style="font-size:1.6rem">⚖️</span>Sondaggi
+          </button>
+        </div>
+        <!-- Riga: Figurine + Classifica -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem">
+          <button id="gameFigurineBtn" onclick="openMyFigurineModal()" style="display:flex;flex-direction:column;align-items:center;gap:.3rem;padding:.75rem .5rem;background:linear-gradient(135deg,#1a6ca8,#0d3b66);color:#fff;border:none;border-radius:12px;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:.9rem;font-weight:600;box-shadow:0 3px 10px rgba(13,59,102,.25)">
+            <span style="font-size:1.6rem">📸</span>Le mie Figurine
+          </button>
+          <button id="gameClassificaBtn" onclick="openClassificaModal()" style="display:flex;flex-direction:column;align-items:center;gap:.3rem;padding:.75rem .5rem;background:#eef5ff;color:#0d3b66;border:1.5px solid #ccd9ee;border-radius:12px;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:.9rem;font-weight:600">
+            <span style="font-size:1.6rem">📊</span>Classifica
+          </button>
+        </div>
+        <!-- Benvenuto/info -->
+        <button onclick="openGameSection('benvenuto')" style="width:100%;display:flex;align-items:center;gap:.7rem;padding:.6rem 1rem;background:transparent;color:#6b8aaa;border:1.5px solid #ccd9ee;border-radius:10px;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:.85rem;font-weight:600">
+          <span style="font-size:1.2rem">👋</span> Benvenuto &amp; Regole
+          <span style="margin-left:auto;opacity:.5">›</span>
+        </button>
       </div>
-      <button id="gameFigurineBtn" class="lb" onclick="openMyFigurineModal()" style="display:none;margin-top:.6rem;width:100%;background:linear-gradient(135deg,#1a6ca8,#0d3b66);color:#fff">📸 Le mie Figurine</button>
-      <button id="gameClassificaBtn" class="lb" onclick="openClassificaModal()" style="display:none;margin-top:.5rem;width:100%;background:#eef3f8;color:#0d3b66;border:1px solid #cdd9e6">📊 Classifica</button>
 
       <div class="sab" style="margin-top:1.4rem"><a onclick="closeGameWelcome()">← Torna al Diario di Bordo</a></div>
     </div>
@@ -1931,9 +1957,7 @@ function updateGameWelcomeState(){
   // In anteprima l'SA vede la pagina come un autista non iscritto (Partecipa + disclaimer visibili)
   const enrolled=!_gamePreview&&isGameEnrolled();
   document.getElementById('gameJoinBox').style.display=enrolled?'none':'block';
-  document.getElementById('gameMainButtons').style.display=enrolled?'grid':'none';
-  const fb=document.getElementById('gameFigurineBtn');if(fb)fb.style.display=enrolled?'block':'none';
-  const cb=document.getElementById('gameClassificaBtn');if(cb)cb.style.display=enrolled?'block':'none';
+  document.getElementById('gameMainButtons').style.display=enrolled?'flex':'none';
 }
 function openGameConsent(){
   const isLoggedDriver=currentUser&&!currentUser.isAdmin&&!currentUser.isSA&&currentUser.name;
@@ -1961,7 +1985,7 @@ async function confirmGameJoin(){
   if(!isLoggedDriver&&(!name||name.split(' ').length<2)){err.textContent='Inserisci nome e cognome.';err.classList.add('show');return;}
   if(!document.getElementById('gameConsentChk').checked){err.textContent='Devi accettare il disclaimer per partecipare.';err.classList.add('show');return;}
   // In preview: simula l'iscrizione senza salvare dati reali
-  if(_gamePreview){closeGameConsent();document.getElementById('gameMainButtons').style.display='grid';document.getElementById('gameJoinBox').style.display='none';const fb=document.getElementById('gameFigurineBtn');if(fb)fb.style.display='block';const cb=document.getElementById('gameClassificaBtn');if(cb)cb.style.display='block';return;}
+  if(_gamePreview){closeGameConsent();document.getElementById('gameMainButtons').style.display='flex';document.getElementById('gameJoinBox').style.display='none';return;}
   const low=name.toLowerCase();
   if(!gamePlayers.some(p=>p.name.toLowerCase()===low)){
     gamePlayers.push({name,consentAt:new Date().toISOString()});
@@ -2299,25 +2323,47 @@ function tdIslandSvg(type,w){
     <ellipse cx="34" cy="93" rx="8" ry="4.5" fill="#9a7828"/>
   </svg>`;
 }
-// Isola di arrivo (banner a destra) + bandiera a scacchi
+// Isola di arrivo (banner a destra) + bandiera a scacchi — palma grandissima
 function initTdIsland(){
   const el=document.getElementById('tdIsland');if(!el)return;
   el.innerHTML=`
     <div class="td-finish-checker"></div>
-    <div style="position:absolute;top:6px;right:14px;width:104px">${tdIslandSvg('palm',104)}</div>
-    <div style="position:absolute;top:50%;right:-8px;transform:translateY(-50%) rotate(90deg);transform-origin:center;font-family:'Source Sans 3',sans-serif;font-size:.66rem;font-weight:700;letter-spacing:.22em;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);white-space:nowrap">🏁 ARRIVO</div>`;
+    <div style="position:absolute;bottom:0;right:16px;width:220px">${tdIslandSvg('palm',220)}</div>
+    <div style="position:absolute;top:8px;right:2px;font-family:'Source Sans 3',sans-serif;font-size:.6rem;font-weight:700;letter-spacing:.18em;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);writing-mode:vertical-rl;text-orientation:mixed">🏁 ARRIVO</div>`;
 }
-// Isole di sfondo (vulcano + faro), grandi
+// Isole di sfondo: vulcano, faro + palme sparse nella gara
 function initTdIslandsBg(){
   const deco=document.getElementById('tdDeco');if(!deco)return;
+  // vulcano in alto a sinistra
   const v=document.createElement('div');v.className='td-island-bg';
-  v.style.cssText='top:2%;left:3%;opacity:.95';
-  v.innerHTML=tdIslandSvg('volcano',132);
+  v.style.cssText='top:1%;left:2%;opacity:.95';
+  v.innerHTML=tdIslandSvg('volcano',140);
   deco.appendChild(v);
+  // faro a metà
   const f=document.createElement('div');f.className='td-island-bg';
-  f.style.cssText='top:1%;left:46%;opacity:.9';
-  f.innerHTML=tdIslandSvg('lighthouse',102);
+  f.style.cssText='top:1%;left:44%;opacity:.9';
+  f.innerHTML=tdIslandSvg('lighthouse',108);
   deco.appendChild(f);
+  // palma piccola in basso a sinistra
+  const p1=document.createElement('div');p1.className='td-island-bg';
+  p1.style.cssText='bottom:2%;left:6%;opacity:.88';
+  p1.innerHTML=tdIslandSvg('palm',90);
+  deco.appendChild(p1);
+  // palma media a 1/4 dall'alto, 25% da sinistra
+  const p2=document.createElement('div');p2.className='td-island-bg';
+  p2.style.cssText='top:22%;left:22%;opacity:.82';
+  p2.innerHTML=tdIslandSvg('palm',78);
+  deco.appendChild(p2);
+  // palma in fondo al centro
+  const p3=document.createElement('div');p3.className='td-island-bg';
+  p3.style.cssText='bottom:3%;left:48%;opacity:.85';
+  p3.innerHTML=tdIslandSvg('palm',86);
+  deco.appendChild(p3);
+  // palma a 3/4 orizzontale, 60% verticale
+  const p4=document.createElement('div');p4.className='td-island-bg';
+  p4.style.cssText='top:58%;left:66%;opacity:.8';
+  p4.innerHTML=tdIslandSvg('palm',74);
+  deco.appendChild(p4);
 }
 // Onde su tutto lo schermo: più creste animate distribuite in verticale
 function _swellPath(baseY,amp,period,total){
@@ -2398,6 +2444,13 @@ function openTorneoDash(){
   if(panel)panel.classList.remove('open');
   if(chevron)chevron.classList.remove('open');
   document.getElementById('torneoDash').classList.add('show');
+  // Scrolla alla corsia del mio autista
+  const _demo=_gameDemo&&!gamePlayers.length;
+  const _me=(gameMyName()||'').toLowerCase();
+  if(!_demo&&_me){
+    const myIdx=lb.findIndex(e=>e.name.toLowerCase()===_me);
+    if(myIdx>=0){const scrollEl=document.getElementById('tdStageScroll');if(scrollEl)setTimeout(()=>{scrollEl.scrollTop=Math.max(0,myIdx*94-40);},120);}
+  }
 }
 function closeTorneoDash(){document.getElementById('torneoDash').classList.remove('show');}
 function renderTorneoDash(){

@@ -3162,6 +3162,9 @@ function populateMezzoSelect(){
   else if(currentUser.isAdmin)mezzi=getAdminMezzi();
   else mezzi=getDriverMezzi(currentUser.name);
   document.getElementById('fMezzo').innerHTML='<option value="">— seleziona —</option>'+mezzi.map(m=>`<option>${m}</option>`).join('');
+  // Popola subito il dropdown tessere ricaricabili (non aspettare la selezione barca)
+  const ricSel=document.getElementById('fTesseraRic');
+  if(ricSel)ricSel.innerHTML='<option value="">— nessuna —</option>'+tessereList.map(t=>`<option value="${t.id}">${escHtml(t.nome)} (${t.tipo.toUpperCase()})</option>`).join('');
 }
 
 // MODIFICA: autista può lavorare con più admin — le sue barche sono l'unione di tutte le assegnazioni

@@ -2060,10 +2060,8 @@ function showOtpStep(n){document.querySelectorAll('.otp-step').forEach(s=>s.clas
 // =============================================
 // Mostra il banner d'ingresso al gioco nella schermata di login se il gioco è attivo
 function refreshGameEntryBanner(){
-  const b=document.getElementById('gameEntryBanner');if(!b)return;
-  // Il banner pubblico nella schermata di login appare SOLO quando il gioco è ON per tutti.
-  // In modalità PROVA il gioco è visibile solo al Super Admin (dal pannello di anteprima).
-  b.style.display=(gameConfig.status==='on')?'block':'none';
+  // Il torneo richiede login — il banner pre-login è disabilitato.
+  const b=document.getElementById('gameEntryBanner');if(b)b.style.display='none';
 }
 // Nome dell'iscritto memorizzato su questo dispositivo (gioco accessibile prima del login)
 function gameMyName(){

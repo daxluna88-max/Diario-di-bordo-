@@ -2938,19 +2938,37 @@ async function saRemoveGamePlayer(i){
 function renderSaOreMotore(){
   const el=document.getElementById('saOreMotoreList');if(!el)return;
   if(!records.length){el.innerHTML='<p style="color:var(--ink-faded);font-style:italic;font-size:.85rem">Nessuna registrazione presente.</p>';return;}
-  // Raggruppa per autista → barca → ore
-  const byAutista={};
+  // ore motore = lettura contaore cumulativa. Le ore di un autista sono il DELTA
+  // tra la sua lettura e quella successiva sulla stessa barca (lui ha usato la barca
+  // tra le due letture, e la lettura seguente "rivela" quante ore ha girato).
+  const byBarca={};
   records.forEach(r=>{
-    const nome=(r.autista||'—').trim();
-    const barca=(r.mezzo||'—').trim();
-    const ore=parseFloat(r.ore)||0;
-    if(!byAutista[nome])byAutista[nome]={totale:0,barche:{}};
-    byAutista[nome].totale+=ore;
-    byAutista[nome].barche[barca]=(byAutista[nome].barche[barca]||0)+ore;
+    const ore=parseFloat(r.ore);
+    if(isNaN(ore)||ore<=0)return;
+    const b=(r.mezzo||'—').trim();
+    if(!byBarca[b])byBarca[b]=[];
+    byBarca[b].push({data:r.data||'',autista:(r.autista||'—').trim(),ore});
   });
-  // Ordina autisti per ore totali decrescenti
+  Object.values(byBarca).forEach(arr=>arr.sort((a,b)=>a.data.localeCompare(b.data)));
+  const byAutista={};
+  Object.entries(byBarca).forEach(([barca,arr])=>{
+    for(let i=0;i<arr.length-1;i++){
+      const delta=arr[i+1].ore-arr[i].ore;
+      if(delta<=0)continue;
+      const nome=arr[i].autista;
+      if(!byAutista[nome])byAutista[nome]={totale:0,barche:{}};
+      byAutista[nome].totale+=delta;
+      byAutista[nome].barche[barca]=(byAutista[nome].barche[barca]||0)+delta;
+    }
+  });
+  if(!Object.keys(byAutista).length){
+    el.innerHTML='<p style="color:var(--ink-faded);font-style:italic;font-size:.85rem">Nessun delta ore calcolabile (servono almeno due letture per barca).</p>';return;
+  }
+  const nota=`<div style="margin-bottom:.85rem;padding:.55rem .75rem;background:#fffbe6;border:1px solid #f0d040;border-radius:6px;font-size:.78rem;color:#6b5800;font-family:'Source Sans 3',sans-serif">
+    ℹ️ Metodo: le ore sono il <strong>delta contaore</strong> tra due registrazioni consecutive sulla stessa barca — attribuite all'autista della registrazione <em>precedente</em> (chi ha usato la barca tra le due letture).
+  </div>`;
   const sorted=Object.entries(byAutista).sort((a,b)=>b[1].totale-a[1].totale);
-  el.innerHTML=sorted.map(([nome,d])=>{
+  el.innerHTML=nota+sorted.map(([nome,d])=>{
     const barche=Object.entries(d.barche).sort((a,b)=>b[1]-a[1]);
     const righe=barche.map(([b,ore])=>`<div style="display:flex;justify-content:space-between;padding:.18rem 0 .18rem .7rem;border-bottom:1px dashed var(--line-light);font-size:.8rem">
         <span style="color:var(--ink)">🚤 ${escHtml(b)}</span>

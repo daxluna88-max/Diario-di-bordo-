@@ -1970,7 +1970,15 @@ async function enterApp(){
   document.getElementById('tabsSide').style.display='flex';
   document.getElementById('fData').value=new Date().toISOString().slice(0,10);
   document.getElementById('fDataFuel').value=new Date().toISOString().slice(0,16);
-  if(!currentUser.isSA){document.getElementById('fAutista').value=currentUser.name;const _fa=document.getElementById('fAutistaFuel');if(_fa)_fa.value=currentUser.name;}
+  if(!currentUser.isSA){
+    const _fa=document.getElementById('fAutista');
+    _fa.value=currentUser.name;
+    const _fb=document.getElementById('fAutistaFuel');
+    if(_fb)_fb.value=currentUser.name;
+    if(!currentUser.isAdmin){
+      [_fa,_fb].forEach(f=>{if(!f)return;f.readOnly=true;f.style.opacity='.65';f.style.cursor='not-allowed';});
+    }
+  }
   document.getElementById('mediaUploadSection').style.display=(currentUser.isAdmin||currentUser.isSA)?'block':'none';
   document.querySelector('.side-tab.carburanti').style.display='flex';
   const _tg=document.getElementById('tabsGroup');

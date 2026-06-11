@@ -803,7 +803,7 @@ body{padding:.8rem .3rem 3rem;}
       <div id="dotazioniSeraSection" style="display:none;margin-top:1.4rem">
         <div style="border-top:2px solid var(--line);padding-top:1rem">
           <p style="font-family:'Playfair Display',serif;font-size:1rem;font-style:italic;color:var(--ink);margin-bottom:.3rem">🌅 Dotazioni di oggi</p>
-          <p style="font-family:'Source Sans 3',sans-serif;font-size:.75rem;color:var(--ink-faded);margin-bottom:.9rem;line-height:1.5">Aggiorna le dotazioni sulle tue registrazioni di oggi.</p>
+          <p style="font-family:'Source Sans 3',sans-serif;font-size:.75rem;color:var(--ink-faded);margin-bottom:.9rem;line-height:1.5">✓ Registrazione già salvata — aggiorna qui le dotazioni. <strong>Salvataggio automatico</strong> ad ogni spunta.</p>
           <div id="dotazioniSeraList"></div>
         </div>
       </div>
@@ -3874,7 +3874,7 @@ document.getElementById('assignModal').addEventListener('click',e=>{if(e.target=
 // =============================================
 function renderDotazioniSera(){
   const sec=document.getElementById('dotazioniSeraSection');if(!sec)return;
-  if(currentUser.isAdmin||currentUser.isSA){sec.style.display='none';return;}
+  if(currentUser.isSA||!currentUser.name){sec.style.display='none';return;}
   const now=new Date();
   const refDate=(now.getHours()<5)?new Date(now.getFullYear(),now.getMonth(),now.getDate()-1).toISOString().slice(0,10):now.toISOString().slice(0,10);
   const myName=currentUser.name.toLowerCase();
@@ -3884,8 +3884,27 @@ function renderDotazioniSera(){
   const list=document.getElementById('dotazioniSeraList');
   list.innerHTML=mine.map(r=>{
     const dot=r.dotazioni||{};
+    const isRiva=r.mezzo&&r.mezzo.toLowerCase().includes('riva');
     function dCls(v,type){return v===type?(type==='ok'?' ok':' no'):'';}
     const fuel=r.dotazioni?.carburante||null;
+    const litri=r.dotazioni?.litriRimasti||'';
+    const fuelSection=isRiva
+      ?`<div class="fuel-level-row" style="margin-top:.35rem;align-items:center;gap:.5rem">
+          <span class="check-label">⛽ Litri benzina rimasti</span>
+          <input id="dotLitriInp-${r.id}" type="number" min="0" step="1" placeholder="es. 35" value="${escHtml(String(litri))}"
+            onblur="setDotLitri(${r.id})" onkeydown="if(event.key==='Enter'){this.blur()}"
+            style="width:72px;border:1px solid var(--line);border-radius:4px;padding:.3rem .5rem;font-size:.9rem;outline:none;font-family:'Source Sans 3',sans-serif;text-align:right">
+          <span style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded)">L</span>
+        </div>`
+      :`<div class="fuel-level-row" style="margin-top:.35rem"><span class="check-label">⛽ Carburante</span><div class="fuel-level-btns">
+        <button class="fuel-lvl-btn${fuel==='4/4'?' sel':''}" onclick='setDotFuel(${r.id},"4/4",this)'>4/4</button>
+        <button class="fuel-lvl-btn${fuel==='3/4'?' sel':''}" onclick='setDotFuel(${r.id},"3/4",this)'>3/4</button>
+        <button class="fuel-lvl-btn${fuel==='3/8'?' sel':''}" onclick='setDotFuel(${r.id},"3/8",this)'>3/4½</button>
+        <button class="fuel-lvl-btn${fuel==='2/4'?' sel':''}" onclick='setDotFuel(${r.id},"2/4",this)'>2/4</button>
+        <button class="fuel-lvl-btn${fuel==='3/8b'?' sel':''}" onclick='setDotFuel(${r.id},"3/8b",this)'>1/2½</button>
+        <button class="fuel-lvl-btn${fuel==='1/4'?' sel':''}" onclick='setDotFuel(${r.id},"1/4",this)'>1/4</button>
+        <button class="fuel-lvl-btn${fuel==='1/8'?' sel':''}" onclick='setDotFuel(${r.id},"1/8",this)'>1/4½</button>
+      </div></div>${renderFuelNotesTable(r)}`;
     return`<div style="border:1.5px solid var(--line);border-radius:4px;padding:.8rem .9rem;margin-bottom:.8rem;background:#fafaf8">
       <div style="font-family:'Playfair Display',serif;font-size:.9rem;font-style:italic;color:var(--ink);margin-bottom:.65rem">🚤 ${r.mezzo}</div>
       <div class="check-row"><span class="check-label">🥂 Prosecco</span><div class="check-btns">
@@ -3900,16 +3919,7 @@ function renderDotazioniSera(){
         <button class="chk-btn${dCls(dot.acqua,'ok')}" onclick='setDot(${r.id},"acqua","ok",this)'>✅ Ok</button>
         <button class="chk-btn${dCls(dot.acqua,'no')}" onclick='setDot(${r.id},"acqua","no",this)'>❌ No</button>
       </div></div>
-      <div class="fuel-level-row" style="margin-top:.35rem"><span class="check-label">⛽ Carburante</span><div class="fuel-level-btns">
-        <button class="fuel-lvl-btn${fuel==='4/4'?' sel':''}" onclick='setDotFuel(${r.id},"4/4",this)'>4/4</button>
-        <button class="fuel-lvl-btn${fuel==='3/4'?' sel':''}" onclick='setDotFuel(${r.id},"3/4",this)'>3/4</button>
-        <button class="fuel-lvl-btn${fuel==='3/8'?' sel':''}" onclick='setDotFuel(${r.id},"3/8",this)'>3/4½</button>
-        <button class="fuel-lvl-btn${fuel==='2/4'?' sel':''}" onclick='setDotFuel(${r.id},"2/4",this)'>2/4</button>
-        <button class="fuel-lvl-btn${fuel==='3/8b'?' sel':''}" onclick='setDotFuel(${r.id},"3/8b",this)'>1/2½</button>
-        <button class="fuel-lvl-btn${fuel==='1/4'?' sel':''}" onclick='setDotFuel(${r.id},"1/4",this)'>1/4</button>
-        <button class="fuel-lvl-btn${fuel==='1/8'?' sel':''}" onclick='setDotFuel(${r.id},"1/8",this)'>1/4½</button>
-      </div></div>
-      ${renderFuelNotesTable(r)}
+      ${fuelSection}
     </div>`;
   }).join('');
 }
@@ -3945,6 +3955,14 @@ async function addDotFuelNote(recId){
   rec.dotazioni.noteCarburante.push({t:Date.now(),txt});
   await sv.records();
   renderDotazioniSera();
+}
+async function setDotLitri(recId){
+  const inp=document.getElementById('dotLitriInp-'+recId);if(!inp)return;
+  const v=inp.value.trim();
+  const rec=records.find(r=>r.id===recId);if(!rec)return;
+  if(!rec.dotazioni)rec.dotazioni={};
+  rec.dotazioni.litriRimasti=v;
+  await sv.records();
 }
 async function removeDotFuelNote(recId,idx){
   const rec=records.find(r=>r.id===recId);if(!rec||!rec.dotazioni||!Array.isArray(rec.dotazioni.noteCarburante))return;
@@ -4610,17 +4628,23 @@ function hideAttendi(){
   if(ov)ov.style.display='none';
 }
 
-// Wrappa submitForm con overlay
+// Wrappa submitForm con overlay + debounce anti-doppio-salvataggio
+let _lastFormSaveTs=0;
 const _origSubmitForm=submitForm;
 submitForm=async function(){
-  if(!showAttendi('Salvataggio diario in corso…'))return;
+  const now=Date.now();if(now-_lastFormSaveTs<2500)return; // blocca doppio tap entro 2.5s
+  _lastFormSaveTs=now;
+  if(!showAttendi('Salvataggio diario in corso…')){_lastFormSaveTs=0;return;}
   try{await _origSubmitForm();}finally{hideAttendi();}
 };
 
-// Wrappa submitFuel con overlay
+// Wrappa submitFuel con overlay + debounce anti-doppio-salvataggio
+let _lastFuelSaveTs=0;
 const _origSubmitFuel=submitFuel;
 submitFuel=async function(){
-  if(!showAttendi('Registrazione rifornimento in corso…'))return;
+  const now=Date.now();if(now-_lastFuelSaveTs<2500)return;
+  _lastFuelSaveTs=now;
+  if(!showAttendi('Registrazione rifornimento in corso…')){_lastFuelSaveTs=0;return;}
   try{await _origSubmitFuel();}finally{hideAttendi();}
 };
 

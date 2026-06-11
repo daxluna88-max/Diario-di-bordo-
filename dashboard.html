@@ -471,7 +471,10 @@ function calcDeltaOre(allRecords,filteredRecords){
   Object.entries(byBarca).forEach(([barca,arr])=>{
     for(let i=0;i<arr.length-1;i++){
       const delta=arr[i+1].ore-arr[i].ore;
-      if(delta<=0||delta>5000)continue;
+      if(delta<=0)continue;
+      // scarta delta impossibili: max 16h/giorno tra le due letture (floor 100h)
+      const days=Math.max(1,Math.round((new Date(arr[i+1].data+'T00:00:00')-new Date(arr[i].data+'T00:00:00'))/86400000));
+      if(delta>Math.max(days*16,100))continue;
       // includi nel periodo se il record "da" è nel set filtrato
       if(filteredRecords&&!filteredSet.has(arr[i].id))continue;
       const nome=arr[i].autista;

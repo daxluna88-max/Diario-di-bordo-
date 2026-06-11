@@ -2249,7 +2249,7 @@ function monthLeaders(){
   const m=gameMonthKey(new Date());
   const lb=getLeaderboard();
   const general=lb[0]||null;
-  const rifBy={};fuelRecords.forEach(f=>{if(f.autista&&gameMonthKey(f.data)===m)rifBy[f.autista]=(rifBy[f.autista]||0)+1;});
+  const rifBy={};fuelRecords.forEach(f=>{if(f.autista&&gameInPeriod(f.data)&&gameMonthKey(f.data)===m)rifBy[f.autista]=(rifBy[f.autista]||0)+1;});
   let rifName=null,rifMax=0;Object.keys(rifBy).forEach(k=>{if(rifBy[k]>rifMax){rifMax=rifBy[k];rifName=k;}});
   const vBy={};gameVotes.forEach(v=>{if(gameMonthKey(v.ts)===m)vBy[v.figurinaId]=(vBy[v.figurinaId]||0)+1;});
   let figId=null,figMax=0;Object.keys(vBy).forEach(fid=>{if(vBy[fid]>figMax){figMax=vBy[fid];figId=fid;}});
@@ -2265,7 +2265,7 @@ async function autoAssignPrizes(){
   const ended=isGameEnded();
   // Competitivi mensili (mesi conclusi, o tutto a gioco finito): Re del Rifornimento + figurina più votata
   const rifByMonth={};
-  fuelRecords.forEach(f=>{if(!f.autista)return;const mk=gameMonthKey(f.data);if(!mk)return;(rifByMonth[mk]=rifByMonth[mk]||{});const n=f.autista.toLowerCase();rifByMonth[mk][n]=(rifByMonth[mk][n]||0)+1;});
+  fuelRecords.forEach(f=>{if(!f.autista||!gameInPeriod(f.data))return;const mk=gameMonthKey(f.data);if(!mk)return;(rifByMonth[mk]=rifByMonth[mk]||{});const n=f.autista.toLowerCase();rifByMonth[mk][n]=(rifByMonth[mk][n]||0)+1;});
   Object.keys(rifByMonth).forEach(mk=>{if(mk>=nowM&&!ended)return;const c=rifByMonth[mk];let w=null,mx=0;Object.keys(c).forEach(n=>{if(c[n]>mx){mx=c[n];w=n;}});grant('rif:'+mk,w);});
   const voteByMonthFig={};
   gameVotes.forEach(v=>{const mk=gameMonthKey(v.ts);if(!mk)return;(voteByMonthFig[mk]=voteByMonthFig[mk]||{});voteByMonthFig[mk][v.figurinaId]=(voteByMonthFig[mk][v.figurinaId]||0)+1;});

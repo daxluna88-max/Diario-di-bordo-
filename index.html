@@ -3628,6 +3628,34 @@ async function submitForm(){
   const _autista=document.getElementById('fAutista').value.trim().toLowerCase();
   const _alreadyToday=records.some(r=>r.data===data&&r.mezzo===mezzo&&r.autista&&r.autista.toLowerCase()===_autista);
   if(_alreadyToday&&!confirm("Sei sicuro che vuoi fare un'altra registrazione?"))return;
+
+  // ── VALIDAZIONE CONTAORE ──────────────────────────────────────────────────
+  const _oreRaw=document.getElementById('fOre').value;
+  const _oreNuovo=parseFloat(_oreRaw);
+  if(_oreRaw&&!isNaN(_oreNuovo)&&_oreNuovo>0){
+    // ultime letture valide per questa barca, ordinate per data crescente
+    const _prevOre=records
+      .filter(r=>r.mezzo===mezzo&&r.ore&&parseFloat(r.ore)>0)
+      .sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+    if(_prevOre.length){
+      const _last=_prevOre[_prevOre.length-1];
+      const _lastVal=parseFloat(_last.ore);
+      const _lastData=_last.data||'';
+      if(_oreNuovo<_lastVal){
+        // contaore decresce — quasi certamente errore
+        if(!confirm(`⚠️ ATTENZIONE — contaore in diminuzione!\n\nUltima lettura: ${_lastVal} h (${_lastData})\nNuova lettura:  ${_oreNuovo} h\n\nIl contaore non può diminuire. Controlla il valore.\n\nVuoi salvare comunque?`))return;
+      }else{
+        const _days=Math.max(1,Math.round((new Date(data+'T00:00:00')-new Date(_lastData+'T00:00:00'))/86400000));
+        const _delta=_oreNuovo-_lastVal;
+        if(_delta>Math.max(_days*16,100)){
+          // delta impossibile dato il numero di giorni
+          if(!confirm(`⚠️ ATTENZIONE — delta contaore sospetto!\n\nUltima lettura: ${_lastVal} h (${_lastData})\nNuova lettura:  ${_oreNuovo} h\nDelta: +${Math.round(_delta*10)/10} h in ${_days} giorno/i\n\nSembra troppo alto. Controlla il contaore.\n\nVuoi salvare comunque?`))return;
+        }
+      }
+    }
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   const btn=document.getElementById('saveBtnCompila');
   const totalFiles=pendingFotos.length+pendingPdfs.length;
   btn.textContent=totalFiles?'⏳ Caricamento...':'⏳ Salvataggio...';btn.disabled=true;

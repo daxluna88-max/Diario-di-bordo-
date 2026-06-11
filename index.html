@@ -2144,7 +2144,9 @@ function openGameConsent(){
   }else{
     if(nw)nw.style.display='block';
     if(nd)nd.style.display='none';
-    document.getElementById('gameConsentName').value=gameMyName();
+    // pre-riempie con il nome del login (SA/visitatore) se disponibile
+    const _prefill=currentUser&&currentUser.name?currentUser.name:gameMyName();
+    document.getElementById('gameConsentName').value=_prefill;
   }
   document.getElementById('gameConsentChk').checked=false;
   document.getElementById('gameConsentErr').classList.remove('show');

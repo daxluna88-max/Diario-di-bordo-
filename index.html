@@ -1813,7 +1813,7 @@ async function enterApp(){
   document.getElementById('tabsSide').style.display='flex';
   document.getElementById('fData').value=new Date().toISOString().slice(0,10);
   document.getElementById('fDataFuel').value=new Date().toISOString().slice(0,16);
-  if(!currentUser.isAdmin&&!currentUser.isSA){document.getElementById('fAutista').value=currentUser.name;const _fa=document.getElementById('fAutistaFuel');if(_fa)_fa.value=currentUser.name;}
+  if(!currentUser.isSA){document.getElementById('fAutista').value=currentUser.name;const _fa=document.getElementById('fAutistaFuel');if(_fa)_fa.value=currentUser.name;}
   document.getElementById('mediaUploadSection').style.display=(currentUser.isAdmin||currentUser.isSA)?'block':'none';
   document.querySelector('.side-tab.carburanti').style.display='flex';
   const _tg=document.getElementById('tabsGroup');
@@ -1878,8 +1878,8 @@ function showPage(name,btn){
   if(name==='manutenzione'){renderManutenzioneSelects();}
   if(name==='cisterna'){syncCisternaFromFuel();renderCisterna();}
   if(name==='carburanti'){
-    if(currentUser.isAdmin||currentUser.isSA){document.getElementById('adminRegSec').style.display='block';document.getElementById('autoristaFuel').style.display='none';populateFuelBarcoFilter();renderFuelHistory();}
-    else{document.getElementById('adminRegSec').style.display='none';document.getElementById('autoristaFuel').style.display='block';}
+    if(currentUser.isAdmin||currentUser.isSA){document.getElementById('adminRegSec').style.display='block';populateFuelBarcoFilter();renderFuelHistory();}else{document.getElementById('adminRegSec').style.display='none';}
+    document.getElementById('autoristaFuel').style.display=currentUser.isSA?'none':'block';
     renderTessereAdminFuelSection();
     renderTessereAutistaSection();
   }
@@ -1904,8 +1904,8 @@ function refreshGameEntryBanner(){
 }
 // Nome dell'iscritto memorizzato su questo dispositivo (gioco accessibile prima del login)
 function gameMyName(){
-  // Se un autista è loggato nel diario, l'identità di gioco è il suo nome
-  if(currentUser&&!currentUser.isAdmin&&!currentUser.isSA&&currentUser.name)return currentUser.name;
+  // Se un autista è loggato nel diario, l'identità di gioco è il suo nome (admin inclusi, non SA)
+  if(currentUser&&!currentUser.isSA&&currentUser.name)return currentUser.name;
   try{return localStorage.getItem('ccb_game_me')||'';}catch{return'';}
 }
 function isGameEnrolled(){const n=gameMyName().toLowerCase();return!!n&&gamePlayers.some(p=>p.name.toLowerCase()===n);}
@@ -1962,7 +1962,7 @@ function updateGameWelcomeState(){
   document.getElementById('gameMainButtons').style.display=enrolled?'flex':'none';
 }
 function openGameConsent(){
-  const isLoggedDriver=currentUser&&!currentUser.isAdmin&&!currentUser.isSA&&currentUser.name;
+  const isLoggedDriver=currentUser&&!currentUser.isSA&&currentUser.name;
   document.getElementById('gameConsentText').textContent=GAME_DISCLAIMER_DEFAULT;
   const nw=document.getElementById('gameConsentNameWrap');
   const nd=document.getElementById('gameConsentNameDisplay');
@@ -1982,7 +1982,7 @@ function openGameConsent(){
 function closeGameConsent(){document.getElementById('gameConsentModal').classList.remove('show');}
 async function confirmGameJoin(){
   const err=document.getElementById('gameConsentErr');
-  const isLoggedDriver=currentUser&&!currentUser.isAdmin&&!currentUser.isSA&&currentUser.name;
+  const isLoggedDriver=currentUser&&!currentUser.isSA&&currentUser.name;
   const name=isLoggedDriver?currentUser.name:document.getElementById('gameConsentName').value.trim().replace(/\s+/g,' ');
   if(!isLoggedDriver&&(!name||name.split(' ').length<2)){err.textContent='Inserisci nome e cognome.';err.classList.add('show');return;}
   if(!document.getElementById('gameConsentChk').checked){err.textContent='Devi accettare il disclaimer per partecipare.';err.classList.add('show');return;}
@@ -3167,7 +3167,7 @@ async function submitForm(){
   document.getElementById('fOre').value='';document.getElementById('fIntervento').value='';document.getElementById('fNote').value='';
   document.getElementById('fFoto').value='';document.getElementById('fotoPreview').innerHTML='';pendingFotos=[];
   document.getElementById('fPdf').value='';document.getElementById('pdfPreview').innerHTML='';pendingPdfs=[];
-  if(!currentUser.isAdmin&&!currentUser.isSA){document.getElementById('fAutista').value=currentUser.name;const _fa=document.getElementById('fAutistaFuel');if(_fa)_fa.value=currentUser.name;}
+  if(!currentUser.isSA){document.getElementById('fAutista').value=currentUser.name;const _fa=document.getElementById('fAutistaFuel');if(_fa)_fa.value=currentUser.name;}
   btn.textContent='✦ Salva nel registro';btn.disabled=false;
   renderDotazioniSera();
   const n=document.getElementById('successNote');n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2500);
@@ -3456,7 +3456,7 @@ async function submitFuel(){
   }
 
   // Reset form
-  document.getElementById('fLitri').value='';document.getElementById('fNoteFuel').value='';document.getElementById('litriDisplay').textContent='0';if(!currentUser.isAdmin&&!currentUser.isSA)document.getElementById('fAutistaFuel').value=currentUser.name;
+  document.getElementById('fLitri').value='';document.getElementById('fNoteFuel').value='';document.getElementById('litriDisplay').textContent='0';if(!currentUser.isSA)document.getElementById('fAutistaFuel').value=currentUser.name;
   const chk=document.getElementById('usaTesseraCheck');if(chk){chk.checked=false;toggleUsaTessera();}
   if(document.getElementById('fTesseraCosto'))document.getElementById('fTesseraCosto').value='';
   const n=document.getElementById('successNoteFuel');n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2500);

@@ -291,7 +291,7 @@ function renderAll(){
 // ── KPI ───────────────────────────────────────────────────────────────────
 function renderKpis(records,fuelRecords){
   const totLitri=fuelRecords.reduce((s,r)=>s+(parseFloat(r.litri)||0),0);
-  const totOre=records.reduce((s,r)=>s+(parseFloat(r.ore)||0),0);
+  const totOre=calcDeltaOre(records).totale;
   const barche=new Set([...records.map(r=>(r.mezzo||'').trim()),...fuelRecords.map(r=>(r.barca||'').trim())].filter(Boolean));
   const autisti=new Set([...records.map(r=>(r.autista||'').trim()),...fuelRecords.map(r=>(r.autista||'').trim())].filter(Boolean));
   const kpis=[
@@ -329,15 +329,16 @@ function renderCharts(records,fuelRecords){
     '#c8854a'
   );
 
-  // Ore per autista (top 8)
-  const oreAut=sumBy(records,r=>(r.autista||'').trim(),r=>parseFloat(r.ore)||0);
-  const topAut=topN(oreAut,8);
-  mkBarChart('chartOreAutista',topAut.map(x=>x.k),topAut.map(x=>fmt1(x.v)),PALETTE,'y');
+  // Ore per autista (top 8) — delta contaore
+  const delta=calcDeltaOre(records);
+  const oreAutMap=Object.fromEntries(Object.entries(delta.byAutista).map(([k,v])=>[k,Math.round(v.totale*10)/10]));
+  const topAut=topN(oreAutMap,8);
+  mkBarChart('chartOreAutista',topAut.map(x=>x.k),topAut.map(x=>x.v),PALETTE,'y');
 
-  // Ore per barca (top 8)
-  const oreBarca=sumBy(records,r=>(r.mezzo||'').trim(),r=>parseFloat(r.ore)||0);
-  const topBarca=topN(oreBarca,8);
-  mkBarChart('chartOreBarca',topBarca.map(x=>x.k),topBarca.map(x=>fmt1(x.v)),PALETTE,'y');
+  // Ore per barca (top 8) — delta contaore
+  const oreBarcaMap=Object.fromEntries(Object.entries(delta.byBarca).map(([k,v])=>[k,Math.round(v.totale*10)/10]));
+  const topBarca=topN(oreBarcaMap,8);
+  mkBarChart('chartOreBarca',topBarca.map(x=>x.k),topBarca.map(x=>x.v),PALETTE,'y');
 
   // Carburante per tipo (doughnut)
   const tipiMap=sumBy(fuelRecords,r=>(r.tipo||'altro').toLowerCase(),r=>parseFloat(r.litri)||0);
@@ -388,7 +389,35 @@ function mkDoughnut(id,labels,data){
   });
 }
 
-// ── TESSERE ───────────────────────────────────────────────────────────────
+// ── ORE MOTORE: calcolo delta contaore ───────────────────────────────────
+// Il campo `ore` è una lettura cumulativa del contaore (come un odometro).
+// Le ore di ogni autista = delta tra due letture consecutive sulla stessa barca.
+// Il delta è attribuito all'autista della lettura PRECEDENTE (ha guidato fino alla lettura successiva).
+function calcDeltaOre(records){
+  const byBarca={};
+  records.forEach(r=>{
+    const ore=parseFloat(r.ore);
+    if(isNaN(ore)||ore<=0)return;
+    const b=(r.mezzo||'').trim();if(!b)return;
+    (byBarca[b]=byBarca[b]||[]).push({data:r.data||'',autista:(r.autista||'—').trim(),ore});
+  });
+  Object.values(byBarca).forEach(arr=>arr.sort((a,b)=>a.data.localeCompare(b.data)));
+  const byAutista={},byBarca2={};let totale=0;
+  const rows=[];
+  Object.entries(byBarca).forEach(([barca,arr])=>{
+    for(let i=0;i<arr.length-1;i++){
+      const delta=arr[i+1].ore-arr[i].ore;
+      if(delta<=0||delta>5000)continue; // salta valori negativi o anomali (>5000h in una sessione)
+      const nome=arr[i].autista;
+      (byAutista[nome]=byAutista[nome]||{totale:0,barche:{}}); byAutista[nome].totale+=delta; byAutista[nome].barche[barca]=(byAutista[nome].barche[barca]||0)+delta;
+      (byBarca2[barca]=byBarca2[barca]||{totale:0,autisti:{}}); byBarca2[barca].totale+=delta; byBarca2[barca].autisti[nome]=(byBarca2[barca].autisti[nome]||0)+delta;
+      rows.push({autista:nome,barca,delta,dataA:arr[i].data,dataB:arr[i+1].data});
+      totale+=delta;
+    }
+  });
+  return{byAutista,byBarca:byBarca2,totale,rows};
+}
+
 function renderTessere(tessere,tessereList){
   const barche=Object.keys(tessere).sort();
   if(!barche.length){
@@ -436,17 +465,16 @@ function renderTables(records,fuelRecords,tessereLog){
     ])
   );
 
-  // Ore per autista/barca (somma diretta delle ore per sessione)
-  const map={};
-  records.forEach(r=>{
-    const ore=parseFloat(r.ore);if(isNaN(ore)||ore<=0)return;
-    const k=(r.autista||'—').trim()+'__'+(r.mezzo||'—').trim();
-    map[k]=(map[k]||{autista:(r.autista||'—').trim(),barca:(r.mezzo||'—').trim(),ore:0});
-    map[k].ore+=ore;
+  // Ore per autista/barca — delta contaore
+  const deltaOre=calcDeltaOre(records);
+  const oreMap={};
+  deltaOre.rows.forEach(r=>{
+    const k=r.autista+'__'+r.barca;
+    (oreMap[k]=oreMap[k]||{autista:r.autista,barca:r.barca,ore:0}).ore+=r.delta;
   });
-  const oreRows=Object.values(map).sort((a,b)=>b.ore-a.ore);
+  const oreRows=Object.values(oreMap).sort((a,b)=>b.ore-a.ore);
   document.getElementById('tblOre').innerHTML=tbl(
-    ['Autista','Barca','Ore totali'],
+    ['Autista','Barca','Ore (delta contaore)'],
     oreRows.map(r=>[esc(r.autista),esc(r.barca),`<span class="td-num">${fmt1(r.ore)} h</span>`])
   );
 
@@ -500,14 +528,13 @@ function downloadCsv(){
       sorted.map(r=>[(r.data||'').slice(0,10),r.autista||'',r.barca||'',r.tipo||'',r.litri||'',r.fornitori||'',r.note||'']));
   }else if(activeTab==='ore'){
     name='ore_motore_flotta.csv';
+    const dOre=calcDeltaOre(records);
     const map={};
-    records.forEach(r=>{
-      const ore=parseFloat(r.ore);if(isNaN(ore)||ore<=0)return;
-      const k=(r.autista||'—').trim()+'__'+(r.mezzo||'—').trim();
-      map[k]=(map[k]||{autista:(r.autista||'—').trim(),barca:(r.mezzo||'—').trim(),ore:0});
-      map[k].ore+=ore;
+    dOre.rows.forEach(r=>{
+      const k=r.autista+'__'+r.barca;
+      (map[k]=map[k]||{autista:r.autista,barca:r.barca,ore:0}).ore+=r.delta;
     });
-    csv=toCsv(['Autista','Barca','Ore totali'],
+    csv=toCsv(['Autista','Barca','Ore (delta contaore)'],
       Object.values(map).sort((a,b)=>b.ore-a.ore).map(r=>[r.autista,r.barca,fmt1(r.ore)]));
   }else{
     name='movimenti_tessere.csv';

@@ -437,9 +437,10 @@ function buildTempoSeries(records,fuelRecords,range){
     const weekBuckets={};
     records.forEach(r=>{const wk=getWeekLabel(r.data);if(!wk)return;(weekBuckets[wk]=weekBuckets[wk]||{reg:0,fuel:0}).reg++;});
     fuelRecords.forEach(r=>{const wk=getWeekLabel(r.data);if(!wk)return;(weekBuckets[wk]=weekBuckets[wk]||{reg:0,fuel:0}).fuel+=parseFloat(r.litri)||0;});
-    labels=Object.keys(weekBuckets).sort();
-    regData=labels.map(k=>weekBuckets[k].reg);
-    fuelData=labels.map(k=>Math.round(weekBuckets[k].fuel));
+    const wkKeys=Object.keys(weekBuckets).sort();
+    labels=wkKeys.map(k=>fmtWeekRange(k));
+    regData=wkKeys.map(k=>weekBuckets[k].reg);
+    fuelData=wkKeys.map(k=>Math.round(weekBuckets[k].fuel));
     titReg='Registrazioni per settimana'; titFuel='Litri per settimana';
   }else{
     // tutto: raggruppa per mese (ultimi 12 o tutti)
@@ -477,35 +478,6 @@ function calcDeltaOre(allRecords,filteredRecords){
       if(delta>Math.max(days*16,100))continue;
       // includi nel periodo se il record "da" è nel set filtrato
       if(filteredRecords&&!filteredSet.has(arr[i].id))continue;
-      const nome=arr[i].autista;
-      (byAutista[nome]=byAutista[nome]||{totale:0,barche:{}}); byAutista[nome].totale+=delta; byAutista[nome].barche[barca]=(byAutista[nome].barche[barca]||0)+delta;
-      (byBarca2[barca]=byBarca2[barca]||{totale:0,autisti:{}}); byBarca2[barca].totale+=delta; byBarca2[barca].autisti[nome]=(byBarca2[barca].autisti[nome]||0)+delta;
-      rows.push({autista:nome,barca,delta,dataA:arr[i].data,dataB:arr[i+1].data});
-      totale+=delta;
-    }
-  });
-  return{byAutista,byBarca:byBarca2,totale,rows};
-}
-
-// ── ORE MOTORE: calcolo delta contaore ───────────────────────────────────
-// Il campo `ore` è una lettura cumulativa del contaore (come un odometro).
-// Le ore di ogni autista = delta tra due letture consecutive sulla stessa barca.
-// Il delta è attribuito all'autista della lettura PRECEDENTE (ha guidato fino alla lettura successiva).
-function calcDeltaOre(records){
-  const byBarca={};
-  records.forEach(r=>{
-    const ore=parseFloat(r.ore);
-    if(isNaN(ore)||ore<=0)return;
-    const b=(r.mezzo||'').trim();if(!b)return;
-    (byBarca[b]=byBarca[b]||[]).push({data:r.data||'',autista:(r.autista||'—').trim(),ore});
-  });
-  Object.values(byBarca).forEach(arr=>arr.sort((a,b)=>a.data.localeCompare(b.data)));
-  const byAutista={},byBarca2={};let totale=0;
-  const rows=[];
-  Object.entries(byBarca).forEach(([barca,arr])=>{
-    for(let i=0;i<arr.length-1;i++){
-      const delta=arr[i+1].ore-arr[i].ore;
-      if(delta<=0||delta>5000)continue; // salta valori negativi o anomali (>5000h in una sessione)
       const nome=arr[i].autista;
       (byAutista[nome]=byAutista[nome]||{totale:0,barche:{}}); byAutista[nome].totale+=delta; byAutista[nome].barche[barca]=(byAutista[nome].barche[barca]||0)+delta;
       (byBarca2[barca]=byBarca2[barca]||{totale:0,autisti:{}}); byBarca2[barca].totale+=delta; byBarca2[barca].autisti[nome]=(byBarca2[barca].autisti[nome]||0)+delta;
@@ -725,6 +697,17 @@ function toYMD(d){const p=n=>String(n).padStart(2,'0');return`${d.getFullYear()}
 function fmtDate(d){if(!d)return '—';try{return new Date(d.slice(0,10)+'T00:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'2-digit'});}catch{return d;}}
 function fmtDay(ym){try{const d=new Date(ym+'T00:00:00');return d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'short'});}catch{return ym;}}
 function fmtMonth(ym){const mesi=['','Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];const[y,m]=ym.split('-');return(mesi[parseInt(m)]||m)+" '"+y.slice(2);}
+function fmtWeekRange(mondayYMD){
+  try{
+    const mon=new Date(mondayYMD+'T00:00:00');
+    const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+    const mesi=['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+    const d1=String(mon.getDate()).padStart(2,'0');
+    const d2=String(sun.getDate()).padStart(2,'0');
+    const m1=mesi[mon.getMonth()];const m2=mesi[sun.getMonth()];
+    return m1===m2?`${d1}-${d2} ${m1}`:`${d1} ${m1}-${d2} ${m2}`;
+  }catch{return mondayYMD;}
+}
 function getWeekLabel(dateStr){
   if(!dateStr)return null;
   const d=new Date(dateStr+'T00:00:00');const day=d.getDay();

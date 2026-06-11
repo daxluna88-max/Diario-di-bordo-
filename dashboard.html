@@ -166,9 +166,9 @@ tr:hover td{background:var(--light)}
     <span class="period-label">Periodo:</span>
     <div class="period-pills">
       <button class="pill" onclick="setPeriod('day',this)">Oggi</button>
+      <button class="pill" onclick="setPeriod('week7',this)">7 Giorni</button>
       <button class="pill" onclick="setPeriod('week',this)">Settimana</button>
-      <button class="pill" onclick="setPeriod('month',this)">Mese</button>
-      <button class="pill active" onclick="setPeriod('all',this)">Tutto</button>
+      <button class="pill active" onclick="setPeriod('month',this)">Mese</button>
     </div>
     <span class="period-range" id="periodRange"></span>
   </div>
@@ -260,12 +260,13 @@ const TABLE='agenda';
 const KEYS=['fleet-records','fleet-fuel-records','fleet-tessere-barca','fleet-tessere-barca-log','fleet-tessere-list','fleet-dashboard-pw'];
 const PALETTE=['#4a90b8','#2d6a4f','#c8854a','#7b4fa0','#b8474a','#2a7a7a','#8a9b3a','#c06030','#3a608a','#6a4fa0','#a07030','#4a7a50'];
 const GHOST_BOATS=['Barca fantasma'];
+const EXCLUDED_AUTISTI=['Antonella Fiore','Vittorio Vita Durini'];
 
 let DB={};
 let dashPw='';
 let charts={};
 let activeTab='reg';
-let currentPeriod='all';
+let currentPeriod='month';
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
 async function init(){
@@ -316,6 +317,10 @@ function getDateRange(period){
   if(period==='day'){
     const t=fmt(now);return{from:t,to:t,label:'Oggi, '+now.toLocaleDateString('it-IT',{day:'2-digit',month:'long'})};
   }
+  if(period==='week7'){
+    const w7=new Date(now);w7.setDate(now.getDate()-6);
+    return{from:fmt(w7),to:fmt(now),label:'Ultimi 7 giorni'};
+  }
   if(period==='week'){
     const day=now.getDay();const mon=new Date(now);mon.setDate(now.getDate()-(day===0?6:day-1));
     const sun=new Date(mon);sun.setDate(mon.getDate()+6);
@@ -340,8 +345,9 @@ function renderAll(){
   document.getElementById('lastUpdate').textContent=ts;
 
   const isGhost=r=>GHOST_BOATS.includes((r.mezzo||r.barca||'').trim());
-  const allRecords=(DB['fleet-records']||[]).filter(r=>!isGhost(r));
-  const allFuel=(DB['fleet-fuel-records']||[]).filter(r=>!GHOST_BOATS.includes((r.barca||'').trim()));
+  const isExcludedAut=r=>EXCLUDED_AUTISTI.includes((r.autista||'').trim());
+  const allRecords=(DB['fleet-records']||[]).filter(r=>!isGhost(r)&&!isExcludedAut(r));
+  const allFuel=(DB['fleet-fuel-records']||[]).filter(r=>!GHOST_BOATS.includes((r.barca||'').trim())&&!isExcludedAut(r));
   const tessere=DB['fleet-tessere-barca']||{};
   const tessereList=DB['fleet-tessere-list']||[];
   const tessereLog=DB['fleet-tessere-barca-log']||[];
@@ -421,7 +427,7 @@ function renderCharts(records,fuelRecords,allRec,allFuel){
 
 function buildTempoSeries(records,fuelRecords,range){
   let labels,regData,fuelData,titReg,titFuel;
-  if(currentPeriod==='day'||currentPeriod==='week'){
+  if(currentPeriod==='day'||currentPeriod==='week'||currentPeriod==='week7'){
     // raggruppa per giorno
     const days=[...new Set([
       ...records.map(r=>(r.data||'').slice(0,10)),

@@ -773,16 +773,16 @@ body{padding:.8rem .3rem 3rem;}
         <div style="font-family:'Playfair Display',serif;font-size:.95rem;font-style:italic;color:var(--ink);margin-bottom:.3rem">Hai queste tessere a bordo?</div>
         <div style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink-faded);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem">💳 Tessere a bordo</div>
         <label style="display:flex;align-items:center;gap:.65rem;margin-bottom:.5rem;cursor:pointer">
-          <input type="checkbox" id="fTesseraMila" style="accent-color:var(--blue);width:17px;height:17px;flex-shrink:0;cursor:pointer">
+          <input type="checkbox" id="fTesseraMila" onchange="if(!document.getElementById('fMezzo').value){this.checked=false;alert('Seleziona prima la barca');}" style="accent-color:var(--blue);width:17px;height:17px;flex-shrink:0;cursor:pointer">
           <span style="font-family:'Source Sans 3',sans-serif;font-size:.9rem;color:var(--ink)">Tessera Mila</span>
         </label>
         <label style="display:flex;align-items:center;gap:.65rem;margin-bottom:.6rem;cursor:pointer">
-          <input type="checkbox" id="fTesseraCC" style="accent-color:var(--blue);width:17px;height:17px;flex-shrink:0;cursor:pointer">
+          <input type="checkbox" id="fTesseraCC" onchange="if(!document.getElementById('fMezzo').value){this.checked=false;alert('Seleziona prima la barca');}" style="accent-color:var(--blue);width:17px;height:17px;flex-shrink:0;cursor:pointer">
           <span style="font-family:'Source Sans 3',sans-serif;font-size:.9rem;color:var(--ink)">Carta di credito</span>
         </label>
         <div class="field" style="margin-top:.1rem">
           <label class="fl">Tessera ricaricabile</label>
-          <select id="fTesseraRic" style="border:none;border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.9rem;color:var(--ink);width:100%;outline:none;padding:.25rem 0;appearance:none;cursor:pointer;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right .3rem center;padding-right:1.5rem;"><option value="">— nessuna —</option></select>
+          <select id="fTesseraRic" onchange="if(this.value&&!document.getElementById('fMezzo').value){this.value='';alert('Seleziona prima la barca');}" style="border:none;border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.9rem;color:var(--ink);width:100%;outline:none;padding:.25rem 0;appearance:none;cursor:pointer;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right .3rem center;padding-right:1.5rem;"><option value="">— nessuna —</option></select>
         </div>
       </div>
       <div id="mediaUploadSection" style="display:none">

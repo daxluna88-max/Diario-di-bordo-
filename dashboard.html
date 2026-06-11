@@ -10,7 +10,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --blue:#4a90b8;--green:#2d6a4f;--orange:#c8854a;--purple:#7b4fa0;--red:#b8474a;--teal:#2a7a7a;
+  --blue:#4a90b8;--green:#2d6a4f;--orange:#c8854a;--purple:#7b4fa0;--red:#b8474a;
   --bg:#f0f2f5;--card:#fff;--border:#e2e8f0;--ink:#1a202c;--muted:#64748b;--light:#f8fafc;
 }
 body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
@@ -34,71 +34,91 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--i
 
 /* DASHBOARD */
 #dashboard{display:none;flex-direction:column;min-height:100vh}
-header{background:var(--card);border-bottom:1px solid var(--border);padding:.85rem 1.2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+header{background:var(--card);border-bottom:1px solid var(--border);padding:.75rem 1.2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .header-left{display:flex;align-items:center;gap:.75rem}
-.header-logo{font-size:1.5rem}
-.header-title{font-size:1rem;font-weight:700;color:var(--ink)}
-.header-sub{font-size:.72rem;color:var(--muted)}
-.header-right{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
-.header-ts{font-size:.72rem;color:var(--muted)}
-.btn{padding:.45rem .85rem;border-radius:7px;border:1.5px solid var(--border);background:var(--card);color:var(--ink);font-size:.78rem;font-weight:500;font-family:inherit;cursor:pointer;transition:background .15s}
+.header-logo{font-size:1.4rem}
+.header-title{font-size:.95rem;font-weight:700;color:var(--ink)}
+.header-sub{font-size:.68rem;color:var(--muted)}
+.header-right{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.header-ts{font-size:.68rem;color:var(--muted)}
+.btn{padding:.4rem .75rem;border-radius:7px;border:1.5px solid var(--border);background:var(--card);color:var(--ink);font-size:.76rem;font-weight:500;font-family:inherit;cursor:pointer;transition:background .15s}
 .btn:hover{background:var(--light)}
 .btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
 .btn-primary:hover{background:#3a7aa8}
 
+/* PERIOD FILTER */
+.period-bar{background:var(--card);border-bottom:1px solid var(--border);padding:.5rem 1.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;position:sticky;top:57px;z-index:99}
+.period-label{font-size:.72rem;color:var(--muted);font-weight:500;margin-right:.2rem}
+.period-pills{display:flex;gap:.35rem;flex-wrap:wrap}
+.pill{padding:.3rem .75rem;border-radius:20px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-size:.73rem;font-weight:500;font-family:inherit;cursor:pointer;transition:all .15s}
+.pill.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.period-range{font-size:.7rem;color:var(--muted);margin-left:auto}
+
 main{padding:1rem;display:flex;flex-direction:column;gap:1rem;max-width:1100px;width:100%;margin:0 auto}
 
 /* KPI */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem}
-.kpi{background:var(--card);border-radius:12px;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.3rem;box-shadow:0 1px 4px rgba(0,0,0,.06);border-left:4px solid transparent}
-.kpi-icon{font-size:1.3rem}
-.kpi-value{font-size:1.7rem;font-weight:700;line-height:1;color:var(--ink)}
-.kpi-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.65rem}
+.kpi{background:var(--card);border-radius:12px;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.25rem;box-shadow:0 1px 4px rgba(0,0,0,.06);border-left:4px solid transparent}
+.kpi-icon{font-size:1.2rem}
+.kpi-value{font-size:1.6rem;font-weight:700;line-height:1;color:var(--ink)}
+.kpi-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:500}
 
-/* CHARTS GRID */
+/* CHARTS */
 .charts-row{display:grid;gap:.75rem}
 .charts-2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .charts-3{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
 .card{background:var(--card);border-radius:12px;padding:1rem 1.1rem;box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.card-title{font-size:.82rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.8rem}
+.card-title{font-size:.78rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.75rem}
 .chart-wrap{position:relative;height:200px}
+.chart-wrap-sm{position:relative;height:160px}
 
 /* TABS */
-.tabs-nav{display:flex;gap:0;border-bottom:2px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch}
-.tab-btn{padding:.6rem 1rem;border:none;background:none;font-family:inherit;font-size:.82rem;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .15s,border-color .15s}
+.tabs-nav{display:flex;border-bottom:2px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;background:var(--card);border-radius:12px 12px 0 0;padding:0 .5rem}
+.tab-btn{padding:.6rem .9rem;border:none;background:none;font-family:inherit;font-size:.8rem;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .15s,border-color .15s;flex-shrink:0}
 .tab-btn.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
-.tab-panel{display:none;overflow-x:auto}
+.tab-panel{display:none}
 .tab-panel.active{display:block}
+.tab-body{background:var(--card);border-radius:0 0 12px 12px;padding:.8rem 1rem;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 table{width:100%;border-collapse:collapse;font-size:.78rem}
 thead tr{border-bottom:2px solid var(--border)}
-th{text-align:left;padding:.4rem .5rem;font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;white-space:nowrap}
-td{padding:.45rem .5rem;border-bottom:1px solid var(--border);vertical-align:top;color:var(--ink)}
+th{text-align:left;padding:.4rem .5rem;font-size:.64rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;white-space:nowrap}
+td{padding:.42rem .5rem;border-bottom:1px solid var(--border);vertical-align:top}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:var(--light)}
-.td-date{white-space:nowrap;color:var(--muted)}
 .td-num{font-weight:600}
+.td-muted{color:var(--muted);font-size:.72rem}
 .chip{display:inline-block;padding:.1rem .45rem;border-radius:20px;font-size:.68rem;font-weight:600;background:var(--border);color:var(--ink)}
-.chip-blue{background:#dbeafe;color:#1d4ed8}
-.chip-orange{background:#ffedd5;color:#c2410c}
+.chip-diesel{background:#ffedd5;color:#c2410c}
+.chip-benzina{background:#dbeafe;color:#1d4ed8}
+
+/* ORE AUTISTA: blocchi espansi */
+.aut-block{margin-bottom:.8rem;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.aut-header{display:flex;justify-content:space-between;align-items:center;padding:.55rem .8rem;background:var(--light);font-weight:600;font-size:.82rem}
+.aut-barche{padding:.3rem .8rem .5rem}
+.aut-barca-row{display:flex;justify-content:space-between;align-items:center;padding:.3rem 0;border-bottom:1px dashed var(--border);font-size:.78rem}
+.aut-barca-row:last-child{border-bottom:none}
+.bar-mini-track{flex:1;margin:0 .75rem;background:var(--border);border-radius:4px;height:8px;overflow:hidden}
+.bar-mini-fill{height:100%;border-radius:4px;min-width:2px}
 
 /* TESSERE */
-.tessere-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.6rem}
-.tessera-card{border:1.5px solid var(--border);border-radius:10px;padding:.75rem .9rem}
-.tessera-name{font-weight:600;font-size:.85rem;margin-bottom:.5rem}
-.tessera-badges{display:flex;gap:.4rem;flex-wrap:wrap}
-.badge{padding:.15rem .5rem;border-radius:20px;font-size:.7rem;font-weight:600}
+.tessere-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.6rem}
+.tessera-card{border:1.5px solid var(--border);border-radius:10px;padding:.7rem .85rem}
+.tessera-name{font-weight:600;font-size:.83rem;margin-bottom:.45rem}
+.tessera-badges{display:flex;gap:.35rem;flex-wrap:wrap}
+.badge{padding:.12rem .45rem;border-radius:20px;font-size:.68rem;font-weight:600}
 .badge-on{background:#dcfce7;color:#166534}
 .badge-off{background:var(--border);color:var(--muted)}
 .badge-purple{background:#f3e8ff;color:#7e22ce}
 
-/* EMPTY STATE */
-.empty{color:var(--muted);font-style:italic;font-size:.85rem;padding:.5rem 0}
+.empty{color:var(--muted);font-style:italic;font-size:.83rem;padding:.5rem 0}
+.sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.sec-title{font-size:.82rem;font-weight:600;color:var(--ink)}
 
-/* RESPONSIVE */
 @media(max-width:600px){
-  header{padding:.65rem .85rem}
-  main{padding:.75rem}
-  .kpi-value{font-size:1.4rem}
+  header{padding:.6rem .85rem}
+  .period-bar{top:50px;padding:.45rem .85rem}
+  main{padding:.65rem}
+  .kpi-value{font-size:1.35rem}
   .chart-wrap{height:170px}
 }
 </style>
@@ -125,6 +145,7 @@ tr:hover td{background:var(--light)}
 
 <!-- DASHBOARD -->
 <div id="dashboard">
+
   <header>
     <div class="header-left">
       <span class="header-logo">⚓</span>
@@ -134,29 +155,42 @@ tr:hover td{background:var(--light)}
       </div>
     </div>
     <div class="header-right">
-      <span class="header-ts">Aggiornato: <strong id="lastUpdate">—</strong></span>
+      <span class="header-ts">Agg. <strong id="lastUpdate">—</strong></span>
       <button class="btn" onclick="refresh()">↻ Aggiorna</button>
       <button class="btn" onclick="location.href='index.html'">← App</button>
     </div>
   </header>
 
+  <!-- PERIOD FILTER -->
+  <div class="period-bar">
+    <span class="period-label">Periodo:</span>
+    <div class="period-pills">
+      <button class="pill" onclick="setPeriod('day',this)">Oggi</button>
+      <button class="pill" onclick="setPeriod('week',this)">Settimana</button>
+      <button class="pill" onclick="setPeriod('month',this)">Mese</button>
+      <button class="pill active" onclick="setPeriod('all',this)">Tutto</button>
+    </div>
+    <span class="period-range" id="periodRange"></span>
+  </div>
+
   <main>
+
     <!-- KPI -->
     <div class="kpi-grid" id="kpiGrid"></div>
 
-    <!-- CHARTS ROW 1 -->
+    <!-- CHARTS: registrazioni + carburante per mese/settimana/giorno -->
     <div class="charts-row charts-2">
       <div class="card">
-        <div class="card-title">📅 Registrazioni per mese</div>
-        <div class="chart-wrap"><canvas id="chartRegMese"></canvas></div>
+        <div class="card-title" id="titRegTempo">📅 Registrazioni nel tempo</div>
+        <div class="chart-wrap"><canvas id="chartRegTempo"></canvas></div>
       </div>
       <div class="card">
-        <div class="card-title">⛽ Carburante per mese (litri)</div>
-        <div class="chart-wrap"><canvas id="chartFuelMese"></canvas></div>
+        <div class="card-title" id="titFuelTempo">⛽ Litri carburante nel tempo</div>
+        <div class="chart-wrap"><canvas id="chartFuelTempo"></canvas></div>
       </div>
     </div>
 
-    <!-- CHARTS ROW 2 -->
+    <!-- CHARTS: ore per autista + barca + tipo carburante -->
     <div class="charts-row charts-3">
       <div class="card">
         <div class="card-title">👤 Ore per autista</div>
@@ -172,11 +206,15 @@ tr:hover td{background:var(--light)}
       </div>
     </div>
 
-    <!-- CHARTS ROW 3 -->
-    <div class="charts-row charts-2">
+    <!-- CHARTS: litri per barca + litri per fornitore + reg per barca -->
+    <div class="charts-row charts-3">
       <div class="card">
         <div class="card-title">🚤 Litri per barca</div>
         <div class="chart-wrap"><canvas id="chartFuelBarca"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🏪 Litri per fornitore</div>
+        <div class="chart-wrap"><canvas id="chartFornitore"></canvas></div>
       </div>
       <div class="card">
         <div class="card-title">📋 Registrazioni per barca</div>
@@ -184,28 +222,34 @@ tr:hover td{background:var(--light)}
       </div>
     </div>
 
-    <!-- TESSERE -->
+    <!-- TESSERE (sempre globali, non filtrate per periodo) -->
     <div class="card">
       <div class="card-title">💳 Stato tessere per barca</div>
       <div class="tessere-grid" id="tessereGrid"></div>
     </div>
 
     <!-- TABELLE -->
-    <div class="card">
+    <div>
       <div class="tabs-nav">
         <button class="tab-btn active" onclick="switchTab('reg',this)">📋 Registrazioni</button>
         <button class="tab-btn" onclick="switchTab('fuel',this)">⛽ Rifornimenti</button>
         <button class="tab-btn" onclick="switchTab('ore',this)">⏱ Ore Motore</button>
-        <button class="tab-btn" onclick="switchTab('tslog',this)">💳 Movimenti Tessere</button>
+        <button class="tab-btn" onclick="switchTab('forn',this)">🏪 Fornitori</button>
+        <button class="tab-btn" onclick="switchTab('tslog',this)">💳 Tessere</button>
       </div>
-      <div style="display:flex;justify-content:flex-end;margin:.6rem 0 .2rem">
-        <button class="btn btn-primary" onclick="downloadCsv()" id="csvBtn">↓ Scarica CSV</button>
+      <div class="tab-body">
+        <div class="sec-head">
+          <span class="sec-title" id="tabTitle">Registrazioni</span>
+          <button class="btn btn-primary" onclick="downloadCsv()">↓ CSV</button>
+        </div>
+        <div id="tabReg" class="tab-panel active"><div id="tblReg"></div></div>
+        <div id="tabFuel" class="tab-panel"><div id="tblFuel"></div></div>
+        <div id="tabOre" class="tab-panel"><div id="tblOre"></div></div>
+        <div id="tabForn" class="tab-panel"><div id="tblForn"></div></div>
+        <div id="tabTslog" class="tab-panel"><div id="tblTslog"></div></div>
       </div>
-      <div id="tabReg" class="tab-panel active"><div id="tblReg"></div></div>
-      <div id="tabFuel" class="tab-panel"><div id="tblFuel"></div></div>
-      <div id="tabOre" class="tab-panel"><div id="tblOre"></div></div>
-      <div id="tabTslog" class="tab-panel"><div id="tblTslog"></div></div>
     </div>
+
   </main>
 </div>
 
@@ -214,91 +258,116 @@ const SB_URL='https://psgxyjtsgthctvntbgnf.supabase.co';
 const SB_KEY='sb_publishable_bq_M1RIzGgxPR-ieGL-b1g_gKPT088P';
 const TABLE='agenda';
 const KEYS=['fleet-records','fleet-fuel-records','fleet-tessere-barca','fleet-tessere-barca-log','fleet-tessere-list','fleet-dashboard-pw'];
-const PALETTE=['#4a90b8','#2d6a4f','#c8854a','#7b4fa0','#b8474a','#2a7a7a','#8a9b3a','#c06030','#3a608a','#6a4fa0'];
+const PALETTE=['#4a90b8','#2d6a4f','#c8854a','#7b4fa0','#b8474a','#2a7a7a','#8a9b3a','#c06030','#3a608a','#6a4fa0','#a07030','#4a7a50'];
 
 let DB={};
 let dashPw='';
 let charts={};
 let activeTab='reg';
+let currentPeriod='all';
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
 async function init(){
-  show('loadingScreen');
-  hide('loginScreen');
+  show('loadingScreen'); hide('loginScreen');
   try{
     const data=await dbGetMany(KEYS);
-    KEYS.forEach(k=>{
-      const v=data[k];
-      if(v!==null&&v!==undefined)DB[k]=v;
-    });
+    KEYS.forEach(k=>{const v=data[k];if(v!=null)DB[k]=v;});
     dashPw=DB['fleet-dashboard-pw']||'';
   }catch(e){console.error(e);}
   hide('loadingScreen');
-
   const saved=sessionStorage.getItem('dash_auth');
-  if(saved===dashPw&&dashPw){
-    openDashboard();
-  }else{
-    show('loginScreen');
-  }
+  if(saved===dashPw&&dashPw) openDashboard();
+  else show('loginScreen');
 }
 
 function doLogin(){
   const entered=document.getElementById('pwInput').value;
   const err=document.getElementById('loginErr');
   if(!dashPw){err.textContent='Password non impostata dal Super Admin.';err.style.display='block';return;}
-  if(entered===dashPw){
-    sessionStorage.setItem('dash_auth',dashPw);
-    openDashboard();
-  }else{
-    err.style.display='block';
-    err.textContent='Password non corretta.';
-  }
+  if(entered===dashPw){sessionStorage.setItem('dash_auth',dashPw);openDashboard();}
+  else{err.style.display='block';err.textContent='Password non corretta.';}
 }
 
 function openDashboard(){
-  hide('loginScreen');
-  hide('loadingScreen');
-  const el=document.getElementById('dashboard');
-  el.style.display='flex';
+  hide('loginScreen');hide('loadingScreen');
+  const el=document.getElementById('dashboard');el.style.display='flex';
   renderAll();
 }
 
 async function refresh(){
-  try{
-    const data=await dbGetMany(KEYS);
-    KEYS.forEach(k=>{if(data[k]!==null&&data[k]!==undefined)DB[k]=data[k];});
-  }catch(e){console.error(e);}
+  try{const data=await dbGetMany(KEYS);KEYS.forEach(k=>{if(data[k]!=null)DB[k]=data[k];});}catch(e){console.error(e);}
   renderAll();
+}
+
+// ── PERIOD FILTER ─────────────────────────────────────────────────────────
+function setPeriod(p,btn){
+  currentPeriod=p;
+  document.querySelectorAll('.pill').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderAll();
+}
+
+function getDateRange(period){
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const fmt=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  if(period==='all')return{from:null,to:null,label:'Tutti i dati'};
+  if(period==='day'){
+    const t=fmt(now);return{from:t,to:t,label:'Oggi, '+now.toLocaleDateString('it-IT',{day:'2-digit',month:'long'})};
+  }
+  if(period==='week'){
+    const day=now.getDay();const mon=new Date(now);mon.setDate(now.getDate()-(day===0?6:day-1));
+    const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+    return{from:fmt(mon),to:fmt(sun),label:mon.toLocaleDateString('it-IT',{day:'2-digit',month:'short'})+' – '+sun.toLocaleDateString('it-IT',{day:'2-digit',month:'short'})};
+  }
+  if(period==='month'){
+    const f=new Date(now.getFullYear(),now.getMonth(),1);
+    const l=new Date(now.getFullYear(),now.getMonth()+1,0);
+    return{from:fmt(f),to:fmt(l),label:now.toLocaleDateString('it-IT',{month:'long',year:'numeric'})};
+  }
+  return{from:null,to:null,label:''};
+}
+
+function filterByDate(arr,dateFn,range){
+  if(!range.from)return arr;
+  return arr.filter(r=>{const d=dateFn(r);return d>=range.from&&d<=range.to;});
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────
 function renderAll(){
   const ts=new Date().toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
   document.getElementById('lastUpdate').textContent=ts;
-  const records=DB['fleet-records']||[];
-  const fuelRecords=DB['fleet-fuel-records']||[];
+
+  const allRecords=DB['fleet-records']||[];
+  const allFuel=DB['fleet-fuel-records']||[];
   const tessere=DB['fleet-tessere-barca']||{};
   const tessereList=DB['fleet-tessere-list']||[];
   const tessereLog=DB['fleet-tessere-barca-log']||[];
 
-  renderKpis(records,fuelRecords);
-  renderCharts(records,fuelRecords);
+  const range=getDateRange(currentPeriod);
+  document.getElementById('periodRange').textContent=range.label;
+
+  const records=filterByDate(allRecords,r=>(r.data||'').slice(0,10),range);
+  const fuelRecords=filterByDate(allFuel,r=>(r.data||'').slice(0,10),range);
+
+  renderKpis(records,fuelRecords,allRecords,allFuel);
+  renderCharts(records,fuelRecords,allRecords,allFuel);
   renderTessere(tessere,tessereList);
-  renderTables(records,fuelRecords,tessereLog);
+  renderTables(records,fuelRecords,tessereLog,allRecords);
 }
 
 // ── KPI ───────────────────────────────────────────────────────────────────
-function renderKpis(records,fuelRecords){
+function renderKpis(records,fuelRecords,allRec,allFuel){
   const totLitri=fuelRecords.reduce((s,r)=>s+(parseFloat(r.litri)||0),0);
-  const totOre=calcDeltaOre(records).totale;
+  const deltaOre=calcDeltaOre(allRec,records); // delta computed on all, but attributed within period
+  const totOre=deltaOre.totale;
   const barche=new Set([...records.map(r=>(r.mezzo||'').trim()),...fuelRecords.map(r=>(r.barca||'').trim())].filter(Boolean));
   const autisti=new Set([...records.map(r=>(r.autista||'').trim()),...fuelRecords.map(r=>(r.autista||'').trim())].filter(Boolean));
   const kpis=[
     {ico:'📋',val:records.length,lbl:'Registrazioni',color:'var(--green)'},
     {ico:'⏱',val:fmt1(totOre)+' h',lbl:'Ore Motore',color:'var(--blue)'},
     {ico:'⛽',val:Math.round(totLitri)+' L',lbl:'Carburante',color:'var(--orange)'},
-    {ico:'🚤',val:barche.size,lbl:'Barche',color:'var(--purple)'},
+    {ico:'🚤',val:barche.size,lbl:'Barche attive',color:'var(--purple)'},
     {ico:'👥',val:autisti.size,lbl:'Autisti',color:'var(--red)'},
   ];
   document.getElementById('kpiGrid').innerHTML=kpis.map(k=>
@@ -311,103 +380,98 @@ function renderKpis(records,fuelRecords){
 }
 
 // ── CHARTS ────────────────────────────────────────────────────────────────
-function renderCharts(records,fuelRecords){
-  // Registrazioni per mese
-  const regMese=groupBy(records,r=>(r.data||'').slice(0,7));
-  const lastMonths=last6Months();
-  mkBarChart('chartRegMese',
-    lastMonths.map(m=>fmtMonth(m)),
-    lastMonths.map(m=>regMese[m]||0),
-    '#4a90b8'
-  );
+function renderCharts(records,fuelRecords,allRec,allFuel){
+  const range=getDateRange(currentPeriod);
+  const delta=calcDeltaOre(allRec,records);
 
-  // Carburante per mese
-  const fuelMese=sumBy(fuelRecords,r=>(r.data||'').slice(0,7),r=>parseFloat(r.litri)||0);
-  mkBarChart('chartFuelMese',
-    lastMonths.map(m=>fmtMonth(m)),
-    lastMonths.map(m=>Math.round(fuelMese[m]||0)),
-    '#c8854a'
-  );
+  // ---- grafici temporali ----
+  const {labels:tLabels,regData,fuelData,titReg,titFuel}=buildTempoSeries(records,fuelRecords,range);
+  document.getElementById('titRegTempo').textContent='📅 '+titReg;
+  document.getElementById('titFuelTempo').textContent='⛽ '+titFuel;
+  mkBarChart('chartRegTempo',tLabels,regData,'#4a90b8');
+  mkBarChart('chartFuelTempo',tLabels,fuelData,'#c8854a');
 
-  // Ore per autista (top 8) — delta contaore
-  const delta=calcDeltaOre(records);
-  const oreAutMap=Object.fromEntries(Object.entries(delta.byAutista).map(([k,v])=>[k,Math.round(v.totale*10)/10]));
-  const topAut=topN(oreAutMap,8);
-  mkBarChart('chartOreAutista',topAut.map(x=>x.k),topAut.map(x=>x.v),PALETTE,'y');
+  // ---- ore autista ----
+  const oreAutMap=objSumDelta(delta.byAutista,'totale');
+  mkBarChart('chartOreAutista',topN(oreAutMap,8).map(x=>x.k),topN(oreAutMap,8).map(x=>x.v),PALETTE,'y');
 
-  // Ore per barca (top 8) — delta contaore
-  const oreBarcaMap=Object.fromEntries(Object.entries(delta.byBarca).map(([k,v])=>[k,Math.round(v.totale*10)/10]));
-  const topBarca=topN(oreBarcaMap,8);
-  mkBarChart('chartOreBarca',topBarca.map(x=>x.k),topBarca.map(x=>x.v),PALETTE,'y');
+  // ---- ore barca ----
+  const oreBarcaMap=objSumDelta(delta.byBarca,'totale');
+  mkBarChart('chartOreBarca',topN(oreBarcaMap,8).map(x=>x.k),topN(oreBarcaMap,8).map(x=>x.v),PALETTE,'y');
 
-  // Carburante per tipo (doughnut)
+  // ---- tipo carburante ----
   const tipiMap=sumBy(fuelRecords,r=>(r.tipo||'altro').toLowerCase(),r=>parseFloat(r.litri)||0);
-  const tipi=Object.entries(tipiMap).sort((a,b)=>b[1]-a[1]);
+  const tipi=Object.entries(tipiMap).filter(([k])=>k).sort((a,b)=>b[1]-a[1]);
   mkDoughnut('chartFuelTipo',tipi.map(x=>cap(x[0])),tipi.map(x=>Math.round(x[1])));
 
-  // Litri per barca (top 8)
+  // ---- litri per barca ----
   const litriB=sumBy(fuelRecords,r=>(r.barca||'').trim(),r=>parseFloat(r.litri)||0);
-  const topLitri=topN(litriB,8);
-  mkBarChart('chartFuelBarca',topLitri.map(x=>x.k),topLitri.map(x=>Math.round(x.v)),PALETTE,'y');
+  mkBarChart('chartFuelBarca',topN(litriB,8).map(x=>x.k),topN(litriB,8).map(x=>Math.round(x.v)),PALETTE,'y');
 
-  // Registrazioni per barca (top 8)
+  // ---- litri per fornitore ----
+  const fornMap=sumBy(fuelRecords,r=>cleanFornitore(r.fornitori),r=>parseFloat(r.litri)||0);
+  mkBarChart('chartFornitore',topN(fornMap,8).map(x=>x.k),topN(fornMap,8).map(x=>Math.round(x.v)),PALETTE,'y');
+
+  // ---- registrazioni per barca ----
   const regB=groupBy(records,r=>(r.mezzo||'').trim());
-  const topRegB=topN(regB,8);
-  mkBarChart('chartRegBarca',topRegB.map(x=>x.k),topRegB.map(x=>x.v),PALETTE,'y');
+  mkBarChart('chartRegBarca',topN(regB,8).map(x=>x.k),topN(regB,8).map(x=>x.v),PALETTE,'y');
 }
 
-function mkBarChart(id,labels,data,color,indexAxis){
-  if(charts[id]){charts[id].destroy();}
-  const colors=Array.isArray(color)?labels.map((_,i)=>PALETTE[i%PALETTE.length]):color;
-  charts[id]=new Chart(document.getElementById(id),{
-    type:'bar',
-    data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:4,borderSkipped:false}]},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      indexAxis:indexAxis||'x',
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.parsed[indexAxis==='y'?'x':'y']}}},
-      scales:{
-        x:{grid:{color:'#f0f2f5'},ticks:{font:{family:'Inter',size:11},color:'#64748b',maxRotation:indexAxis==='y'?0:35}},
-        y:{grid:{color:'#f0f2f5'},ticks:{font:{family:'Inter',size:11},color:'#64748b'}}
-      }
-    }
-  });
-}
-
-function mkDoughnut(id,labels,data){
-  if(charts[id]){charts[id].destroy();}
-  charts[id]=new Chart(document.getElementById(id),{
-    type:'doughnut',
-    data:{labels,datasets:[{data,backgroundColor:PALETTE,borderWidth:2,borderColor:'#fff'}]},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{
-        legend:{position:'bottom',labels:{font:{family:'Inter',size:11},boxWidth:12,padding:8}},
-        tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+ctx.parsed+' L'}}
-      }
-    }
-  });
+function buildTempoSeries(records,fuelRecords,range){
+  let labels,regData,fuelData,titReg,titFuel;
+  if(currentPeriod==='day'||currentPeriod==='week'){
+    // raggruppa per giorno
+    const days=[...new Set([
+      ...records.map(r=>(r.data||'').slice(0,10)),
+      ...fuelRecords.map(r=>(r.data||'').slice(0,10))
+    ].filter(Boolean).sort())];
+    if(!days.length)days.push(range.from||toYMD(new Date()));
+    labels=days.map(d=>fmtDay(d));
+    regData=days.map(d=>records.filter(r=>(r.data||'').startsWith(d)).length);
+    fuelData=days.map(d=>Math.round(fuelRecords.filter(r=>(r.data||'').startsWith(d)).reduce((s,r)=>s+(parseFloat(r.litri)||0),0)));
+    titReg='Registrazioni per giorno'; titFuel='Litri per giorno';
+  }else if(currentPeriod==='month'){
+    // raggruppa per settimana del mese (lun-dom)
+    const weekBuckets={};
+    records.forEach(r=>{const wk=getWeekLabel(r.data);if(!wk)return;(weekBuckets[wk]=weekBuckets[wk]||{reg:0,fuel:0}).reg++;});
+    fuelRecords.forEach(r=>{const wk=getWeekLabel(r.data);if(!wk)return;(weekBuckets[wk]=weekBuckets[wk]||{reg:0,fuel:0}).fuel+=parseFloat(r.litri)||0;});
+    labels=Object.keys(weekBuckets).sort();
+    regData=labels.map(k=>weekBuckets[k].reg);
+    fuelData=labels.map(k=>Math.round(weekBuckets[k].fuel));
+    titReg='Registrazioni per settimana'; titFuel='Litri per settimana';
+  }else{
+    // tutto: raggruppa per mese (ultimi 12 o tutti)
+    const months=[...new Set([
+      ...records.map(r=>(r.data||'').slice(0,7)),
+      ...fuelRecords.map(r=>(r.data||'').slice(0,7))
+    ].filter(Boolean).sort())].slice(-12);
+    labels=months.map(m=>fmtMonth(m));
+    regData=months.map(m=>records.filter(r=>(r.data||'').startsWith(m)).length);
+    fuelData=months.map(m=>Math.round(fuelRecords.filter(r=>(r.data||'').startsWith(m)).reduce((s,r)=>s+(parseFloat(r.litri)||0),0)));
+    titReg='Registrazioni per mese'; titFuel='Litri per mese';
+  }
+  return{labels,regData,fuelData,titReg,titFuel};
 }
 
 // ── ORE MOTORE: calcolo delta contaore ───────────────────────────────────
-// Il campo `ore` è una lettura cumulativa del contaore (come un odometro).
-// Le ore di ogni autista = delta tra due letture consecutive sulla stessa barca.
-// Il delta è attribuito all'autista della lettura PRECEDENTE (ha guidato fino alla lettura successiva).
-function calcDeltaOre(records){
+// Calcola i delta sull'intero dataset; poi filtra i delta il cui intervallo
+// inizia nella finestra temporale richiesta (filteredRecords).
+function calcDeltaOre(allRecords,filteredRecords){
+  const filteredSet=new Set((filteredRecords||allRecords).map(r=>r.id));
   const byBarca={};
-  records.forEach(r=>{
-    const ore=parseFloat(r.ore);
-    if(isNaN(ore)||ore<=0)return;
+  allRecords.forEach(r=>{
+    const ore=parseFloat(r.ore);if(isNaN(ore)||ore<=0)return;
     const b=(r.mezzo||'').trim();if(!b)return;
-    (byBarca[b]=byBarca[b]||[]).push({data:r.data||'',autista:(r.autista||'—').trim(),ore});
+    (byBarca[b]=byBarca[b]||[]).push({id:r.id,data:r.data||'',autista:(r.autista||'—').trim(),ore});
   });
   Object.values(byBarca).forEach(arr=>arr.sort((a,b)=>a.data.localeCompare(b.data)));
-  const byAutista={},byBarca2={};let totale=0;
-  const rows=[];
+  const byAutista={},byBarca2={};let totale=0;const rows=[];
   Object.entries(byBarca).forEach(([barca,arr])=>{
     for(let i=0;i<arr.length-1;i++){
       const delta=arr[i+1].ore-arr[i].ore;
-      if(delta<=0||delta>5000)continue; // salta valori negativi o anomali (>5000h in una sessione)
+      if(delta<=0||delta>5000)continue;
+      // includi nel periodo se il record "da" è nel set filtrato
+      if(filteredRecords&&!filteredSet.has(arr[i].id))continue;
       const nome=arr[i].autista;
       (byAutista[nome]=byAutista[nome]||{totale:0,barche:{}}); byAutista[nome].totale+=delta; byAutista[nome].barche[barca]=(byAutista[nome].barche[barca]||0)+delta;
       (byBarca2[barca]=byBarca2[barca]||{totale:0,autisti:{}}); byBarca2[barca].totale+=delta; byBarca2[barca].autisti[nome]=(byBarca2[barca].autisti[nome]||0)+delta;
@@ -418,172 +482,227 @@ function calcDeltaOre(records){
   return{byAutista,byBarca:byBarca2,totale,rows};
 }
 
+// ── TESSERE ───────────────────────────────────────────────────────────────
 function renderTessere(tessere,tessereList){
   const barche=Object.keys(tessere).sort();
-  if(!barche.length){
-    document.getElementById('tessereGrid').innerHTML='<div class="empty">Nessun dato tessere.</div>';
-    return;
-  }
+  if(!barche.length){document.getElementById('tessereGrid').innerHTML='<div class="empty">Nessun dato tessere.</div>';return;}
   document.getElementById('tessereGrid').innerHTML=barche.map(b=>{
     const s=tessere[b]||{};
     const ric=s.ric?(tessereList.find(t=>t.id===s.ric)?.nome||('Ric. #'+s.ric)):null;
-    const badges=[
-      `<span class="badge ${s.mila?'badge-on':'badge-off'}">Mila</span>`,
-      `<span class="badge ${s.cc?'badge-on':'badge-off'}">CC</span>`,
-      ric?`<span class="badge badge-purple">💳 ${esc(ric)}</span>`:`<span class="badge badge-off">—</span>`
-    ].join('');
-    return`<div class="tessera-card"><div class="tessera-name">🚤 ${esc(b)}</div><div class="tessera-badges">${badges}</div></div>`;
+    return`<div class="tessera-card">
+      <div class="tessera-name">🚤 ${esc(b)}</div>
+      <div class="tessera-badges">
+        <span class="badge ${s.mila?'badge-on':'badge-off'}">Mila</span>
+        <span class="badge ${s.cc?'badge-on':'badge-off'}">CC</span>
+        ${ric?`<span class="badge badge-purple">💳 ${esc(ric)}</span>`:`<span class="badge badge-off">—</span>`}
+      </div>
+    </div>`;
   }).join('');
 }
 
 // ── TABLES ────────────────────────────────────────────────────────────────
-function renderTables(records,fuelRecords,tessereLog){
+function renderTables(records,fuelRecords,tessereLog,allRecords){
+  // --- REGISTRAZIONI ---
   const sortedReg=[...records].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
   document.getElementById('tblReg').innerHTML=tbl(
-    ['Data','Autista','Barca','Ore','Intervento','Note'],
-    sortedReg.map(r=>[
-      fmtDate(r.data),
-      esc(r.autista||'—'),
-      esc(r.mezzo||'—'),
-      r.ore?`<span class="td-num">${esc(r.ore)}h</span>`:'—',
-      esc(r.intervento||'—'),
-      esc(r.note||'—')
-    ])
+    ['Data','Autista','Barca','Ore contaore','Intervento','Note'],
+    sortedReg.map(r=>[fmtDate(r.data),esc(r.autista||'—'),esc(r.mezzo||'—'),
+      r.ore?`<span class="td-num">${esc(r.ore)}</span>`:'—',
+      esc(r.intervento||'—'),`<span class="td-muted">${esc(r.note||'')}</span>`])
   );
 
+  // --- RIFORNIMENTI ---
   const sortedFuel=[...fuelRecords].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
   document.getElementById('tblFuel').innerHTML=tbl(
     ['Data','Autista','Barca','Tipo','Litri','Fornitore','Note'],
-    sortedFuel.map(r=>[
-      fmtDate(r.data),
-      esc(r.autista||'—'),
-      esc(r.barca||'—'),
-      r.tipo?`<span class="chip ${r.tipo==='diesel'?'chip-orange':'chip-blue'}">${esc(r.tipo)}</span>`:'—',
-      r.litri?`<span class="td-num">${r.litri}L</span>`:'—',
-      esc(r.fornitori||'—'),
-      esc(r.note||'—')
-    ])
+    sortedFuel.map(r=>[fmtDate(r.data),esc(r.autista||'—'),esc(r.barca||'—'),
+      r.tipo?`<span class="chip chip-${r.tipo}">${esc(r.tipo)}</span>`:'—',
+      r.litri?`<span class="td-num">${r.litri} L</span>`:'—',
+      esc(cleanFornitore(r.fornitori)||'—'),
+      `<span class="td-muted">${esc(r.note||'')}</span>`])
   );
 
-  // Ore per autista/barca — delta contaore
-  const deltaOre=calcDeltaOre(records);
-  const oreMap={};
-  deltaOre.rows.forEach(r=>{
-    const k=r.autista+'__'+r.barca;
-    (oreMap[k]=oreMap[k]||{autista:r.autista,barca:r.barca,ore:0}).ore+=r.delta;
+  // --- ORE MOTORE: per autista con dettaglio barche ---
+  const deltaOre=calcDeltaOre(allRecords,records);
+  const autSorted=Object.entries(deltaOre.byAutista).sort((a,b)=>b[1].totale-a[1].totale);
+  if(!autSorted.length){
+    document.getElementById('tblOre').innerHTML='<div class="empty">Nessun dato ore motore disponibile (servono almeno due letture contaore per barca).</div>';
+  }else{
+    const maxOre=Math.max(...autSorted.map(([,d])=>d.totale),1);
+    document.getElementById('tblOre').innerHTML=autSorted.map(([nome,d])=>{
+      const barcheRows=Object.entries(d.barche).sort((a,b)=>b[1]-a[1]).map(([barca,ore])=>{
+        const pct=Math.max(ore/maxOre*100,2);
+        const col=PALETTE[autSorted.findIndex(([n])=>n===nome)%PALETTE.length];
+        return`<div class="aut-barca-row">
+          <span style="min-width:130px;color:var(--muted);font-size:.74rem">🚤 ${esc(barca)}</span>
+          <div class="bar-mini-track"><div class="bar-mini-fill" style="width:${pct}%;background:${col}"></div></div>
+          <span class="td-num" style="min-width:52px;text-align:right">${fmt1(ore)} h</span>
+        </div>`;
+      }).join('');
+      return`<div class="aut-block">
+        <div class="aut-header">
+          <span>👤 ${esc(nome)}</span>
+          <span style="color:var(--blue)">${fmt1(d.totale)} h totali</span>
+        </div>
+        <div class="aut-barche">${barcheRows}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // --- FORNITORI ---
+  const fornMap={};
+  fuelRecords.forEach(r=>{
+    const f=cleanFornitore(r.fornitori)||'—';const litri=parseFloat(r.litri)||0;if(!litri)return;
+    (fornMap[f]=fornMap[f]||{litri:0,rifornimenti:0,barche:new Set()});
+    fornMap[f].litri+=litri; fornMap[f].rifornimenti++;
+    if(r.barca)fornMap[f].barche.add(r.barca.trim());
   });
-  const oreRows=Object.values(oreMap).sort((a,b)=>b.ore-a.ore);
-  document.getElementById('tblOre').innerHTML=tbl(
-    ['Autista','Barca','Ore (delta contaore)'],
-    oreRows.map(r=>[esc(r.autista),esc(r.barca),`<span class="td-num">${fmt1(r.ore)} h</span>`])
-  );
+  const fornRows=Object.entries(fornMap).sort((a,b)=>b[1].litri-a[1].litri);
+  document.getElementById('tblForn').innerHTML=fornRows.length?tbl(
+    ['Fornitore','Litri totali','Rifornimenti','Barche servite'],
+    fornRows.map(([f,d])=>[
+      esc(f),
+      `<span class="td-num">${Math.round(d.litri)} L</span>`,
+      d.rifornimenti,
+      [...d.barche].sort().map(b=>`<span class="chip">${esc(b)}</span>`).join(' ')||'—'
+    ])
+  ):'<div class="empty">Nessun dato fornitori.</div>';
 
+  // --- TESSERE LOG ---
   const sortedLog=[...tessereLog].sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
   const fmtTs=s=>[s.mila?'Mila':'',s.cc?'CC':'',s.ric?'Ric.':''].filter(Boolean).join(', ')||'—';
   document.getElementById('tblTslog').innerHTML=tbl(
     ['Data','Autista','Barca','Prima','Dopo'],
     sortedLog.slice(0,150).map(e=>[
       e.ts?new Date(e.ts).toLocaleString('it-IT'):'—',
-      esc(e.autista||'—'),
-      esc(e.barca||'—'),
-      fmtTs(e.from||{}),
-      fmtTs(e.to||{})
+      esc(e.autista||'—'),esc(e.barca||'—'),fmtTs(e.from||{}),fmtTs(e.to||{})
     ])
   );
 }
 
 function tbl(headers,rows){
   if(!rows.length)return '<div class="empty" style="padding:.7rem 0">Nessun dato disponibile.</div>';
-  return`<table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${
+  return`<div style="overflow-x:auto"><table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${
     rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')
-  }</tbody></table>`;
+  }</tbody></table></div>`;
 }
 
 // ── TABS ──────────────────────────────────────────────────────────────────
+const TAB_TITLES={reg:'Registrazioni',fuel:'Rifornimenti',ore:'Ore Motore per Autista',forn:'Riepilogo Fornitori',tslog:'Movimenti Tessere'};
 function switchTab(name,btn){
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab'+cap(name)).classList.add('active');
   btn.classList.add('active');
   activeTab=name;
+  document.getElementById('tabTitle').textContent=TAB_TITLES[name]||name;
 }
 
 // ── CSV DOWNLOAD ──────────────────────────────────────────────────────────
 function downloadCsv(){
-  const records=DB['fleet-records']||[];
-  const fuelRecords=DB['fleet-fuel-records']||[];
+  const records=filterByDate(DB['fleet-records']||[],r=>(r.data||'').slice(0,10),getDateRange(currentPeriod));
+  const fuelRecords=filterByDate(DB['fleet-fuel-records']||[],r=>(r.data||'').slice(0,10),getDateRange(currentPeriod));
   const tessereLog=DB['fleet-tessere-barca-log']||[];
-  const esc2=v=>{const s=String(v==null?'':v).replace(/"/g,'""');return/[",\n\r]/.test(s)?`"${s}"`:s;};
-  const toCsv=(h,rows)=>[h,...rows].map(r=>r.map(esc2).join(',')).join('\n');
+  const e2=v=>{const s=String(v==null?'':v).replace(/"/g,'""');return/[",\n\r]/.test(s)?`"${s}"`:s;};
+  const toCsv=(h,rows)=>[h,...rows].map(r=>r.map(e2).join(',')).join('\n');
   let csv,name;
   if(activeTab==='reg'){
-    name='registrazioni_flotta.csv';
-    const sorted=[...records].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
-    csv=toCsv(['Data','Autista','Barca','Ore','Intervento','Note','Salvato'],
-      sorted.map(r=>[r.data||'',r.autista||'',r.mezzo||'',r.ore||'',r.intervento||'',r.note||'',r.salvato||'']));
+    name='registrazioni.csv';
+    csv=toCsv(['Data','Autista','Barca','Contaore','Intervento','Note'],
+      [...records].sort((a,b)=>(b.data||'').localeCompare(a.data||'')).map(r=>[r.data||'',r.autista||'',r.mezzo||'',r.ore||'',r.intervento||'',r.note||'']));
   }else if(activeTab==='fuel'){
-    name='rifornimenti_flotta.csv';
-    const sorted=[...fuelRecords].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+    name='rifornimenti.csv';
     csv=toCsv(['Data','Autista','Barca','Tipo','Litri','Fornitore','Note'],
-      sorted.map(r=>[(r.data||'').slice(0,10),r.autista||'',r.barca||'',r.tipo||'',r.litri||'',r.fornitori||'',r.note||'']));
+      [...fuelRecords].sort((a,b)=>(b.data||'').localeCompare(a.data||'')).map(r=>[(r.data||'').slice(0,10),r.autista||'',r.barca||'',r.tipo||'',r.litri||'',cleanFornitore(r.fornitori)||'',r.note||'']));
   }else if(activeTab==='ore'){
-    name='ore_motore_flotta.csv';
-    const dOre=calcDeltaOre(records);
-    const map={};
-    dOre.rows.forEach(r=>{
-      const k=r.autista+'__'+r.barca;
-      (map[k]=map[k]||{autista:r.autista,barca:r.barca,ore:0}).ore+=r.delta;
-    });
+    name='ore_motore.csv';
+    const d=calcDeltaOre(DB['fleet-records']||[],records);
+    const map={};d.rows.forEach(r=>{const k=r.autista+'__'+r.barca;(map[k]=map[k]||{autista:r.autista,barca:r.barca,ore:0}).ore+=r.delta;});
     csv=toCsv(['Autista','Barca','Ore (delta contaore)'],
       Object.values(map).sort((a,b)=>b.ore-a.ore).map(r=>[r.autista,r.barca,fmt1(r.ore)]));
+  }else if(activeTab==='forn'){
+    name='fornitori.csv';
+    const fornMap={};
+    fuelRecords.forEach(r=>{const f=cleanFornitore(r.fornitori)||'—';const litri=parseFloat(r.litri)||0;if(!litri)return;(fornMap[f]=fornMap[f]||{litri:0,n:0}).litri+=litri;fornMap[f].n++;});
+    csv=toCsv(['Fornitore','Litri totali','N. rifornimenti'],
+      Object.entries(fornMap).sort((a,b)=>b[1].litri-a[1].litri).map(([f,d])=>[f,Math.round(d.litri),d.n]));
   }else{
-    name='movimenti_tessere.csv';
+    name='tessere.csv';
     const fmtTs=s=>[s.mila?'Mila':'',s.cc?'CC':'',s.ric?'Ric.':''].filter(Boolean).join('; ')||'';
-    const sorted=[...tessereLog].sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
     csv=toCsv(['Data','Autista','Barca','Prima','Dopo'],
-      sorted.map(e=>[e.ts?new Date(e.ts).toLocaleString('it-IT'):'',e.autista||'',e.barca||'',fmtTs(e.from||{}),fmtTs(e.to||{})]));
+      [...tessereLog].sort((a,b)=>(b.ts||'').localeCompare(a.ts||'')).map(e=>[e.ts?new Date(e.ts).toLocaleString('it-IT'):'',e.autista||'',e.barca||'',fmtTs(e.from||{}),fmtTs(e.to||{})]));
   }
   const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href);
+}
+
+// ── CHART HELPERS ─────────────────────────────────────────────────────────
+function mkBarChart(id,labels,data,color,indexAxis){
+  if(charts[id])charts[id].destroy();
+  const ia=indexAxis||'x';
+  const colors=Array.isArray(color)?labels.map((_,i)=>PALETTE[i%PALETTE.length]):color;
+  charts[id]=new Chart(document.getElementById(id),{
+    type:'bar',
+    data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:4,borderSkipped:false}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,indexAxis:ia,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.parsed[ia==='y'?'x':'y']}}},
+      scales:{
+        x:{grid:{color:'#f0f2f5'},ticks:{font:{family:'Inter',size:10},color:'#64748b',maxRotation:ia==='y'?0:40}},
+        y:{grid:{color:'#f0f2f5'},ticks:{font:{family:'Inter',size:10},color:'#64748b'}}
+      }
+    }
+  });
+}
+
+function mkDoughnut(id,labels,data){
+  if(charts[id])charts[id].destroy();
+  charts[id]=new Chart(document.getElementById(id),{
+    type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:PALETTE,borderWidth:2,borderColor:'#fff'}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'bottom',labels:{font:{family:'Inter',size:10},boxWidth:11,padding:6}},
+        tooltip:{callbacks:{label:ctx=>' '+ctx.label+': '+ctx.parsed+' L'}}
+      }
+    }
+  });
 }
 
 // ── DB ────────────────────────────────────────────────────────────────────
 async function dbGetMany(keys){
   const list=keys.join(',');
   const r=await fetch(`${SB_URL}/rest/v1/${TABLE}?key=in.(${encodeURIComponent(list)})&select=key,value`,{
-    cache:'no-store',
-    headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,'Cache-Control':'no-cache'}
+    cache:'no-store',headers:{apikey:SB_KEY,Authorization:`Bearer ${SB_KEY}`,'Cache-Control':'no-cache'}
   });
   const rows=await r.json();
   const out={};keys.forEach(k=>out[k]=null);
-  (Array.isArray(rows)?rows:[]).forEach(row=>{
-    try{out[row.key]=JSON.parse(row.value);}catch{out[row.key]=row.value;}
-  });
+  (Array.isArray(rows)?rows:[]).forEach(row=>{try{out[row.key]=JSON.parse(row.value);}catch{out[row.key]=row.value;}});
   return out;
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────
-function show(id){const el=document.getElementById(id);if(el){el.style.display='flex';}}
-function hide(id){const el=document.getElementById(id);if(el){el.style.display='none';}}
+function show(id){const el=document.getElementById(id);if(el)el.style.display='flex';}
+function hide(id){const el=document.getElementById(id);if(el)el.style.display='none';}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
-function fmt1(n){const v=parseFloat(n)||0;return v%1===0?String(v):v.toFixed(1);}
-function fmtDate(d){
-  if(!d)return '—';
-  try{return new Date(d.slice(0,10)+'T00:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'2-digit'});}catch{return d;}
-}
-function last6Months(){
-  const out=[];const d=new Date();
-  for(let i=5;i>=0;i--){const m=new Date(d.getFullYear(),d.getMonth()-i,1);out.push(m.toISOString().slice(0,7));}
-  return out;
-}
-function fmtMonth(ym){
-  const mesi=['','Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
-  const[y,m]=ym.split('-');return (mesi[parseInt(m)]||m)+" '"+y.slice(2);
+function fmt1(n){const v=Math.round((parseFloat(n)||0)*10)/10;return v%1===0?String(v):v.toFixed(1);}
+function toYMD(d){const p=n=>String(n).padStart(2,'0');return`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;}
+function fmtDate(d){if(!d)return '—';try{return new Date(d.slice(0,10)+'T00:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'2-digit'});}catch{return d;}}
+function fmtDay(ym){try{const d=new Date(ym+'T00:00:00');return d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'short'});}catch{return ym;}}
+function fmtMonth(ym){const mesi=['','Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];const[y,m]=ym.split('-');return(mesi[parseInt(m)]||m)+" '"+y.slice(2);}
+function getWeekLabel(dateStr){
+  if(!dateStr)return null;
+  const d=new Date(dateStr+'T00:00:00');const day=d.getDay();
+  const mon=new Date(d);mon.setDate(d.getDate()-(day===0?6:day-1));
+  return toYMD(mon);
 }
 function groupBy(arr,fn){const m={};arr.forEach(x=>{const k=fn(x);if(!k)return;m[k]=(m[k]||0)+1;});return m;}
 function sumBy(arr,kFn,vFn){const m={};arr.forEach(x=>{const k=kFn(x);if(!k)return;m[k]=(m[k]||0)+(vFn(x)||0);});return m;}
 function topN(obj,n){return Object.entries(obj).filter(([k])=>k).sort((a,b)=>b[1]-a[1]).slice(0,n).map(([k,v])=>({k,v}));}
+function objSumDelta(obj,field){return Object.fromEntries(Object.entries(obj).map(([k,v])=>[k,Math.round((v[field]||0)*10)/10]));}
+function cleanFornitore(s){if(!s)return '';return s.replace(/^💳\s*/,'').trim();}
 
 init();
 </script>

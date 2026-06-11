@@ -235,6 +235,10 @@ body{background:#e8e0d0;background-image:radial-gradient(ellipse at 20% 50%,rgba
 .asb.on{background:rgba(45,106,79,.12);color:var(--green);}
 .asb.off{background:rgba(192,57,43,.1);color:var(--red);}
 .aca{display:flex;gap:.4rem;margin-top:.6rem;flex-wrap:wrap;}
+/* DASHBOARD PUBBLICA */
+.dash-tab{font-size:.78rem;padding:.6rem .85rem;border:none;background:none;cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px;color:var(--ink-faded);font-family:'Source Sans 3',sans-serif;white-space:nowrap;transition:color .15s,border-color .15s;}
+.dash-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600;}
+.dash-panel{animation:fadeIn .18s ease;}
 /* AUDIT — tabella paginata */
 .auc{display:flex;gap:.8rem;margin-bottom:.8rem;flex-wrap:wrap;align-items:center;position:relative;z-index:2;}
 .audit-table-wrap{overflow-x:auto;position:relative;z-index:2;}
@@ -1283,6 +1287,20 @@ body{padding:.8rem .3rem 3rem;}
   </div>
 
   <div class="sas">
+    <div class="sast">🔗 Dashboard Pubblica</div>
+    <div class="ib">Condividi questo link con chi deve consultare i dati flotta in sola lettura (registrazioni, rifornimenti, ore motore, tessere). Imposta una password dedicata: chi apre il link dovrà inserirla per accedere.</div>
+    <div style="position:relative;z-index:2">
+      <div style="padding:.55rem .75rem;background:#f0f7ff;border:1px solid rgba(74,144,184,.3);border-radius:6px;margin-bottom:.9rem;font-family:'Source Sans 3',sans-serif;font-size:.82rem;word-break:break-all">
+        🔗 <strong id="dashLinkText">—</strong>
+        <button class="cb" style="margin-left:.6rem;font-size:.72rem" onclick="copyDashboardLink()">Copia link</button>
+      </div>
+      <div class="field"><label class="fl">Password di accesso dashboard</label><input type="text" id="saDashPwInput" placeholder="es. flotta2026" style="border-bottom:1px solid rgba(107,63,160,.3)"></div>
+      <button class="sb pur" onclick="saveDashboardPw()">✦ Salva password</button>
+      <div class="sn pur" id="dashPwSavedOk">✓ Password dashboard salvata.</div>
+    </div>
+  </div>
+
+  <div class="sas">
     <div class="sast">Registro Attività & Accessi</div>
     <div class="auc">
       <select class="hs" id="auditRole" onchange="renderAuditLog()"><option value="">Tutti i ruoli</option><option value="superadmin">Super Admin</option><option value="admin">Admin</option><option value="driver">Autista</option></select>
@@ -1312,6 +1330,66 @@ body{padding:.8rem .3rem 3rem;}
       <div class="field"><label class="fl">Numero telefono (SMS OTP)</label><input type="tel" id="saPhone" placeholder="+39 333 000 0000" style="border-bottom:1px solid rgba(107,63,160,.3)"></div>
       <button class="sb pur" onclick="saUpdateContacts()">✦ Salva contatti</button>
       <div class="sn pur" id="saContactOk">✓ Contatti aggiornati.</div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD PUBBLICA (accesso tramite link + password) -->
+<div id="pageDashboard" style="display:none;min-height:100vh;background:#f7f6f2">
+  <!-- Login -->
+  <div id="dashLoginSection" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:2rem 1rem">
+    <div style="font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:var(--ink);margin-bottom:.4rem">📊 Dashboard Flotta</div>
+    <div style="font-family:'Source Sans 3',sans-serif;font-size:.9rem;color:var(--ink-faded);margin-bottom:1.8rem">Inserisci la password per accedere ai dati</div>
+    <div style="width:100%;max-width:320px">
+      <div class="field"><label class="fl">Password</label><input type="password" id="dashPwInput" placeholder="Password dashboard" onkeydown="if(event.key==='Enter')checkDashboardPw()" style="width:100%"></div>
+      <button class="sb" style="width:100%;margin-top:.9rem" onclick="checkDashboardPw()">Entra →</button>
+      <div style="color:var(--red);font-size:.82rem;margin-top:.6rem;display:none;text-align:center" id="dashPwErr">Password non corretta.</div>
+    </div>
+  </div>
+  <!-- Content (hidden until unlocked) -->
+  <div id="dashContentSection" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:.65rem 1rem;background:#fff;border-bottom:1.5px solid var(--line);position:sticky;top:0;z-index:10">
+      <span style="font-family:'Playfair Display',serif;font-weight:700;font-size:1rem;color:var(--ink)">📊 Dashboard Flotta</span>
+      <div style="display:flex;align-items:center;gap:.6rem">
+        <span style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink-faded)">Aggiornato: <span id="dashLastUpdate"></span></span>
+        <button class="cb" style="font-size:.75rem" onclick="loadDashboardData()">↻ Aggiorna</button>
+      </div>
+    </div>
+    <!-- TAB navigation -->
+    <div style="display:flex;border-bottom:2px solid var(--line);overflow-x:auto;background:#fff;-webkit-overflow-scrolling:touch">
+      <button class="dash-tab active" onclick="showDashTab('Registrazioni',this)">📋 Registrazioni</button>
+      <button class="dash-tab" onclick="showDashTab('Rifornimenti',this)">⛽ Rifornimenti</button>
+      <button class="dash-tab" onclick="showDashTab('Ore',this)">⏱ Ore Motore</button>
+      <button class="dash-tab" onclick="showDashTab('Tessere',this)">💳 Tessere</button>
+    </div>
+    <!-- TAB panels -->
+    <div id="dashTabRegistrazioni" class="dash-panel" style="padding:.85rem 1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem">
+        <span style="font-family:'Source Sans 3',sans-serif;font-size:.8rem;color:var(--ink-faded)">Tutte le registrazioni diario</span>
+        <button class="exb" style="background:linear-gradient(135deg,#2d6a4f,#1a4f38);font-size:.68rem;padding:.35rem .7rem" onclick="dashDownloadCsv('registrazioni')">↓ CSV</button>
+      </div>
+      <div id="dashRegList"></div>
+    </div>
+    <div id="dashTabRifornimenti" class="dash-panel" style="display:none;padding:.85rem 1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem">
+        <span style="font-family:'Source Sans 3',sans-serif;font-size:.8rem;color:var(--ink-faded)">Tutti i rifornimenti carburante</span>
+        <button class="exb" style="background:linear-gradient(135deg,#c8854a,#a0602a);font-size:.68rem;padding:.35rem .7rem" onclick="dashDownloadCsv('rifornimenti')">↓ CSV</button>
+      </div>
+      <div id="dashFuelList"></div>
+    </div>
+    <div id="dashTabOre" class="dash-panel" style="display:none;padding:.85rem 1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem">
+        <span style="font-family:'Source Sans 3',sans-serif;font-size:.8rem;color:var(--ink-faded)">Ore motore per autista e per barca (delta contaore)</span>
+        <button class="exb" style="background:linear-gradient(135deg,#4a90b8,#2a6080);font-size:.68rem;padding:.35rem .7rem" onclick="dashDownloadCsv('ore')">↓ CSV</button>
+      </div>
+      <div id="dashOreList"></div>
+    </div>
+    <div id="dashTabTessere" class="dash-panel" style="display:none;padding:.85rem 1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem">
+        <span style="font-family:'Source Sans 3',sans-serif;font-size:.8rem;color:var(--ink-faded)">Stato tessere per barca + storico movimenti</span>
+        <button class="exb" style="background:linear-gradient(135deg,#7b4fa0,#5a3080);font-size:.68rem;padding:.35rem .7rem" onclick="dashDownloadCsv('tessere')">↓ CSV</button>
+      </div>
+      <div id="dashTessereList"></div>
     </div>
   </div>
 </div>
@@ -1633,7 +1711,7 @@ let records=[],drivers=[],allMezzi=[],fuelRecords=[],fornitori=[],selectedFuelTy
 let barcoFuel={},cisternaDiesel={litriAttuali:0,storico:[]},benzinaDieselDati=[];
 let auditLog=[],adminAccounts=[],saContacts={email:'',phone:''};
 let cisternaPerms={};
-let ADMIN_PW='',SA_PW='';
+let ADMIN_PW='',SA_PW='',DASHBOARD_PW='';
 let currentUser=null,assigningDriver=null,isAdminMode=false;
 let currentOTP=null,otpTimer=null,pendingPwChange=null,resetPwTarget=null;
 let dotItems=[],dotBarcaDotazioni={};  // dotazioni globali
@@ -1662,7 +1740,7 @@ let auditPage=0;
 // =============================================
 async function init(){
   // Un solo round-trip per tutte le chiavi (prima erano 20 richieste in serie)
-  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages','game-config','game-players','game-figurine','game-msg-reads','game-bonus-fig','game-chests-opened','game-figurine-perms','game-votes','game-prizes-given','fleet-tessere-barca','fleet-tessere-barca-log']);
+  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages','game-config','game-players','game-figurine','game-msg-reads','game-bonus-fig','game-chests-opened','game-figurine-perms','game-votes','game-prizes-given','fleet-tessere-barca','fleet-tessere-barca-log','fleet-dashboard-pw']);
   if(g['fleet-records'])records=g['fleet-records'];
   if(g['fleet-drivers'])drivers=g['fleet-drivers'];
   if(g['fleet-mezzi'])allMezzi=g['fleet-mezzi'];
@@ -1698,6 +1776,7 @@ async function init(){
   if(g['game-prizes-given'])gamePrizesGiven=g['game-prizes-given'];
   if(g['fleet-tessere-barca'])tessereBarca=g['fleet-tessere-barca'];
   if(g['fleet-tessere-barca-log'])tessereBarcaLog=g['fleet-tessere-barca-log'];
+  if(g['fleet-dashboard-pw'])DASHBOARD_PW=g['fleet-dashboard-pw'];
   purgeExpiredMessages();
   const now=new Date();
   const ds=now.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
@@ -1715,6 +1794,14 @@ async function init(){
   autoAssignPrizes();
 }
 init().then(async()=>{
+  // Rilevamento route #dashboard — mostra dashboard invece del normale login
+  if(window.location.hash==='#dashboard'){
+    document.getElementById('pageLogin').style.display='none';
+    const pd=document.getElementById('pageDashboard');
+    if(pd){pd.style.display='block';}
+    updateDashLinkDisplay();
+    return;
+  }
   // Tenta auto-login da sessione salvata
   try{
     const saved=localStorage.getItem('ccb_session');
@@ -1766,6 +1853,7 @@ const sv={
   gamePrizesGiven:()=>dbSet('game-prizes-given',gamePrizesGiven),
   tessereBarca:()=>dbSet('fleet-tessere-barca',tessereBarca),
   tessereBarcaLog:()=>dbSet('fleet-tessere-barca-log',tessereBarcaLog),
+  dashboardPw:()=>dbSet('fleet-dashboard-pw',DASHBOARD_PW),
 };
 
 async function getIP(){try{const r=await fetch('https://api.ipify.org?format=json');return(await r.json()).ip;}catch{return'N/D';}}
@@ -2812,6 +2900,8 @@ function renderSA(){
   renderSATessereBarca();
   renderSaOreMotore();
   renderAuditLog();
+  updateDashLinkDisplay();
+  const inp=document.getElementById('saDashPwInput');if(inp&&DASHBOARD_PW)inp.value=DASHBOARD_PW;
   const box=document.getElementById('saPwInfoBox');
   const cnt=document.getElementById('saPwInfoContent');
   if(box&&cnt){
@@ -2983,6 +3073,187 @@ function renderSaOreMotore(){
     </div>`;
   }).join('');
 }
+// =============================================
+// DASHBOARD PUBBLICA
+// =============================================
+function showDashTab(name,btn){
+  document.querySelectorAll('.dash-panel').forEach(p=>p.style.display='none');
+  document.querySelectorAll('.dash-tab').forEach(b=>b.classList.remove('active'));
+  const panel=document.getElementById('dashTab'+name);if(panel)panel.style.display='block';
+  if(btn)btn.classList.add('active');
+}
+function checkDashboardPw(){
+  const inp=document.getElementById('dashPwInput');
+  const err=document.getElementById('dashPwErr');
+  if(!DASHBOARD_PW){err.textContent='Password non ancora impostata dal Super Admin.';err.style.display='block';return;}
+  if(inp.value===DASHBOARD_PW){
+    document.getElementById('dashLoginSection').style.display='none';
+    document.getElementById('dashContentSection').style.display='block';
+    renderDashboard();
+  }else{
+    err.textContent='Password non corretta.';err.style.display='block';
+  }
+}
+async function loadDashboardData(){
+  const g=await dbGetMany(['fleet-records','fleet-fuel-records','fleet-tessere-barca','fleet-tessere-barca-log','fleet-tessere-list']);
+  if(g['fleet-records'])records=g['fleet-records'];
+  if(g['fleet-fuel-records'])fuelRecords=g['fleet-fuel-records'];
+  if(g['fleet-tessere-barca'])tessereBarca=g['fleet-tessere-barca'];
+  if(g['fleet-tessere-barca-log'])tessereBarcaLog=g['fleet-tessere-barca-log'];
+  if(g['fleet-tessere-list'])tessereList=g['fleet-tessere-list'];
+  renderDashboard();
+}
+function renderDashboard(){
+  const el=document.getElementById('dashLastUpdate');
+  if(el)el.textContent=new Date().toLocaleString('it-IT');
+  renderDashRegistrazioni();
+  renderDashRifornimenti();
+  renderDashOreMotore();
+  renderDashTessere();
+}
+function renderDashRegistrazioni(){
+  const el=document.getElementById('dashRegList');if(!el)return;
+  const sorted=[...records].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  if(!sorted.length){el.innerHTML='<p style="color:var(--ink-faded);font-style:italic;font-size:.85rem">Nessuna registrazione.</p>';return;}
+  el.innerHTML='<div style="overflow-x:auto"><table class="audit-table"><thead><tr><th>Data</th><th>Autista</th><th>Barca</th><th>Ore motore</th><th>Intervento</th><th>Note</th><th>Dotazioni</th></tr></thead><tbody>'+
+    sorted.map(r=>{
+      const d=r.data?new Date(r.data+'T00:00:00').toLocaleDateString('it-IT'):'—';
+      const dot=(r.dotazioni||[]).filter(Boolean).join(', ')||'—';
+      return`<tr><td class="td">${d}</td><td>${escHtml(r.autista||'—')}</td><td>${escHtml(r.mezzo||'—')}</td><td>${r.ore||'—'}</td><td>${escHtml(r.intervento||'—')}</td><td class="tn">${escHtml(r.note||'—')}</td><td class="tn">${escHtml(dot)}</td></tr>`;
+    }).join('')+'</tbody></table></div>';
+}
+function renderDashRifornimenti(){
+  const el=document.getElementById('dashFuelList');if(!el)return;
+  const sorted=[...fuelRecords].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  if(!sorted.length){el.innerHTML='<p style="color:var(--ink-faded);font-style:italic;font-size:.85rem">Nessun rifornimento.</p>';return;}
+  el.innerHTML='<div style="overflow-x:auto"><table class="audit-table"><thead><tr><th>Data</th><th>Autista</th><th>Barca</th><th>Tipo</th><th>Litri</th><th>Fornitore</th><th>Note</th></tr></thead><tbody>'+
+    sorted.map(r=>{
+      const d=r.data?new Date(r.data.slice(0,10)+'T00:00:00').toLocaleDateString('it-IT'):'—';
+      return`<tr><td class="td">${d}</td><td>${escHtml(r.autista||'—')}</td><td>${escHtml(r.barca||'—')}</td><td>${escHtml((r.tipo||'').toUpperCase())}</td><td>${r.litri||'—'}</td><td>${escHtml(r.fornitori||'—')}</td><td class="tn">${escHtml(r.note||'—')}</td></tr>`;
+    }).join('')+'</tbody></table></div>';
+}
+function _calcOreMotoreByBarca(){
+  const byBarca={};
+  records.forEach(r=>{
+    const ore=parseFloat(r.ore);if(isNaN(ore)||ore<=0)return;
+    const b=(r.mezzo||'—').trim();
+    if(!byBarca[b])byBarca[b]=[];
+    byBarca[b].push({data:r.data||'',autista:(r.autista||'—').trim(),ore});
+  });
+  Object.values(byBarca).forEach(arr=>arr.sort((a,b)=>a.data.localeCompare(b.data)));
+  return byBarca;
+}
+function renderDashOreMotore(){
+  const el=document.getElementById('dashOreList');if(!el)return;
+  const byBarca=_calcOreMotoreByBarca();
+  const byAutista={};const byBarcaTot={};
+  Object.entries(byBarca).forEach(([barca,arr])=>{
+    for(let i=0;i<arr.length-1;i++){
+      const delta=arr[i+1].ore-arr[i].ore;if(delta<=0)continue;
+      const nome=arr[i].autista;
+      if(!byAutista[nome])byAutista[nome]={totale:0,barche:{}};
+      byAutista[nome].totale+=delta;
+      byAutista[nome].barche[barca]=(byAutista[nome].barche[barca]||0)+delta;
+      if(!byBarcaTot[barca])byBarcaTot[barca]={totale:0,autisti:{}};
+      byBarcaTot[barca].totale+=delta;
+      byBarcaTot[barca].autisti[nome]=(byBarcaTot[barca].autisti[nome]||0)+delta;
+    }
+  });
+  if(!Object.keys(byAutista).length){el.innerHTML='<p style="color:var(--ink-faded);font-style:italic;font-size:.85rem">Nessun delta calcolabile (servono almeno due letture per barca).</p>';return;}
+  const fmtH=h=>h%1===0?h+' h':h.toFixed(1)+' h';
+  const sortedA=Object.entries(byAutista).sort((a,b)=>b[1].totale-a[1].totale);
+  const tableA='<div style="font-family:\'Source Sans 3\',sans-serif;font-weight:700;font-size:.88rem;color:var(--ink);margin-bottom:.45rem">Per autista</div><div style="overflow-x:auto;margin-bottom:1.3rem"><table class="audit-table"><thead><tr><th>Autista</th><th>Barca</th><th>Ore (delta)</th></tr></thead><tbody>'+
+    sortedA.flatMap(([nome,d])=>Object.entries(d.barche).sort((a,b)=>b[1]-a[1]).map(([b,ore],i)=>`<tr><td>${i===0?`<strong>${escHtml(nome)}</strong>`:''}</td><td>${escHtml(b)}</td><td style="font-weight:600;color:var(--blue)">${fmtH(ore)}</td></tr>`)).join('')+
+    `<tr style="background:var(--line-light)"><td colspan="2" style="font-weight:700">Totale</td><td style="font-weight:700;color:var(--red)">${fmtH(sortedA.reduce((s,[,d])=>s+d.totale,0))}</td></tr>`+
+    '</tbody></table></div>';
+  const sortedB=Object.entries(byBarcaTot).sort((a,b)=>b[1].totale-a[1].totale);
+  const tableB='<div style="font-family:\'Source Sans 3\',sans-serif;font-weight:700;font-size:.88rem;color:var(--ink);margin-bottom:.45rem">Per barca</div><div style="overflow-x:auto"><table class="audit-table"><thead><tr><th>Barca</th><th>Autista</th><th>Ore (delta)</th></tr></thead><tbody>'+
+    sortedB.flatMap(([barca,d])=>Object.entries(d.autisti).sort((a,b)=>b[1]-a[1]).map(([nome,ore],i)=>`<tr><td>${i===0?`<strong>${escHtml(barca)}</strong>`:''}</td><td>${escHtml(nome)}</td><td style="font-weight:600;color:var(--blue)">${fmtH(ore)}</td></tr>`)).join('')+
+    '</tbody></table></div>';
+  el.innerHTML=tableA+tableB;
+}
+function renderDashTessere(){
+  const el=document.getElementById('dashTessereList');if(!el)return;
+  const barche=Object.keys(tessereBarca);
+  const stateHtml=barche.length?
+    '<div style="font-family:\'Source Sans 3\',sans-serif;font-weight:700;font-size:.88rem;color:var(--ink);margin-bottom:.45rem">Stato attuale</div><div style="overflow-x:auto;margin-bottom:1.3rem"><table class="audit-table"><thead><tr><th>Barca</th><th>Tessera Mila</th><th>Carta credito</th><th>Ricaricabile</th></tr></thead><tbody>'+
+    barche.map(b=>{
+      const s=tessereBarca[b]||{};
+      const ric=s.ric?(tessereList.find(t=>t.id===s.ric)?.nome||s.ric):'—';
+      return`<tr><td><strong>${escHtml(b)}</strong></td><td>${s.mila?'✓':'—'}</td><td>${s.cc?'✓':'—'}</td><td>${escHtml(ric)}</td></tr>`;
+    }).join('')+'</tbody></table></div>'
+    :'<p style="color:var(--ink-faded);font-style:italic;font-size:.85rem;margin-bottom:1rem">Nessun dato tessere.</p>';
+  const log=[...tessereBarcaLog].sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
+  const logHtml=log.length?
+    '<div style="font-family:\'Source Sans 3\',sans-serif;font-weight:700;font-size:.88rem;color:var(--ink);margin-bottom:.45rem">Storico movimenti (ultimi 100)</div><div style="overflow-x:auto"><table class="audit-table"><thead><tr><th>Data</th><th>Autista</th><th>Barca</th><th>Prima</th><th>Dopo</th></tr></thead><tbody>'+
+    log.slice(0,100).map(e=>{
+      const d=e.ts?new Date(e.ts).toLocaleString('it-IT'):'—';
+      const fmt=s=>[s.mila?'Mila':'',s.cc?'CC':'',s.ric?'Ric.':''].filter(Boolean).join(', ')||'—';
+      return`<tr><td class="td">${d}</td><td>${escHtml(e.autista||'—')}</td><td>${escHtml(e.barca||'—')}</td><td>${fmt(e.from||{})}</td><td>${fmt(e.to||{})}</td></tr>`;
+    }).join('')+'</tbody></table></div>'
+    :'<p style="color:var(--ink-faded);font-style:italic;font-size:.85rem">Nessun movimento registrato.</p>';
+  el.innerHTML=stateHtml+logHtml;
+}
+function dashDownloadCsv(section){
+  const esc=v=>{const s=String(v===null||v===undefined?'':v).replace(/"/g,'""');return/[",\n\r]/.test(s)?`"${s}"`:s;};
+  const toCsv=(headers,rows)=>[headers,...rows].map(r=>r.map(esc).join(',')).join('\n');
+  let filename,csv;
+  if(section==='registrazioni'){
+    filename='registrazioni_flotta.csv';
+    const sorted=[...records].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+    csv=toCsv(['Data','Autista','Barca','Ore motore','Intervento','Note','Dotazioni','Salvato'],
+      sorted.map(r=>[r.data||'',r.autista||'',r.mezzo||'',r.ore||'',r.intervento||'',r.note||'',(r.dotazioni||[]).filter(Boolean).join('; '),r.salvato?new Date(r.salvato).toLocaleString('it-IT'):'']));
+  }else if(section==='rifornimenti'){
+    filename='rifornimenti_flotta.csv';
+    const sorted=[...fuelRecords].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+    csv=toCsv(['Data','Autista','Barca','Tipo','Litri','Fornitore','Note','Salvato'],
+      sorted.map(r=>[r.data?r.data.slice(0,10):'',r.autista||'',r.barca||'',r.tipo||'',r.litri||'',r.fornitori||'',r.note||'',r.salvato?new Date(r.salvato).toLocaleString('it-IT'):'']));
+  }else if(section==='ore'){
+    filename='ore_motore_flotta.csv';
+    const byBarca=_calcOreMotoreByBarca();
+    const rows=[];
+    Object.entries(byBarca).forEach(([barca,arr])=>{
+      for(let i=0;i<arr.length-1;i++){
+        const delta=arr[i+1].ore-arr[i].ore;if(delta<=0)continue;
+        rows.push([arr[i].autista,barca,arr[i].data,arr[i+1].data,delta.toFixed(1)]);
+      }
+    });
+    csv=toCsv(['Autista','Barca','Data lettura precedente','Data lettura successiva','Ore (delta)'],rows);
+  }else if(section==='tessere'){
+    filename='tessere_flotta.csv';
+    const stateRows=Object.entries(tessereBarca).map(([b,s])=>{
+      const ric=s.ric?(tessereList.find(t=>t.id===s.ric)?.nome||s.ric):'';
+      return[b,s.mila?'SI':'NO',s.cc?'SI':'NO',ric,'','','','',''];
+    });
+    const logRows=[...tessereBarcaLog].sort((a,b)=>(b.ts||'').localeCompare(a.ts||'')).slice(0,200).map(e=>{
+      const fmt=s=>[s.mila?'Mila':'',s.cc?'CC':'',s.ric?'Ric.':''].filter(Boolean).join('; ')||'';
+      return['','','','',e.ts?new Date(e.ts).toLocaleString('it-IT'):'',e.autista||'',e.barca||'',fmt(e.from||{}),fmt(e.to||{})];
+    });
+    csv=toCsv(['Barca (stato)','Mila','CC','Ricaricabile','Data movimento','Autista','Barca movimento','Prima','Dopo'],[...stateRows,...logRows]);
+  }
+  if(!csv)return;
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);
+}
+async function saveDashboardPw(){
+  const inp=document.getElementById('saDashPwInput');if(!inp)return;
+  const pw=inp.value.trim();
+  if(!pw){alert('Inserisci una password per la dashboard.');return;}
+  DASHBOARD_PW=pw;
+  await sv.dashboardPw();
+  const ok=document.getElementById('dashPwSavedOk');
+  if(ok){ok.classList.add('show');setTimeout(()=>ok.classList.remove('show'),3000);}
+}
+function copyDashboardLink(){
+  const link=window.location.origin+window.location.pathname+'#dashboard';
+  if(navigator.clipboard){navigator.clipboard.writeText(link).then(()=>alert('Link copiato!')).catch(()=>prompt('Copia questo link:',link));}
+  else prompt('Copia questo link:',link);
+}
+function updateDashLinkDisplay(){
+  const el=document.getElementById('dashLinkText');
+  if(el)el.textContent=window.location.origin+window.location.pathname+'#dashboard';
+}
+
 function renderSaMezziList(){
   const c=document.getElementById('saMezziList');
   if(!c)return;

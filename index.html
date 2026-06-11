@@ -1975,9 +1975,7 @@ async function enterApp(){
     _fa.value=currentUser.name;
     const _fb=document.getElementById('fAutistaFuel');
     if(_fb)_fb.value=currentUser.name;
-    if(!currentUser.isAdmin){
-      [_fa,_fb].forEach(f=>{if(!f)return;f.readOnly=true;f.style.opacity='.65';f.style.cursor='not-allowed';});
-    }
+    [_fa,_fb].forEach(f=>{if(!f)return;f.readOnly=true;f.style.opacity='.65';f.style.cursor='not-allowed';});
   }
   document.getElementById('mediaUploadSection').style.display=(currentUser.isAdmin||currentUser.isSA)?'block':'none';
   document.querySelector('.side-tab.carburanti').style.display='flex';

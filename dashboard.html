@@ -484,7 +484,35 @@ function calcDeltaOre(allRecords,filteredRecords){
   return{byAutista,byBarca:byBarca2,totale,rows};
 }
 
-// ── TESSERE ───────────────────────────────────────────────────────────────
+// ── ORE MOTORE: calcolo delta contaore ───────────────────────────────────
+// Il campo `ore` è una lettura cumulativa del contaore (come un odometro).
+// Le ore di ogni autista = delta tra due letture consecutive sulla stessa barca.
+// Il delta è attribuito all'autista della lettura PRECEDENTE (ha guidato fino alla lettura successiva).
+function calcDeltaOre(records){
+  const byBarca={};
+  records.forEach(r=>{
+    const ore=parseFloat(r.ore);
+    if(isNaN(ore)||ore<=0)return;
+    const b=(r.mezzo||'').trim();if(!b)return;
+    (byBarca[b]=byBarca[b]||[]).push({data:r.data||'',autista:(r.autista||'—').trim(),ore});
+  });
+  Object.values(byBarca).forEach(arr=>arr.sort((a,b)=>a.data.localeCompare(b.data)));
+  const byAutista={},byBarca2={};let totale=0;
+  const rows=[];
+  Object.entries(byBarca).forEach(([barca,arr])=>{
+    for(let i=0;i<arr.length-1;i++){
+      const delta=arr[i+1].ore-arr[i].ore;
+      if(delta<=0||delta>5000)continue; // salta valori negativi o anomali (>5000h in una sessione)
+      const nome=arr[i].autista;
+      (byAutista[nome]=byAutista[nome]||{totale:0,barche:{}}); byAutista[nome].totale+=delta; byAutista[nome].barche[barca]=(byAutista[nome].barche[barca]||0)+delta;
+      (byBarca2[barca]=byBarca2[barca]||{totale:0,autisti:{}}); byBarca2[barca].totale+=delta; byBarca2[barca].autisti[nome]=(byBarca2[barca].autisti[nome]||0)+delta;
+      rows.push({autista:nome,barca,delta,dataA:arr[i].data,dataB:arr[i+1].data});
+      totale+=delta;
+    }
+  });
+  return{byAutista,byBarca:byBarca2,totale,rows};
+}
+
 function renderTessere(tessere,tessereList){
   const barche=Object.keys(tessere).filter(b=>!GHOST_BOATS.includes(b.trim())).sort();
   if(!barche.length){document.getElementById('tessereGrid').innerHTML='<div class="empty">Nessun dato tessere.</div>';return;}

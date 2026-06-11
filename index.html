@@ -1990,6 +1990,9 @@ async function enterApp(){
   if(currentUser.isSA&&!document.getElementById('tabSA')){
     const t=document.createElement('div');t.className='side-tab superadmin';t.id='tabSA';t.textContent='👑 SA';t.onclick=function(){showPage('superadmin',this);};_tg.appendChild(t);
   }
+  if(gameConfig.status==='on'&&!document.getElementById('tabTorneo')){
+    const t=document.createElement('div');t.className='side-tab';t.id='tabTorneo';t.style.cssText='background:#0d3b66;color:#fff';t.textContent='🏆 Torneo';t.onclick=function(){openGameWelcomeFromApp();};_tg.appendChild(t);
+  }
   populateMezzoSelect();populateFuelFornitori();setupMic();
   await loadAttMessages();updateAttBtn();
   // FAB rimosso
@@ -2012,7 +2015,7 @@ async function doLogout(){
   document.getElementById('loginSub').textContent='Diario di Bordo Como Classic Boats';
   document.getElementById('switchLink').textContent='Accedi come amministratore';
   
-  ['tabAdmin','tabSA','tabCisterna','tabDotazioni','tabManutenzione','tabTessere'].forEach(id=>{const el=document.getElementById(id);if(el)el.remove();});
+  ['tabAdmin','tabSA','tabCisterna','tabDotazioni','tabManutenzione','tabTessere','tabTorneo'].forEach(id=>{const el=document.getElementById(id);if(el)el.remove();});
   document.querySelector('.side-tab.carburanti').style.display='none';
   PAGE_IDS.forEach(id=>{const el=document.getElementById(id);if(el){el.classList.remove('active');el.style.display='none';}});
   document.getElementById('pageGameWelcome').style.display='none';
@@ -2078,6 +2081,14 @@ function openGameWelcome(){
   renderNonPartecipanti();
   updateGameWelcomeState();
 }
+let _gameFromApp=false;
+function openGameWelcomeFromApp(){
+  _gameFromApp=true;
+  const ub=document.getElementById('userBar');if(ub)ub.style.display='none';
+  const ts=document.getElementById('tabsSide');if(ts)ts.style.display='none';
+  const pc=document.getElementById('pagesContainer');if(pc)pc.style.display='none';
+  openGameWelcome();
+}
 // Prova/anteprima riservata al Super Admin: nasconde la chrome dell'app, mostra il gioco solo a lui
 // e popola con dati di esempio dove non ci sono dati reali, così tutto è navigabile.
 function openGamePreview(){
@@ -2095,8 +2106,14 @@ function closeGameWelcome(){
     const ts=document.getElementById('tabsSide');if(ts)ts.style.display='flex';
     const pc=document.getElementById('pagesContainer');if(pc)pc.style.display='';
     showPage('superadmin',document.getElementById('tabSA'));
+  }else if(_gameFromApp&&currentUser){
+    _gameFromApp=false;_gameDemo=false;
+    const ub=document.getElementById('userBar');if(ub)ub.style.display='flex';
+    const ts=document.getElementById('tabsSide');if(ts)ts.style.display='flex';
+    const pc=document.getElementById('pagesContainer');if(pc)pc.style.display='';
+    showPage('compila',document.querySelector('.side-tab.compila'));
   }else{
-    _gameDemo=false;
+    _gameFromApp=false;_gameDemo=false;
     document.getElementById('pageLogin').style.display='flex';
   }
 }

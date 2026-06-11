@@ -3212,6 +3212,14 @@ async function submitForm(){
   const _prevTB=tessereBarca[mezzo]||{mila:false,cc:false,ric:null};
   if(_prevTB.mila!==_tbMila||_prevTB.cc!==_tbCC||_prevTB.ric!==_tbRic){
     const _logE={ts:new Date().toISOString(),autista:document.getElementById('fAutista').value.trim()||currentUser.name,barca:mezzo,from:Object.assign({},_prevTB),to:{mila:_tbMila,cc:_tbCC,ric:_tbRic}};
+    // Esclusività: rimuovi la tessera da tutte le altre barche prima di assegnarla
+    Object.keys(tessereBarca).forEach(b=>{
+      if(b===mezzo)return;
+      const s=tessereBarca[b];
+      if(_tbMila&&s.mila)s.mila=false;
+      if(_tbCC&&s.cc)s.cc=false;
+      if(_tbRic&&s.ric===_tbRic)s.ric=null;
+    });
     tessereBarca[mezzo]={mila:_tbMila,cc:_tbCC,ric:_tbRic};
     tessereBarcaLog.unshift(_logE);
     if(tessereBarcaLog.length>200)tessereBarcaLog=tessereBarcaLog.slice(0,200);

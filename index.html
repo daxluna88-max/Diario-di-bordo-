@@ -678,7 +678,7 @@ body{padding:.8rem .3rem 3rem;}
   .td-sea-rank{font-size:.82rem;color:#fff;text-shadow:0 1px 5px rgba(0,0,0,.9);font-weight:700;line-height:1;margin-bottom:-2px;display:flex;align-items:center;gap:4px;white-space:nowrap;}
   .td-boat-stage-svg{width:88px;height:74px;overflow:visible;filter:drop-shadow(0 5px 9px rgba(0,0,0,.42));}
   .td-sea-boat-me .td-boat-stage-svg{filter:drop-shadow(0 0 13px #ffd34d) drop-shadow(0 5px 9px rgba(0,0,0,.42));}
-  .td-sea-chest{position:absolute;right:-20px;top:22px;background:none;border:none;cursor:pointer;font-size:1.6rem;animation:tdPulse 1.1s ease-in-out infinite;filter:drop-shadow(0 0 6px gold);z-index:6;}
+  .td-sea-chest{position:absolute;right:-22px;top:20px;background:none;border:none;padding:0;line-height:0;cursor:pointer;animation:tdPulse 1.1s ease-in-out infinite;filter:drop-shadow(0 0 6px gold);z-index:6;}
   /* Bottom leaderboard sheet */
   .td-lb-bar{position:relative;z-index:10;background:rgba(5,22,55,.92);backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,.15);color:#fff;}
   .td-lb-handle{display:flex;align-items:center;gap:.55rem;padding:.55rem 1rem .48rem;cursor:pointer;user-select:none;}
@@ -698,7 +698,7 @@ body{padding:.8rem .3rem 3rem;}
   .td-entry-name{font-family:'Source Sans 3',sans-serif;font-weight:700;font-size:.86rem;color:#0a2a3a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .td-entry-stats{display:flex;gap:.45rem;font-family:'Source Sans 3',sans-serif;font-size:.7rem;color:#2860a0;margin-top:.06rem;}
   .td-pts-lbl{font-family:'Playfair Display',serif;font-weight:700;color:#0d3b66;font-size:.84rem;}
-  .td-chest{background:none;border:none;cursor:pointer;font-size:1.25rem;animation:tdPulse 1.2s ease-in-out infinite;filter:drop-shadow(0 0 4px gold);flex-shrink:0;}
+  .td-chest{background:none;border:none;padding:0;line-height:0;cursor:pointer;animation:tdPulse 1.2s ease-in-out infinite;filter:drop-shadow(0 0 4px gold);flex-shrink:0;}
   /* Animazioni */
   @keyframes tdSwim{0%{transform:translateX(-18vw)}100%{transform:translateX(118vw)}}
   @keyframes tdSwimR{0%{transform:translateX(118vw) scaleX(-1)}100%{transform:translateX(-18vw) scaleX(-1)}}
@@ -2359,6 +2359,21 @@ function chestOpenedToday(name){
   const day=new Date().toISOString().slice(0,10);const key=String(name).toLowerCase();
   return!!(gameChestsOpened[key]&&gameChestsOpened[key][day]);
 }
+// Scrigno del tesoro disegnato (sostituisce l'emoji): legno con bande e lucchetto dorati
+function tdChestSvg(size){
+  const w=size||38, h=(w*0.86).toFixed(0);
+  return `<svg width="${w}" height="${h}" viewBox="0 0 44 38" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block">`+
+    `<path d="M5 17 Q22 2 39 17 L39 19 L5 19 Z" fill="#8a5a2b" stroke="#3f2710" stroke-width="1.5"/>`+
+    `<path d="M5 17 Q22 2 39 17" stroke="#e8b84b" stroke-width="2.4" fill="none"/>`+
+    `<rect x="5" y="18" width="34" height="16" rx="2.5" fill="#6e431d" stroke="#3f2710" stroke-width="1.5"/>`+
+    `<rect x="5" y="18" width="34" height="3" fill="#e8b84b"/>`+
+    `<rect x="5" y="31" width="34" height="3" fill="#e8b84b"/>`+
+    `<rect x="20" y="18" width="4" height="16" fill="#e8b84b"/>`+
+    `<rect x="19" y="22" width="6" height="6" rx="1.2" fill="#ffe9a8" stroke="#7a561f" stroke-width=".8"/>`+
+    `<circle cx="22" cy="25" r="1.1" fill="#5e3a17"/>`+
+    `<path d="M40 5 l1 2.6 l2.6 1 l-2.6 1 l-1 2.6 l-1 -2.6 l-2.6 -1 l2.6 -1 z" fill="#fff6cf"/>`+
+    `</svg>`;
+}
 async function openChest(name){
   const me=gameMyName();
   if(!me||me.toLowerCase()!==String(name).toLowerCase()){alert('Puoi aprire solo il tuo scrigno!');return;}
@@ -2442,7 +2457,7 @@ function renderBoatStage(lb){
     const isMe=!demo&&e.name.toLowerCase()===me;
     const chest=(demo?e.rank>=4:(hasChestToday(e.name,e.rank,e.giacenza)&&!chestOpenedToday(e.name)));
     const canOpen=chest&&!demo&&me===e.name.toLowerCase();
-    const chestBtn=chest?(canOpen?`<button class="td-sea-chest" title="Apri lo scrigno!" onclick="openChest('${e.name.replace(/'/g,"\\'")}')">🎁</button>`:'<span class="td-sea-chest" title="Scrigno con figurina omaggio">🎁</span>'):'';
+    const chestBtn=chest?(canOpen?`<button class="td-sea-chest" title="Apri lo scrigno!" onclick="openChest('${e.name.replace(/'/g,"\\'")}')">${tdChestSvg(38)}</button>`:`<span class="td-sea-chest" title="Scrigno con figurina omaggio">${tdChestSvg(38)}</span>`):'';
     return`<div class="td-lane">
       <div class="td-lane-track"></div>
       <div class="td-sea-boat${isMe?' td-sea-boat-me':''}" style="left:${leftPct}%;animation-delay:${(i*0.3).toFixed(2)}s">
@@ -2646,7 +2661,7 @@ function renderTorneoDash(){
   box.innerHTML=(demo?'<div style="color:#ffd34d;font-size:.72rem;text-align:center;padding:.4rem .4rem .1rem">🎬 Anteprima dimostrativa</div>':'')+lb.map(e=>{
     const isMe=!demo&&e.name.toLowerCase()===me;
     const chest=(demo?e.rank>=4:(hasChestToday(e.name,e.rank,e.giacenza)&&!chestOpenedToday(e.name)));
-    const chestBtn=chest?(demo?'<span class="td-chest">🎁</span>':`<button class="td-chest" onclick="openChest('${e.name.replace(/'/g,"\\'")}')">🎁</button>`):'';
+    const chestBtn=chest?(demo?`<span class="td-chest">${tdChestSvg(26)}</span>`:`<button class="td-chest" onclick="openChest('${e.name.replace(/'/g,"\\'")}')">${tdChestSvg(26)}</button>`):'';
     return`<div class="td-entry${isMe?' me':''}">
       <span class="td-entry-rank">${medals[e.rank]||('#'+e.rank)}</span>
       <div class="td-entry-boat">${_tdBoatSvgHtml(e,'td-boat-svg')}</div>

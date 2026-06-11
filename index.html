@@ -3346,13 +3346,13 @@ async function saveDashboardPw(){
   if(ok){ok.classList.add('show');setTimeout(()=>ok.classList.remove('show'),3000);}
 }
 function copyDashboardLink(){
-  const link=window.location.origin+window.location.pathname+'#dashboard';
+  const link=window.location.origin+window.location.pathname.replace('index.html','')+'dashboard.html';
   if(navigator.clipboard){navigator.clipboard.writeText(link).then(()=>alert('Link copiato!')).catch(()=>prompt('Copia questo link:',link));}
   else prompt('Copia questo link:',link);
 }
 function updateDashLinkDisplay(){
   const el=document.getElementById('dashLinkText');
-  if(el)el.textContent=window.location.origin+window.location.pathname+'#dashboard';
+  if(el)el.textContent=window.location.origin+window.location.pathname.replace('index.html','')+'dashboard.html';
 }
 
 function renderSaMezziList(){

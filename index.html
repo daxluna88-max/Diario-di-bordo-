@@ -1162,6 +1162,12 @@ body{padding:.8rem .3rem 3rem;}
   </div>
 
   <div class="sas">
+    <div class="sast">⏱ Ore Motore per Autista</div>
+    <div class="ib">Totale ore motore registrate da ogni autista, con dettaglio per barca. La data usata è quella della registrazione (non l'orario di salvataggio).</div>
+    <div id="saOreMotoreList"></div>
+  </div>
+
+  <div class="sas">
     <div class="sast">👥 Autisti — Lista Globale</div>
     <div class="ib">Gli autisti creati qui sono disponibili per tutti gli admin. Ogni admin assegnerà i propri autisti alle barche. Un autista può lavorare con più admin contemporaneamente.</div>
     <div id="saDriverList"></div>
@@ -2804,6 +2810,7 @@ function renderSA(){
   renderSaTessere();
   renderSaTesserePerms();
   renderSATessereBarca();
+  renderSaOreMotore();
   renderAuditLog();
   const box=document.getElementById('saPwInfoBox');
   const cnt=document.getElementById('saPwInfoContent');
@@ -2928,6 +2935,36 @@ async function saRemoveGamePlayer(i){
   await sv.gamePlayers();renderSaGamePanel();
 }
 
+function renderSaOreMotore(){
+  const el=document.getElementById('saOreMotoreList');if(!el)return;
+  if(!records.length){el.innerHTML='<p style="color:var(--ink-faded);font-style:italic;font-size:.85rem">Nessuna registrazione presente.</p>';return;}
+  // Raggruppa per autista → barca → ore
+  const byAutista={};
+  records.forEach(r=>{
+    const nome=(r.autista||'—').trim();
+    const barca=(r.mezzo||'—').trim();
+    const ore=parseFloat(r.ore)||0;
+    if(!byAutista[nome])byAutista[nome]={totale:0,barche:{}};
+    byAutista[nome].totale+=ore;
+    byAutista[nome].barche[barca]=(byAutista[nome].barche[barca]||0)+ore;
+  });
+  // Ordina autisti per ore totali decrescenti
+  const sorted=Object.entries(byAutista).sort((a,b)=>b[1].totale-a[1].totale);
+  el.innerHTML=sorted.map(([nome,d])=>{
+    const barche=Object.entries(d.barche).sort((a,b)=>b[1]-a[1]);
+    const righe=barche.map(([b,ore])=>`<div style="display:flex;justify-content:space-between;padding:.18rem 0 .18rem .7rem;border-bottom:1px dashed var(--line-light);font-size:.8rem">
+        <span style="color:var(--ink)">🚤 ${escHtml(b)}</span>
+        <span style="font-weight:600;color:var(--blue);min-width:56px;text-align:right">${ore%1===0?ore:ore.toFixed(1)} h</span>
+      </div>`).join('');
+    return`<div style="margin-bottom:.9rem;border:1.5px solid var(--line);border-radius:6px;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;background:var(--line-light);padding:.5rem .75rem">
+        <span style="font-family:'Source Sans 3',sans-serif;font-weight:700;font-size:.9rem;color:var(--ink)">👤 ${escHtml(nome)}</span>
+        <span style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--red)">${d.totale%1===0?d.totale:d.totale.toFixed(1)} h</span>
+      </div>
+      ${righe}
+    </div>`;
+  }).join('');
+}
 function renderSaMezziList(){
   const c=document.getElementById('saMezziList');
   if(!c)return;

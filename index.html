@@ -1827,14 +1827,6 @@ async function init(){
   autoAssignPrizes();
 }
 init().then(async()=>{
-  // Rilevamento route #dashboard — mostra dashboard invece del normale login
-  if(window.location.hash==='#dashboard'){
-    document.getElementById('pageLogin').style.display='none';
-    const pd=document.getElementById('pageDashboard');
-    if(pd){pd.style.display='block';}
-    updateDashLinkDisplay();
-    return;
-  }
   // Tenta auto-login da sessione salvata
   try{
     const saved=localStorage.getItem('ccb_session');

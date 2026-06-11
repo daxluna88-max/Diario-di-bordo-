@@ -3198,6 +3198,9 @@ async function submitForm(){
   const mezzo=document.getElementById('fMezzo').value;
   const data=document.getElementById('fData').value;
   if(!mezzo){alert('Seleziona il mezzo');return;}if(!data){alert('Inserisci la data');return;}
+  const _autista=document.getElementById('fAutista').value.trim().toLowerCase();
+  const _alreadyToday=records.some(r=>r.data===data&&r.mezzo===mezzo&&r.autista&&r.autista.toLowerCase()===_autista);
+  if(_alreadyToday&&!confirm("Sei sicuro che vuoi fare un'altra registrazione?"))return;
   const btn=document.getElementById('saveBtnCompila');
   const totalFiles=pendingFotos.length+pendingPdfs.length;
   btn.textContent=totalFiles?'⏳ Caricamento...':'⏳ Salvataggio...';btn.disabled=true;
@@ -3937,12 +3940,12 @@ function renderFuelNotesTable(r){
     </tr>`;}).join('')
     :`<tr><td colspan="3" style="padding:.4rem;color:var(--ink-faded);font-style:italic;font-size:.78rem">Nessuna nota carburante.</td></tr>`;
   return`<div style="margin-top:.65rem;border-top:1px dashed var(--line-light);padding-top:.55rem">
-    <span class="check-label" style="display:block;margin-bottom:.4rem">📝 Note carburante</span>
+    <span class="check-label" style="display:block;margin-bottom:.4rem">📝 Note carburante Barche Riva litri rimasti</span>
     <table style="width:100%;border-collapse:collapse;font-family:'Source Sans 3',sans-serif;font-size:.8rem">
       <tbody>${rows}</tbody>
     </table>
     <div style="display:flex;gap:.4rem;margin-top:.45rem">
-      <input id="dotFuelNoteInp-${r.id}" type="text" placeholder="Es. rifornito 20L, spia riserva accesa…" onkeydown="if(event.key==='Enter')addDotFuelNote(${r.id})" style="flex:1;border:1px solid var(--line);border-radius:4px;padding:.38rem .55rem;font-size:.85rem;outline:none;background:#fff;font-family:'Source Sans 3',sans-serif">
+      <input id="dotFuelNoteInp-${r.id}" type="text" placeholder="Note carburante Barche Riva litri rimasti" onkeydown="if(event.key==='Enter')addDotFuelNote(${r.id})" style="flex:1;border:1px solid var(--line);border-radius:4px;padding:.38rem .55rem;font-size:.85rem;outline:none;background:#fff;font-family:'Source Sans 3',sans-serif">
       <button class="chk-btn" onclick="addDotFuelNote(${r.id})" style="white-space:nowrap">＋ Aggiungi</button>
     </div>
   </div>`;

@@ -1878,8 +1878,16 @@ function showPage(name,btn){
   if(name==='manutenzione'){renderManutenzioneSelects();}
   if(name==='cisterna'){syncCisternaFromFuel();renderCisterna();}
   if(name==='carburanti'){
-    if(currentUser.isAdmin||currentUser.isSA){document.getElementById('adminRegSec').style.display='block';populateFuelBarcoFilter();renderFuelHistory();}else{document.getElementById('adminRegSec').style.display='none';}
-    document.getElementById('autoristaFuel').style.display=currentUser.isSA?'none':'block';
+    const adminReg=document.getElementById('adminRegSec');
+    const autFuel=document.getElementById('autoristaFuel');
+    if(currentUser.isAdmin||currentUser.isSA){adminReg.style.display='block';populateFuelBarcoFilter();renderFuelHistory();}else{adminReg.style.display='none';}
+    if(currentUser.isSA){autFuel.style.display='none';}else{
+      autFuel.style.display='block';
+      // Per gli admin: form in alto, registro sotto
+      if(currentUser.isAdmin&&autFuel.nextElementSibling!==adminReg){
+        autFuel.parentNode.insertBefore(autFuel,adminReg);
+      }
+    }
     renderTessereAdminFuelSection();
     renderTessereAutistaSection();
   }

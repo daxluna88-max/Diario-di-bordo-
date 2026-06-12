@@ -598,7 +598,10 @@ function renderCharts(records,fuelRecords,allRec,allFuel){
   const regBmap={};allBoats.forEach(b=>regBmap[b]=0);
   records.forEach(r=>{const b=(r.mezzo||'').trim();if(b&&b in regBmap)regBmap[b]++;});
   const regBsorted=Object.entries(regBmap).sort((a,b)=>b[1]-a[1]);
-  mkBarChart('chartRegBarca',regBsorted.map(x=>x[0]),regBsorted.map(x=>x[1]),PALETTE,'y');
+  // altezza dinamica: 28px per barca, min 200px
+  const _rbWrap=document.getElementById('chartRegBarca')?.parentElement;
+  if(_rbWrap)_rbWrap.style.height=Math.max(200,regBsorted.length*28)+'px';
+  mkBarChartReg('chartRegBarca',regBsorted.map(x=>x[0]),regBsorted.map(x=>x[1]));
 }
 
 function buildTempoSeries(records,fuelRecords,range){
@@ -844,6 +847,27 @@ function mkBarChart(id,labels,data,color,indexAxis){
   });
 }
 
+function mkBarChartReg(id,labels,data){
+  if(charts[id])charts[id].destroy();
+  const colors=labels.map((_,i)=>PALETTE[i%PALETTE.length]);
+  const maxVal=Math.max(...data,0);
+  charts[id]=new Chart(document.getElementById(id),{
+    type:'bar',
+    data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:4,borderSkipped:false}]},
+    options:{
+      responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.parsed.x+' uscite'}}},
+      scales:{
+        x:{
+          min:0,suggestedMax:Math.max(maxVal,1)+0.5,
+          grid:{color:'#f0f2f5'},
+          ticks:{font:{family:'Inter',size:10},color:'#64748b',stepSize:1,precision:0}
+        },
+        y:{grid:{color:'#f0f2f5'},ticks:{font:{family:'Inter',size:10},color:'#64748b'}}
+      }
+    }
+  });
+}
 function mkDoughnut(id,labels,data){
   if(charts[id])charts[id].destroy();
   charts[id]=new Chart(document.getElementById(id),{

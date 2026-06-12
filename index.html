@@ -1728,14 +1728,21 @@ async function dbSet(k,v,retries){
 }
 // ── POLLER VERSIONE APP ────────────────────────────────────────────────────
 let _appVersionAtLoad=null;
+let _htmlSigAtLoad=null;
 let _versionPollTimer=null;
+async function fetchHtmlSig(){
+  try{
+    const r=await fetch(location.origin+location.pathname,{method:'HEAD',cache:'no-store'});
+    return r.headers.get('etag')||r.headers.get('last-modified')||null;
+  }catch(e){return null;}
+}
 async function startVersionPoller(){
-  _appVersionAtLoad=await dbGet('fleet-app-version');
+  [_appVersionAtLoad,_htmlSigAtLoad]=await Promise.all([dbGet('fleet-app-version'),fetchHtmlSig()]);
   clearInterval(_versionPollTimer);
   _versionPollTimer=setInterval(async()=>{
     try{
-      const v=await dbGet('fleet-app-version');
-      if(v&&_appVersionAtLoad&&v!==_appVersionAtLoad){
+      const [v,sig]=await Promise.all([dbGet('fleet-app-version'),fetchHtmlSig()]);
+      if((v&&_appVersionAtLoad&&v!==_appVersionAtLoad)||(sig&&_htmlSigAtLoad&&sig!==_htmlSigAtLoad)){
         clearInterval(_versionPollTimer);
         showUpdateOverlay();
       }

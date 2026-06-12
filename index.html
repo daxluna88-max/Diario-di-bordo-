@@ -3657,9 +3657,8 @@ async function submitForm(){
   const mezzo=document.getElementById('fMezzo').value;
   const data=document.getElementById('fData').value;
   if(!mezzo){alert('Seleziona il mezzo');return;}if(!data){alert('Inserisci la data');return;}
-  const _autista=document.getElementById('fAutista').value.trim().toLowerCase();
-  const _alreadyToday=records.some(r=>r.data===data&&r.mezzo===mezzo&&r.autista&&r.autista.toLowerCase()===_autista);
-  if(_alreadyToday&&!confirm("Sei sicuro che vuoi fare un'altra registrazione?"))return;
+  const _prevToday=records.find(r=>r.data===data&&r.mezzo===mezzo);
+  if(_prevToday&&!confirm(`⚠️ ${mezzo} ha già una registrazione per oggi${_prevToday.autista?' ('+_prevToday.autista+')':''}.\n\nSei sicuro di voler aggiungere un'altra registrazione?`))return;
 
   // ── VALIDAZIONE CONTAORE ──────────────────────────────────────────────────
   const _oreRaw=document.getElementById('fOre').value;

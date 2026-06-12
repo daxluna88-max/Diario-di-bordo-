@@ -121,6 +121,24 @@ tr:hover td{background:var(--light)}
   .kpi-value{font-size:1.35rem}
   .chart-wrap{height:170px}
 }
+
+/* ACCORDION FLOTTA */
+.fleet-barca-row{display:flex;align-items:center;gap:.55rem;padding:.55rem .9rem;cursor:pointer;border-bottom:1px solid var(--border);user-select:none;transition:background .12s;flex-wrap:wrap}
+.fleet-barca-row:last-of-type{border-bottom:none}
+.fleet-barca-row:hover,.fleet-barca-row.open{background:#f0f7ff}
+.fleet-barca-chevron{font-size:.68rem;color:var(--muted);transition:transform .22s;margin-left:auto;flex-shrink:0}
+.fleet-barca-chevron.open{transform:rotate(180deg)}
+.fleet-barca-panel{display:none;padding:.6rem .9rem .8rem 1rem;border-bottom:1px solid var(--border);background:#fafcff}
+.fleet-barca-panel.open{display:block}
+.dot-tbl{width:100%;border-collapse:collapse;font-size:.76rem;margin-top:.2rem}
+.dot-tbl th{text-align:left;font-size:.62rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:.28rem .4rem;border-bottom:1px solid var(--border);white-space:nowrap}
+.dot-tbl td{padding:.32rem .4rem;border-bottom:1px dashed var(--border);vertical-align:top}
+.dot-tbl tr:last-child td{border-bottom:none}
+.scad-warn{color:#c2410c;font-weight:600}
+.avviso-pill{display:inline-flex;align-items:center;gap:.2rem;padding:.1rem .45rem;border-radius:12px;font-size:.66rem;font-weight:600;background:#fff3cd;color:#856404;border:1px solid #ffc107;white-space:nowrap}
+.avviso-pill.red{background:#fee2e2;color:#991b1b;border-color:#f87171}
+.man-item{padding:.38rem 0;border-bottom:1px dashed var(--border);font-size:.76rem}
+.man-item:last-child{border-bottom:none}
 </style>
 </head>
 <body>
@@ -228,6 +246,18 @@ tr:hover td{background:var(--light)}
       <div class="tessere-grid" id="tessereGrid"></div>
     </div>
 
+    <!-- DOTAZIONI & MANUTENZIONE PER BARCA -->
+    <div class="charts-row charts-2">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="card-title" style="padding:.9rem 1rem .55rem">🛡 Dotazioni per barca</div>
+        <div id="dotazioniFlotta"></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="card-title" style="padding:.9rem 1rem .55rem">🔧 Manutenzione per barca</div>
+        <div id="manutenzioneFlotta"></div>
+      </div>
+    </div>
+
     <!-- TABELLE -->
     <div>
       <div class="tabs-nav">
@@ -257,7 +287,7 @@ tr:hover td{background:var(--light)}
 const SB_URL='https://psgxyjtsgthctvntbgnf.supabase.co';
 const SB_KEY='sb_publishable_bq_M1RIzGgxPR-ieGL-b1g_gKPT088P';
 const TABLE='agenda';
-const KEYS=['fleet-records','fleet-fuel-records','fleet-tessere-barca','fleet-tessere-barca-log','fleet-tessere-list','fleet-dashboard-pw'];
+const KEYS=['fleet-records','fleet-fuel-records','fleet-tessere-barca','fleet-tessere-barca-log','fleet-tessere-list','fleet-dashboard-pw','fleet-dot-barca','fleet-man-records'];
 const PALETTE=['#4a90b8','#2d6a4f','#c8854a','#7b4fa0','#b8474a','#2a7a7a','#8a9b3a','#c06030','#3a608a','#6a4fa0','#a07030','#4a7a50'];
 const GHOST_BOATS=['Barca fantasma'];
 const EXCLUDED_AUTISTI=['Antonella Fiore','Vittorio Vita Durini'];
@@ -361,6 +391,8 @@ function renderAll(){
   renderKpis(records,fuelRecords,allRecords,allFuel);
   renderCharts(records,fuelRecords,allRecords,allFuel);
   renderTessere(tessere,tessereList);
+  renderDotazioniFlotta();
+  renderManutenzioneFlotta();
   renderTables(records,fuelRecords,tessereLog,allRecords);
 }
 
@@ -725,6 +757,91 @@ function sumBy(arr,kFn,vFn){const m={};arr.forEach(x=>{const k=kFn(x);if(!k)retu
 function topN(obj,n){return Object.entries(obj).filter(([k])=>k).sort((a,b)=>b[1]-a[1]).slice(0,n).map(([k,v])=>({k,v}));}
 function objSumDelta(obj,field){return Object.fromEntries(Object.entries(obj).map(([k,v])=>[k,Math.round((v[field]||0)*10)/10]));}
 function cleanFornitore(s){if(!s)return '';return s.replace(/^💳\s*/,'').trim();}
+
+// ── ACCORDION HELPER ─────────────────────────────────────────────────────
+function toggleFleetRow(id){
+  const panel=document.getElementById('panel-'+id);
+  const row=document.getElementById('row-'+id);
+  const chev=document.getElementById('chev-'+id);
+  if(!panel)return;
+  const open=!panel.classList.contains('open');
+  panel.classList.toggle('open',open);
+  if(row)row.classList.toggle('open',open);
+  if(chev)chev.classList.toggle('open',open);
+}
+
+// ── DOTAZIONI PER BARCA ───────────────────────────────────────────────────
+function renderDotazioniFlotta(){
+  const dot=DB['fleet-dot-barca']||{};
+  const today=new Date().toISOString().slice(0,10);
+  const barche=Object.keys(dot).filter(b=>!GHOST_BOATS.includes(b.trim())&&(dot[b]||[]).length>0).sort();
+  const el=document.getElementById('dotazioniFlotta');if(!el)return;
+  if(!barche.length){el.innerHTML='<div class="empty" style="padding:.75rem 1rem">Nessuna dotazione registrata.</div>';return;}
+  el.innerHTML=barche.map(barca=>{
+    const items=dot[barca]||[];
+    const warnCount=items.filter(it=>{
+      if(!it.expDate)return false;
+      return(new Date(it.expDate)-new Date(today))/(86400000)<=30;
+    }).length;
+    const safeId='dot_'+barca.replace(/[^a-z0-9]/gi,'_');
+    const badge=warnCount?`<span class="avviso-pill red">⚠ ${warnCount} scad.</span>`:'';
+    const rowsHtml=items.map(it=>{
+      let scCls='',scTxt=it.expDate?fmtDate(it.expDate):'—';
+      if(it.expDate){const diff=(new Date(it.expDate)-new Date(today))/86400000;if(diff<=30)scCls='scad-warn';}
+      return`<tr><td>${esc(it.name||'—')}</td><td style="text-align:center">${it.qty||1}</td><td class="${scCls}">${scTxt}</td><td style="color:var(--muted);font-size:.7rem">${esc(it.note||'')}</td></tr>`;
+    }).join('');
+    return`<div id="row-${safeId}" class="fleet-barca-row" onclick="toggleFleetRow('${safeId}')">
+      <span style="font-weight:600;font-size:.84rem">🚤 ${esc(barca)}</span>
+      <span style="font-size:.71rem;color:var(--muted)">${items.length} oggett${items.length===1?'o':'i'}</span>
+      ${badge}<span id="chev-${safeId}" class="fleet-barca-chevron">▼</span>
+    </div>
+    <div id="panel-${safeId}" class="fleet-barca-panel">
+      <div style="overflow-x:auto"><table class="dot-tbl">
+        <thead><tr><th>Oggetto</th><th>Qtà</th><th>Scadenza</th><th>Note</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table></div>
+    </div>`;
+  }).join('');
+}
+
+// ── MANUTENZIONE PER BARCA ────────────────────────────────────────────────
+function renderManutenzioneFlotta(){
+  const recs=DB['fleet-man-records']||[];
+  const byBarca={};
+  recs.forEach(r=>{if(!r.barca||GHOST_BOATS.includes(r.barca.trim()))return;(byBarca[r.barca]=byBarca[r.barca]||[]).push(r);});
+  const barche=Object.keys(byBarca).sort();
+  const el=document.getElementById('manutenzioneFlotta');if(!el)return;
+  if(!barche.length){el.innerHTML='<div class="empty" style="padding:.75rem 1rem">Nessun intervento manutenzione registrato.</div>';return;}
+  el.innerHTML=barche.map(barca=>{
+    const bRecs=[...byBarca[barca]].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+    const avvisiAttivi=bRecs.filter(r=>r.avviso&&!r.avvisoSpento);
+    const safeId='man_'+barca.replace(/[^a-z0-9]/gi,'_');
+    const badge=avvisiAttivi.length?`<span class="avviso-pill red">🔔 ${avvisiAttivi.length} avviso${avvisiAttivi.length>1?'i':''}</span>`:'';
+    const last=bRecs[0];
+    const lastInfo=last?`<span style="font-size:.7rem;color:var(--muted)">${fmtDate(last.data)} — ${esc(last.tipo||'')}</span>`:'';
+    const avvisiHtml=avvisiAttivi.length?`<div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.5rem">${
+      avvisiAttivi.map(r=>`<span class="avviso-pill red">🔔 ${esc(r.tipo)} · avviso a ${r.avviso.ore}h${r.avviso.tipo?' ('+esc(r.avviso.tipo)+')':''}</span>`).join('')
+    }</div>`:'';
+    const histHtml=bRecs.map(r=>`<div class="man-item">
+      <div style="display:flex;align-items:center;gap:.45rem;flex-wrap:wrap">
+        <strong>${esc(r.tipo||'—')}</strong>
+        <span style="color:var(--muted);font-size:.7rem">${fmtDate(r.data)}</span>
+        ${r.oreAttuali?`<span style="color:var(--blue);font-size:.7rem;font-weight:600">${r.oreAttuali} h</span>`:''}
+        ${r.autore?`<span style="color:var(--muted);font-size:.68rem">— ${esc(r.autore)}</span>`:''}
+        ${(r.avviso&&!r.avvisoSpento)?`<span class="avviso-pill">🔔 avviso a ${r.avviso.ore}h</span>`:''}
+      </div>
+      ${r.note?`<div style="color:var(--muted);font-size:.71rem;margin-top:.12rem">${esc(r.note)}</div>`:''}
+    </div>`).join('');
+    return`<div id="row-${safeId}" class="fleet-barca-row" onclick="toggleFleetRow('${safeId}')">
+      <span style="font-weight:600;font-size:.84rem">🚤 ${esc(barca)}</span>
+      ${lastInfo}${badge}<span id="chev-${safeId}" class="fleet-barca-chevron">▼</span>
+    </div>
+    <div id="panel-${safeId}" class="fleet-barca-panel">
+      ${avvisiHtml}
+      <div style="max-height:220px;overflow-y:auto">${histHtml}</div>
+    </div>`;
+  }).join('');
+}
 
 init();
 </script>

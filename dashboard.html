@@ -122,6 +122,26 @@ tr:hover td{background:var(--light)}
   .chart-wrap{height:170px}
 }
 
+/* CISTERNA */
+.cist-wrap{display:flex;gap:1.2rem;align-items:center;flex-wrap:wrap;margin:.4rem 0 .9rem}
+.cist-svg-wrap{flex:0 0 auto;width:50%;max-width:200px}
+.cist-info{flex:1;min-width:130px;display:flex;flex-direction:column;gap:.55rem}
+.cist-litri{font-size:2.1rem;font-weight:700;line-height:1;font-family:'Inter',sans-serif}
+.cist-unit{font-size:.72rem;color:var(--muted);margin-top:.12rem}
+.cist-pct{font-size:.7rem;color:var(--muted)}
+.cist-stato{display:inline-block;padding:.18rem .65rem;border-radius:20px;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#fff;margin-top:.3rem}
+.cist-legend{display:flex;flex-direction:column;gap:.28rem;border-top:1px dashed var(--border);padding-top:.5rem}
+.cist-leg-row{display:flex;align-items:center;gap:.45rem;font-size:.71rem}
+.cist-leg-swatch{width:11px;height:11px;border-radius:2px;flex-shrink:0}
+.cist-storico{border-top:1px solid var(--border);padding-top:.65rem}
+.csrow{display:grid;grid-template-columns:42px 1fr auto auto;gap:.35rem;align-items:center;padding:.35rem 0;border-bottom:1px dashed var(--border);font-size:.75rem}
+.csrow:last-child{border-bottom:none}
+.csd{color:var(--muted);font-size:.68rem}
+.csl{font-weight:700}
+.csl.up{color:#2d6a4f}
+.csl.down{color:#b8474a}
+.csb{color:var(--muted);font-size:.66rem;text-align:right}
+
 /* ACCORDION FLOTTA */
 .fleet-barca-row{display:flex;align-items:center;gap:.55rem;padding:.55rem .9rem;cursor:pointer;border-bottom:1px solid var(--border);user-select:none;transition:background .12s;flex-wrap:wrap}
 .fleet-barca-row:last-of-type{border-bottom:none}
@@ -246,6 +266,84 @@ tr:hover td{background:var(--light)}
       <div class="tessere-grid" id="tessereGrid"></div>
     </div>
 
+    <!-- CISTERNA DIESEL -->
+    <div class="card" id="cisternaCard">
+      <div class="card-title">🛢 Cisterna Diesel CCB</div>
+      <div class="cist-wrap">
+        <div class="cist-svg-wrap">
+          <svg id="dcSvg" viewBox="0 0 280 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:240px">
+            <defs>
+              <linearGradient id="dcBodyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#8a7a6a"/>
+                <stop offset="30%" style="stop-color:#b5a898"/>
+                <stop offset="70%" style="stop-color:#9a8a7a"/>
+                <stop offset="100%" style="stop-color:#6a5a4a"/>
+              </linearGradient>
+              <linearGradient id="dcLiqGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" id="dcLiqTop" style="stop-color:#4a90b8"/>
+                <stop offset="100%" id="dcLiqBot" style="stop-color:#2a5a7a"/>
+              </linearGradient>
+              <linearGradient id="dcShineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#fff;stop-opacity:0"/>
+                <stop offset="25%" style="stop-color:#fff;stop-opacity:0.15"/>
+                <stop offset="50%" style="stop-color:#fff;stop-opacity:0.05"/>
+                <stop offset="100%" style="stop-color:#fff;stop-opacity:0"/>
+              </linearGradient>
+              <clipPath id="dcClip"><rect x="30" y="60" width="220" height="210" rx="20"/></clipPath>
+              <filter id="dcShadow"><feDropShadow dx="3" dy="6" stdDeviation="8" flood-opacity="0.3"/></filter>
+            </defs>
+            <rect x="65" y="260" width="18" height="48" rx="4" fill="#6a5a4a"/>
+            <rect x="197" y="260" width="18" height="48" rx="4" fill="#6a5a4a"/>
+            <rect x="58" y="300" width="32" height="8" rx="3" fill="#5a4a3a"/>
+            <rect x="190" y="300" width="32" height="8" rx="3" fill="#5a4a3a"/>
+            <g clip-path="url(#dcClip)">
+              <rect id="dcLiquidRect" x="30" y="270" width="220" height="0" fill="url(#dcLiqGrad)"/>
+              <ellipse id="dcWaveEllipse" cx="140" cy="270" rx="110" ry="6" fill="url(#dcLiqGrad)" opacity="0.6"/>
+            </g>
+            <rect x="30" y="60" width="220" height="210" rx="20" fill="url(#dcBodyGrad)" filter="url(#dcShadow)"/>
+            <rect x="30" y="60" width="220" height="210" rx="20" fill="url(#dcShineGrad)"/>
+            <rect x="30" y="60" width="220" height="210" rx="20" fill="none" stroke="#5a4a3a" stroke-width="3"/>
+            <ellipse cx="140" cy="60" rx="110" ry="14" fill="#a09080" stroke="#6a5a4a" stroke-width="2"/>
+            <ellipse cx="140" cy="270" rx="110" ry="14" fill="#7a6a5a" stroke="#5a4a3a" stroke-width="2"/>
+            <rect x="50" y="100" width="180" height="6" rx="3" fill="#6a5a4a" opacity="0.5"/>
+            <rect x="50" y="190" width="180" height="6" rx="3" fill="#6a5a4a" opacity="0.5"/>
+            <rect x="50" y="230" width="180" height="6" rx="3" fill="#6a5a4a" opacity="0.5"/>
+            <rect x="118" y="30" width="44" height="30" rx="6" fill="#8a7a6a" stroke="#5a4a3a" stroke-width="2"/>
+            <rect x="124" y="20" width="32" height="14" rx="4" fill="#9a8a7a" stroke="#5a4a3a" stroke-width="1.5"/>
+            <circle cx="140" cy="17" r="5" fill="#6a5a4a"/>
+            <rect x="240" y="200" width="24" height="14" rx="4" fill="#8a7a6a" stroke="#5a4a3a" stroke-width="1.5"/>
+            <rect x="260" y="204" width="14" height="6" rx="3" fill="#6a5a4a"/>
+            <line x1="28" y1="80" x2="22" y2="80" stroke="#8a7a6a" stroke-width="1.5"/>
+            <line x1="28" y1="113" x2="22" y2="113" stroke="#8a7a6a" stroke-width="1.5"/>
+            <line x1="28" y1="146" x2="22" y2="146" stroke="#8a7a6a" stroke-width="1.5"/>
+            <line x1="28" y1="180" x2="22" y2="180" stroke="#8a7a6a" stroke-width="1.5"/>
+            <line x1="28" y1="213" x2="22" y2="213" stroke="#8a7a6a" stroke-width="1.5"/>
+            <line x1="28" y1="246" x2="22" y2="246" stroke="#8a7a6a" stroke-width="1.5"/>
+            <line x1="28" y1="268" x2="22" y2="268" stroke="#8a7a6a" stroke-width="1.5"/>
+            <polygon id="dcLevelArrow" points="16,165 8,160 8,170" fill="#c0392b"/>
+          </svg>
+        </div>
+        <div class="cist-info">
+          <div>
+            <div class="cist-litri" id="dcLitriNum">—</div>
+            <div class="cist-unit">Litri disponibili</div>
+            <div class="cist-pct" id="dcPct">—</div>
+            <span class="cist-stato" id="dcStato">—</span>
+          </div>
+          <div class="cist-legend">
+            <div class="cist-leg-row"><span class="cist-leg-swatch" style="background:#2d7a4f"></span><span>431–860 L</span><span style="color:var(--muted);margin-left:auto">OK</span></div>
+            <div class="cist-leg-row"><span class="cist-leg-swatch" style="background:#d4a017"></span><span>216–430 L</span><span style="color:var(--muted);margin-left:auto">Medio</span></div>
+            <div class="cist-leg-row"><span class="cist-leg-swatch" style="background:#c0392b"></span><span>61–215 L</span><span style="color:var(--muted);margin-left:auto">Basso</span></div>
+            <div class="cist-leg-row"><span class="cist-leg-swatch" style="background:#1a3a6b"></span><span>0–60 L</span><span style="color:var(--muted);margin-left:auto">Critico</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="cist-storico">
+        <div class="card-title" style="margin-bottom:.5rem">Movimenti recenti</div>
+        <div id="dcStorico" style="max-height:200px;overflow-y:auto"></div>
+      </div>
+    </div>
+
     <!-- DOTAZIONI & MANUTENZIONE PER BARCA -->
     <div class="charts-row charts-2">
       <div class="card" style="padding:0;overflow:hidden">
@@ -287,7 +385,8 @@ tr:hover td{background:var(--light)}
 const SB_URL='https://psgxyjtsgthctvntbgnf.supabase.co';
 const SB_KEY='sb_publishable_bq_M1RIzGgxPR-ieGL-b1g_gKPT088P';
 const TABLE='agenda';
-const KEYS=['fleet-records','fleet-fuel-records','fleet-tessere-barca','fleet-tessere-barca-log','fleet-tessere-list','fleet-dashboard-pw','fleet-dot-barca','fleet-man-records'];
+const KEYS=['fleet-records','fleet-fuel-records','fleet-tessere-barca','fleet-tessere-barca-log','fleet-tessere-list','fleet-dashboard-pw','fleet-dot-barca','fleet-man-records','fleet-cisterna-diesel'];
+const CISTERNA_MAX=860;
 const PALETTE=['#4a90b8','#2d6a4f','#c8854a','#7b4fa0','#b8474a','#2a7a7a','#8a9b3a','#c06030','#3a608a','#6a4fa0','#a07030','#4a7a50'];
 const GHOST_BOATS=['Barca fantasma'];
 const EXCLUDED_AUTISTI=['Antonella Fiore','Vittorio Vita Durini'];
@@ -391,6 +490,7 @@ function renderAll(){
   renderKpis(records,fuelRecords,allRecords,allFuel);
   renderCharts(records,fuelRecords,allRecords,allFuel);
   renderTessere(tessere,tessereList);
+  renderCisternaDash();
   renderDotazioniFlotta();
   renderManutenzioneFlotta();
   renderTables(records,fuelRecords,tessereLog,allRecords);
@@ -757,6 +857,50 @@ function sumBy(arr,kFn,vFn){const m={};arr.forEach(x=>{const k=kFn(x);if(!k)retu
 function topN(obj,n){return Object.entries(obj).filter(([k])=>k).sort((a,b)=>b[1]-a[1]).slice(0,n).map(([k,v])=>({k,v}));}
 function objSumDelta(obj,field){return Object.fromEntries(Object.entries(obj).map(([k,v])=>[k,Math.round((v[field]||0)*10)/10]));}
 function cleanFornitore(s){if(!s)return '';return s.replace(/^💳\s*/,'').trim();}
+
+// ── CISTERNA ─────────────────────────────────────────────────────────────
+function getDcColor(litri){
+  if(litri>430)return{fill:'#2d7a4f',color:'#2d6a4f',stato:'LIVELLO OK',w1:'#3a9a60',w2:'#1f5a38'};
+  if(litri>215)return{fill:'#d4a017',color:'#b8840a',stato:'LIVELLO MEDIO',w1:'#e8b830',w2:'#b07010'};
+  if(litri>60) return{fill:'#c0392b',color:'#c0392b',stato:'LIVELLO BASSO',w1:'#e04030',w2:'#901f18'};
+  return{fill:'#1a3a6b',color:'#1a3a6b',stato:'CRITICO',w1:'#244a8b',w2:'#102040'};
+}
+function renderCisternaDash(){
+  const raw=DB['fleet-cisterna-diesel'];
+  const card=document.getElementById('cisternaCard');if(!card)return;
+  if(!raw){card.style.display='none';return;}
+  card.style.display='';
+  const litri=Math.max(0,Math.min(CISTERNA_MAX,raw.litriAttuali||0));
+  const pct=litri/CISTERNA_MAX;
+  const col=getDcColor(litri);
+  const tankH=210,fillH=tankH*pct,fillY=270-fillH;
+  const lr=document.getElementById('dcLiquidRect'),we=document.getElementById('dcWaveEllipse'),la=document.getElementById('dcLevelArrow');
+  const lt=document.getElementById('dcLiqTop'),lb=document.getElementById('dcLiqBot');
+  if(lr){lr.setAttribute('y',fillY);lr.setAttribute('height',fillH);lr.setAttribute('fill',col.fill);}
+  if(we){we.setAttribute('cy',fillY);we.setAttribute('fill',col.w1);}
+  const ay=80+(268-80)*(1-pct);
+  if(la){la.setAttribute('points',`16,${ay} 8,${ay-5} 8,${ay+5}`);la.setAttribute('fill',col.color);}
+  if(lt)lt.style.stopColor=col.w1;if(lb)lb.style.stopColor=col.fill;
+  const ln=document.getElementById('dcLitriNum'),pp=document.getElementById('dcPct'),st=document.getElementById('dcStato');
+  if(ln){ln.textContent=litri.toFixed(0);ln.style.color=col.color;}
+  if(pp)pp.textContent=Math.round(pct*100)+'% — max '+CISTERNA_MAX+' L';
+  if(st){st.textContent='● '+col.stato;st.style.background=col.fill;}
+  // Storico movimenti
+  const stor=(raw.storico||[]).slice(0,30);
+  const sc=document.getElementById('dcStorico');if(!sc)return;
+  if(!stor.length){sc.innerHTML='<div class="empty">Nessun movimento registrato.</div>';return;}
+  sc.innerHTML=stor.map(s=>{
+    const isC=s.tipo==='carico';
+    const d=s.data?new Date(s.data+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'}):'—';
+    const after=typeof s.livelloAfter!=='undefined'?`→ ${s.livelloAfter.toFixed(0)} L`:'';
+    return`<div class="csrow">
+      <div class="csd">${d}</div>
+      <div>${isC?'📥 Carico':'📤 Scarico'}${s.barca?' → '+esc(s.barca):''}<br><span style="font-size:.68rem;color:var(--muted)">${esc(s.nota||'')}</span></div>
+      <div class="csl ${isC?'up':'down'}">${isC?'+':'-'}${s.litri} L</div>
+      <div class="csb">${after}</div>
+    </div>`;
+  }).join('');
+}
 
 // ── ACCORDION HELPER ─────────────────────────────────────────────────────
 function toggleFleetRow(id){

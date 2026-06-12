@@ -48,6 +48,8 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:.75r
 
 /* PERIOD FILTER */
 .period-bar{background:var(--card);border-bottom:1px solid var(--border);padding:.5rem 1.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;position:sticky;top:57px;z-index:99}
+.admin-bar{background:#f8fafc;border-bottom:1px solid var(--border);padding:.4rem 1.2rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;position:sticky;top:97px;z-index:98}
+.admin-pill.active{background:#0d3b66;color:#fff;border-color:#0d3b66}
 .period-label{font-size:.72rem;color:var(--muted);font-weight:500;margin-right:.2rem}
 .period-pills{display:flex;gap:.35rem;flex-wrap:wrap}
 .pill{padding:.3rem .75rem;border-radius:20px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-size:.73rem;font-weight:500;font-family:inherit;cursor:pointer;transition:all .15s}
@@ -117,6 +119,7 @@ tr:hover td{background:var(--light)}
 @media(max-width:600px){
   header{padding:.6rem .85rem}
   .period-bar{top:50px;padding:.45rem .85rem}
+  .admin-bar{top:88px;padding:.38rem .85rem}
   main{padding:.65rem}
   .kpi-value{font-size:1.35rem}
   .chart-wrap{height:170px}
@@ -209,6 +212,12 @@ tr:hover td{background:var(--light)}
       <button class="pill active" onclick="setPeriod('month',this)">Mese</button>
     </div>
     <span class="period-range" id="periodRange"></span>
+  </div>
+
+  <!-- ADMIN FILTER -->
+  <div class="admin-bar" id="adminBar" style="display:none">
+    <span class="period-label">👤 Admin:</span>
+    <div class="period-pills" id="adminPills"></div>
   </div>
 
   <main>
@@ -385,7 +394,7 @@ tr:hover td{background:var(--light)}
 const SB_URL='https://psgxyjtsgthctvntbgnf.supabase.co';
 const SB_KEY='sb_publishable_bq_M1RIzGgxPR-ieGL-b1g_gKPT088P';
 const TABLE='agenda';
-const KEYS=['fleet-records','fleet-fuel-records','fleet-tessere-barca','fleet-tessere-barca-log','fleet-tessere-list','fleet-dashboard-pw','fleet-dot-barca','fleet-man-records','fleet-cisterna-diesel'];
+const KEYS=['fleet-records','fleet-fuel-records','fleet-tessere-barca','fleet-tessere-barca-log','fleet-tessere-list','fleet-dashboard-pw','fleet-dot-barca','fleet-man-records','fleet-cisterna-diesel','fleet-admin-accounts'];
 const CISTERNA_MAX=860;
 const PALETTE=['#4a90b8','#2d6a4f','#c8854a','#7b4fa0','#b8474a','#2a7a7a','#8a9b3a','#c06030','#3a608a','#6a4fa0','#a07030','#4a7a50'];
 const GHOST_BOATS=['Barca fantasma'];
@@ -396,6 +405,7 @@ let dashPw='';
 let charts={};
 let activeTab='reg';
 let currentPeriod='month';
+let currentAdminFilter=null; // null = tutte le barche
 
 // ── AUTH ──────────────────────────────────────────────────────────────────
 async function init(){
@@ -438,6 +448,31 @@ function setPeriod(p,btn){
   renderAll();
 }
 
+// ── ADMIN FILTER ─────────────────────────────────────────────────────────
+function getAdminMezzi(){
+  if(!currentAdminFilter)return null; // null = tutte
+  const admins=DB['fleet-admin-accounts']||[];
+  const acc=admins.find(a=>a.name===currentAdminFilter);
+  return acc?(acc.mezziGroup||[]):[];
+}
+function setAdminFilter(name,btn){
+  currentAdminFilter=name;
+  document.querySelectorAll('.admin-pill').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderAll();
+}
+function renderAdminFilter(){
+  const bar=document.getElementById('adminBar');
+  const pills=document.getElementById('adminPills');
+  if(!bar||!pills)return;
+  const admins=(DB['fleet-admin-accounts']||[]).filter(a=>a.active&&(a.mezziGroup||[]).length>0);
+  if(!admins.length){bar.style.display='none';return;}
+  bar.style.display='flex';
+  pills.innerHTML=
+    `<button class="pill admin-pill${!currentAdminFilter?' active':''}" onclick="setAdminFilter(null,this)">Tutte le barche</button>`+
+    admins.map(a=>`<button class="pill admin-pill${currentAdminFilter===a.name?' active':''}" onclick="setAdminFilter(${JSON.stringify(a.name)},this)">${esc(a.name)}</button>`).join('');
+}
+
 function getDateRange(period){
   const now=new Date();
   const pad=n=>String(n).padStart(2,'0');
@@ -475,11 +510,14 @@ function renderAll(){
 
   const isGhost=r=>GHOST_BOATS.includes((r.mezzo||r.barca||'').trim());
   const isExcludedAut=r=>EXCLUDED_AUTISTI.includes((r.autista||'').trim());
-  const allRecords=(DB['fleet-records']||[]).filter(r=>!isGhost(r)&&!isExcludedAut(r));
-  const allFuel=(DB['fleet-fuel-records']||[]).filter(r=>!GHOST_BOATS.includes((r.barca||'').trim())&&!isExcludedAut(r));
+  const adminMezzi=getAdminMezzi(); // null = tutte, array = filtrate per admin
+  const inAdmin=b=>!adminMezzi||adminMezzi.includes((b||'').trim());
+  const allRecords=(DB['fleet-records']||[]).filter(r=>!isGhost(r)&&!isExcludedAut(r)&&inAdmin(r.mezzo));
+  const allFuel=(DB['fleet-fuel-records']||[]).filter(r=>!GHOST_BOATS.includes((r.barca||'').trim())&&!isExcludedAut(r)&&inAdmin(r.barca));
   const tessere=DB['fleet-tessere-barca']||{};
   const tessereList=DB['fleet-tessere-list']||[];
   const tessereLog=DB['fleet-tessere-barca-log']||[];
+  renderAdminFilter();
 
   const range=getDateRange(currentPeriod);
   document.getElementById('periodRange').textContent=range.label;
@@ -627,7 +665,8 @@ function calcDeltaOre(allRecords,filteredRecords){
 }
 
 function renderTessere(tessere,tessereList){
-  const barche=Object.keys(tessere).filter(b=>!GHOST_BOATS.includes(b.trim())).sort();
+  const adminMezzi=getAdminMezzi();
+  const barche=Object.keys(tessere).filter(b=>!GHOST_BOATS.includes(b.trim())&&(!adminMezzi||adminMezzi.includes(b.trim()))).sort();
   if(!barche.length){document.getElementById('tessereGrid').innerHTML='<div class="empty">Nessun dato tessere.</div>';return;}
   document.getElementById('tessereGrid').innerHTML=barche.map(b=>{
     const s=tessere[b]||{};
@@ -918,7 +957,8 @@ function toggleFleetRow(id){
 function renderDotazioniFlotta(){
   const dot=DB['fleet-dot-barca']||{};
   const today=new Date().toISOString().slice(0,10);
-  const barche=Object.keys(dot).filter(b=>!GHOST_BOATS.includes(b.trim())&&(dot[b]||[]).length>0).sort();
+  const adminMezzi=getAdminMezzi();
+  const barche=Object.keys(dot).filter(b=>!GHOST_BOATS.includes(b.trim())&&(dot[b]||[]).length>0&&(!adminMezzi||adminMezzi.includes(b.trim()))).sort();
   const el=document.getElementById('dotazioniFlotta');if(!el)return;
   if(!barche.length){el.innerHTML='<div class="empty" style="padding:.75rem 1rem">Nessuna dotazione registrata.</div>';return;}
   el.innerHTML=barche.map(barca=>{
@@ -951,8 +991,9 @@ function renderDotazioniFlotta(){
 // ── MANUTENZIONE PER BARCA ────────────────────────────────────────────────
 function renderManutenzioneFlotta(){
   const recs=DB['fleet-man-records']||[];
+  const adminMezzi=getAdminMezzi();
   const byBarca={};
-  recs.forEach(r=>{if(!r.barca||GHOST_BOATS.includes(r.barca.trim()))return;(byBarca[r.barca]=byBarca[r.barca]||[]).push(r);});
+  recs.forEach(r=>{if(!r.barca||GHOST_BOATS.includes(r.barca.trim()))return;if(adminMezzi&&!adminMezzi.includes(r.barca.trim()))return;(byBarca[r.barca]=byBarca[r.barca]||[]).push(r);});
   const barche=Object.keys(byBarca).sort();
   const el=document.getElementById('manutenzioneFlotta');if(!el)return;
   if(!barche.length){el.innerHTML='<div class="empty" style="padding:.75rem 1rem">Nessun intervento manutenzione registrato.</div>';return;}

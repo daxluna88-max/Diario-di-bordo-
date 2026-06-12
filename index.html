@@ -1755,6 +1755,30 @@ async function saBumpAppVersion(){
   if(ok){_appVersionAtLoad=v;alert('✅ Aggiornamento inviato — tutti gli utenti verranno ricaricati entro 90 secondi');}
   else{alert('❌ Errore nel salvataggio, riprova');}
 }
+// ── POLLER DATI (sincronizzazione tra utenti concorrenti) ─────────────────
+let _dataPoller=null;
+async function refreshRecordsData(){
+  try{
+    const g=await dbGetMany(['fleet-records','fleet-fuel-records']);
+    if(g['fleet-records'])records=g['fleet-records'];
+    if(g['fleet-fuel-records'])fuelRecords=g['fleet-fuel-records'];
+    // Aggiorna le viste aperte senza disturbare l'utente
+    if(document.getElementById('pageRegistro')?.classList.contains('active'))renderDash();
+    if(document.getElementById('pageCarburanti')?.classList.contains('active'))renderFuelHistory();
+  }catch(e){}
+}
+function startDataPoller(){
+  clearInterval(_dataPoller);
+  _dataPoller=setInterval(refreshRecordsData,120000); // ogni 2 minuti
+}
+function stopDataPoller(){clearInterval(_dataPoller);_dataPoller=null;}
+// Fetch fresco di fleet-records prima di qualsiasi scrittura (evita sovrascritture)
+async function freshRecords(){
+  try{const d=await dbGet('fleet-records');if(d&&Array.isArray(d))records=d;}catch(e){}
+}
+async function freshFuelRecords(){
+  try{const d=await dbGet('fleet-fuel-records');if(d&&Array.isArray(d))fuelRecords=d;}catch(e){}
+}
 // Recupera più chiavi in UNA sola richiesta (riduce drasticamente la latenza all'avvio)
 async function dbGetMany(keys){
   try{
@@ -2060,10 +2084,11 @@ async function enterApp(){
   checkTessereBlink();
   if(currentUser.isAdmin||currentUser.isSA){checkDotBlink();checkManBlink();}
   startVersionPoller();
+  startDataPoller();
 }
 
 async function doLogout(){
-  stopVersionPoller();
+  stopVersionPoller();stopDataPoller();
   try{localStorage.removeItem('ccb_session');}catch(e){}
   if(currentUser)await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'logout','Logout');
   currentUser=null;isAdminMode=false;
@@ -3757,6 +3782,7 @@ async function submitForm(){
   const _tbCC=document.getElementById('fTesseraCC')?.checked||false;
   const _tbRicVal=document.getElementById('fTesseraRic')?.value;
   const _tbRic=_tbRicVal?parseInt(_tbRicVal):null;
+  await freshRecords(); // fetch aggiornato prima di scrivere
   records.unshift({id:Date.now(),mezzo,data,autista:document.getElementById('fAutista').value.trim(),ore:document.getElementById('fOre').value||'',intervento:document.getElementById('fIntervento').value.trim(),note:document.getElementById('fNote').value.trim(),foto:fotoUrls,pdf:pdfUrls,salvato:new Date().toISOString(),dotazioni:{prosecco:chkState.Prosecco,bicchieri:chkState.Bicchieri,acqua:chkState.Acqua,carburante:fuelLvlState},tessere:{mila:_tbMila,cc:_tbCC,ric:_tbRic}});
   await sv.records();
   await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'save',`Registrazione "${mezzo}" del ${data}`);
@@ -3825,7 +3851,7 @@ function renderDash(){
     return`<tr><td class="tm">${r.mezzo}</td><td class="td">${d}</td><td>${r.autista||'—'}</td><td>${r.ore?r.ore+'h':'—'}</td><td>${r.intervento||'—'}</td><td class="tn">${r.note||''}</td><td>${dotCell}</td><td>${fo}</td><td><div style="display:flex;flex-direction:column;gap:.25rem">${pd}</div></td><td style="white-space:nowrap">${actBtns}</td></tr>`;
   }).join('');
 }
-async function delRec(id){if(!confirm('Eliminare?'))return;const rec=records.find(r=>r.id===id);records=records.filter(r=>r.id!==id);await sv.records();await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','delete',`Eliminata registrazione "${rec?.mezzo||id}"`);populateDashFilters();renderDash();}
+async function delRec(id){if(!confirm('Eliminare?'))return;await freshRecords();const rec=records.find(r=>r.id===id);records=records.filter(r=>r.id!==id);await sv.records();await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','delete',`Eliminata registrazione "${rec?.mezzo||id}"`);populateDashFilters();renderDash();}
 
 function getAdminMezzi(){
   if(currentUser.isSA)return allMezzi;
@@ -4063,6 +4089,7 @@ async function submitFuel(){
   const tessera=tesseraId?tessereList.find(t=>t.id===tesseraId):null;
 
   const rec={id:Date.now(),barca,data,tipo:selectedFuelType,litri,fornitori:tessera?'💳 '+tessera.nome:forn,autista:document.getElementById('fAutistaFuel').value.trim(),note:document.getElementById('fNoteFuel').value.trim(),salvato:new Date().toISOString()};
+  await freshFuelRecords(); // fetch aggiornato prima di scrivere
   fuelRecords.unshift(rec);await sv.fuel();
   await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'save',`Rifornimento ${selectedFuelType.toUpperCase()} ${litri}L — ${barca}${tessera?' [💳 '+tessera.nome+']':''}`);
   if(selectedFuelType==='diesel'&&isCisternaCCB(forn)&&!tessera){
@@ -4098,7 +4125,7 @@ function renderFuelHistory(){
   if(!data.length){tb.innerHTML='<tr><td colspan="7" class="el">— nessun rifornimento —</td></tr>';return;}
   tb.innerHTML=data.map(r=>{const d=new Date(r.data).toLocaleDateString('it-IT');return`<tr><td class="tm">${r.barca}</td><td class="td">${d}</td><td><strong>${r.tipo.toUpperCase()}</strong></td><td>${r.litri}L</td><td>${r.fornitori}</td><td class="tn">${r.note||'—'}</td><td>${(currentUser.isAdmin||currentUser.isSA)?`<button class="dx" onclick="delFuelRec(${r.id})">×</button>`:''}</td></tr>`;}).join('');
 }
-async function delFuelRec(id){if(!confirm('Eliminare rifornimento?'))return;fuelRecords=fuelRecords.filter(r=>r.id!==id);await sv.fuel();await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','delete',`Rifornimento ID ${id} eliminato`);renderFuelHistory();}
+async function delFuelRec(id){if(!confirm('Eliminare rifornimento?'))return;await freshFuelRecords();fuelRecords=fuelRecords.filter(r=>r.id!==id);await sv.fuel();await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','delete',`Rifornimento ID ${id} eliminato`);renderFuelHistory();}
 
 // MODIFICA: solo SA può aggiungere/rimuovere fornitori → queste funzioni ora solo in renderSaFornitori
 async function updateBarcoFuel(b,t){if(t)barcoFuel[b]=t;else delete barcoFuel[b];await sv.barcoFuel();}
@@ -4414,6 +4441,9 @@ async function saveEditRecord(){
   rec.intervento=document.getElementById('eIntervento').value.trim();rec.note=document.getElementById('eNote').value.trim();rec.modificato=new Date().toISOString();
   if(ePendingFotos.length){const btn=document.querySelector('.edit-mf button:last-child');if(btn){btn.textContent='⏳ Caricamento...';btn.disabled=true;}if(!rec.foto)rec.foto=[];for(const file of ePendingFotos){try{rec.foto.push(await uploadPhoto(file));}catch(e){console.error(e);}}ePendingFotos=[];if(btn){btn.textContent='✓ Salva modifiche';btn.disabled=false;}}
   if(ePendingPdfs.length){if(!rec.pdf)rec.pdf=[];for(const file of ePendingPdfs){try{rec.pdf.push(await uploadFile(file));}catch(e){console.error(e);}}ePendingPdfs=[];}
+  // fetch fresco prima di scrivere, poi riapplica la modifica sull'array aggiornato
+  await freshRecords();const recFresh=records.find(r=>r.id===editingRecordId);
+  if(recFresh)Object.assign(recFresh,{mezzo:rec.mezzo,data:rec.data,ore:rec.ore,autista:rec.autista,intervento:rec.intervento,note:rec.note,foto:rec.foto,pdf:rec.pdf,modificato:rec.modificato});
   await sv.records();await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','save',`Modificata registrazione "${rec.mezzo}" del ${rec.data}`);
   closeEditModal();populateDashFilters();renderDash();
 }

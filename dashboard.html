@@ -593,9 +593,12 @@ function renderCharts(records,fuelRecords,allRec,allFuel){
   const fornMap=sumBy(fuelRecords,r=>cleanFornitore(r.fornitori),r=>parseFloat(r.litri)||0);
   mkBarChart('chartFornitore',topN(fornMap,8).map(x=>x.k),topN(fornMap,8).map(x=>Math.round(x.v)),PALETTE,'y');
 
-  // ---- registrazioni per barca ----
-  const regB=groupBy(records,r=>(r.mezzo||'').trim());
-  mkBarChart('chartRegBarca',topN(regB,8).map(x=>x.k),topN(regB,8).map(x=>x.v),PALETTE,'y');
+  // ---- registrazioni per barca (tutte le barche, anche 0 nel periodo) ----
+  const allBoats=[...new Set(allRec.map(r=>(r.mezzo||'').trim()).filter(Boolean))].sort();
+  const regBmap={};allBoats.forEach(b=>regBmap[b]=0);
+  records.forEach(r=>{const b=(r.mezzo||'').trim();if(b&&b in regBmap)regBmap[b]++;});
+  const regBsorted=Object.entries(regBmap).sort((a,b)=>b[1]-a[1]);
+  mkBarChart('chartRegBarca',regBsorted.map(x=>x[0]),regBsorted.map(x=>x[1]),PALETTE,'y');
 }
 
 function buildTempoSeries(records,fuelRecords,range){

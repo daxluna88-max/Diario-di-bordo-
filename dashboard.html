@@ -396,6 +396,7 @@ const SB_KEY='sb_publishable_bq_M1RIzGgxPR-ieGL-b1g_gKPT088P';
 const TABLE='agenda';
 const KEYS=['fleet-records','fleet-fuel-records','fleet-tessere-barca','fleet-tessere-barca-log','fleet-tessere-list','fleet-dashboard-pw','fleet-dot-barca','fleet-man-records','fleet-cisterna-diesel','fleet-admin-accounts'];
 const CISTERNA_MAX=860;
+const DAX_MEZZI=['Hurricane','Nenu','Vivina','Victory'];
 const PALETTE=['#4a90b8','#2d6a4f','#c8854a','#7b4fa0','#b8474a','#2a7a7a','#8a9b3a','#c06030','#3a608a','#6a4fa0','#a07030','#4a7a50'];
 const GHOST_BOATS=['Barca fantasma'];
 const EXCLUDED_AUTISTI=['Antonella Fiore','Vittorio Vita Durini'];
@@ -451,6 +452,7 @@ function setPeriod(p,btn){
 // ── ADMIN FILTER ─────────────────────────────────────────────────────────
 function getAdminMezzi(){
   if(!currentAdminFilter)return null; // null = tutte
+  if(currentAdminFilter==='Dax')return DAX_MEZZI;
   const admins=DB['fleet-admin-accounts']||[];
   const acc=admins.find(a=>a.name===currentAdminFilter);
   return acc?(acc.mezziGroup||[]):[];
@@ -466,10 +468,10 @@ function renderAdminFilter(){
   const pills=document.getElementById('adminPills');
   if(!bar||!pills)return;
   const admins=(DB['fleet-admin-accounts']||[]).filter(a=>a.active&&(a.mezziGroup||[]).length>0);
-  if(!admins.length){bar.style.display='none';return;}
   bar.style.display='flex';
   pills.innerHTML=
     `<button class="pill admin-pill${!currentAdminFilter?' active':''}" onclick="setAdminFilter(null,this)">Tutte le barche</button>`+
+    `<button class="pill admin-pill${currentAdminFilter==='Dax'?' active':''}" onclick="setAdminFilter('Dax',this)">Dax</button>`+
     admins.map(a=>`<button class="pill admin-pill${currentAdminFilter===a.name?' active':''}" onclick="setAdminFilter(${JSON.stringify(a.name)},this)">${esc(a.name)}</button>`).join('');
 }
 
@@ -511,7 +513,7 @@ function renderAll(){
   const isGhost=r=>GHOST_BOATS.includes((r.mezzo||r.barca||'').trim());
   const isExcludedAut=r=>EXCLUDED_AUTISTI.includes((r.autista||'').trim());
   const adminMezzi=getAdminMezzi(); // null = tutte, array = filtrate per admin
-  const inAdmin=b=>!adminMezzi||adminMezzi.includes((b||'').trim());
+  const inAdmin=b=>!adminMezzi||adminMezzi.some(m=>m.trim().toLowerCase()===(b||'').trim().toLowerCase());
   const allRecords=(DB['fleet-records']||[]).filter(r=>!isGhost(r)&&!isExcludedAut(r)&&inAdmin(r.mezzo));
   const allFuel=(DB['fleet-fuel-records']||[]).filter(r=>!GHOST_BOATS.includes((r.barca||'').trim())&&!isExcludedAut(r)&&inAdmin(r.barca));
   const tessere=DB['fleet-tessere-barca']||{};
@@ -666,7 +668,8 @@ function calcDeltaOre(allRecords,filteredRecords){
 
 function renderTessere(tessere,tessereList){
   const adminMezzi=getAdminMezzi();
-  const barche=Object.keys(tessere).filter(b=>!GHOST_BOATS.includes(b.trim())&&(!adminMezzi||adminMezzi.includes(b.trim()))).sort();
+  const inAdm=b=>!adminMezzi||adminMezzi.some(m=>m.trim().toLowerCase()===b.trim().toLowerCase());
+  const barche=Object.keys(tessere).filter(b=>!GHOST_BOATS.includes(b.trim())&&inAdm(b)).sort();
   if(!barche.length){document.getElementById('tessereGrid').innerHTML='<div class="empty">Nessun dato tessere.</div>';return;}
   document.getElementById('tessereGrid').innerHTML=barche.map(b=>{
     const s=tessere[b]||{};
@@ -958,7 +961,8 @@ function renderDotazioniFlotta(){
   const dot=DB['fleet-dot-barca']||{};
   const today=new Date().toISOString().slice(0,10);
   const adminMezzi=getAdminMezzi();
-  const barche=Object.keys(dot).filter(b=>!GHOST_BOATS.includes(b.trim())&&(dot[b]||[]).length>0&&(!adminMezzi||adminMezzi.includes(b.trim()))).sort();
+  const inAdm=b=>!adminMezzi||adminMezzi.some(m=>m.trim().toLowerCase()===b.trim().toLowerCase());
+  const barche=Object.keys(dot).filter(b=>!GHOST_BOATS.includes(b.trim())&&(dot[b]||[]).length>0&&inAdm(b)).sort();
   const el=document.getElementById('dotazioniFlotta');if(!el)return;
   if(!barche.length){el.innerHTML='<div class="empty" style="padding:.75rem 1rem">Nessuna dotazione registrata.</div>';return;}
   el.innerHTML=barche.map(barca=>{
@@ -992,8 +996,9 @@ function renderDotazioniFlotta(){
 function renderManutenzioneFlotta(){
   const recs=DB['fleet-man-records']||[];
   const adminMezzi=getAdminMezzi();
+  const inAdm=b=>!adminMezzi||adminMezzi.some(m=>m.trim().toLowerCase()===b.trim().toLowerCase());
   const byBarca={};
-  recs.forEach(r=>{if(!r.barca||GHOST_BOATS.includes(r.barca.trim()))return;if(adminMezzi&&!adminMezzi.includes(r.barca.trim()))return;(byBarca[r.barca]=byBarca[r.barca]||[]).push(r);});
+  recs.forEach(r=>{if(!r.barca||GHOST_BOATS.includes(r.barca.trim()))return;if(!inAdm(r.barca))return;(byBarca[r.barca]=byBarca[r.barca]||[]).push(r);});
   const barche=Object.keys(byBarca).sort();
   const el=document.getElementById('manutenzioneFlotta');if(!el)return;
   if(!barche.length){el.innerHTML='<div class="empty" style="padding:.75rem 1rem">Nessun intervento manutenzione registrato.</div>';return;}

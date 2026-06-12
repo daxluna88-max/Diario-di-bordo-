@@ -397,6 +397,7 @@ const TABLE='agenda';
 const KEYS=['fleet-records','fleet-fuel-records','fleet-tessere-barca','fleet-tessere-barca-log','fleet-tessere-list','fleet-dashboard-pw','fleet-dot-barca','fleet-man-records','fleet-cisterna-diesel','fleet-admin-accounts'];
 const CISTERNA_MAX=860;
 const DAX_MEZZI=['Hurricane','Nenu','Vivina','Victory'];
+const DASHBOARD_ADMINS=['Fab1one','Alessandro Vanoli'];
 const PALETTE=['#4a90b8','#2d6a4f','#c8854a','#7b4fa0','#b8474a','#2a7a7a','#8a9b3a','#c06030','#3a608a','#6a4fa0','#a07030','#4a7a50'];
 const GHOST_BOATS=['Barca fantasma'];
 const EXCLUDED_AUTISTI=['Antonella Fiore','Vittorio Vita Durini'];
@@ -467,7 +468,7 @@ function renderAdminFilter(){
   const bar=document.getElementById('adminBar');
   const pills=document.getElementById('adminPills');
   if(!bar||!pills)return;
-  const admins=(DB['fleet-admin-accounts']||[]).filter(a=>a.active&&(a.mezziGroup||[]).length>0);
+  const admins=(DB['fleet-admin-accounts']||[]).filter(a=>a.active&&(a.mezziGroup||[]).length>0&&DASHBOARD_ADMINS.includes(a.name));
   bar.style.display='flex';
   pills.innerHTML=
     `<button class="pill admin-pill${!currentAdminFilter?' active':''}" onclick="setAdminFilter(null,this)">Tutte le barche</button>`+

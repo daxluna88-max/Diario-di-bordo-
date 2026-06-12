@@ -417,6 +417,23 @@ body{padding:.8rem .3rem 3rem;}
 @keyframes attendiPulse{
   0%,100%{opacity:1;}50%{opacity:.5;}
 }
+/* ===== OVERLAY AGGIORNAMENTO ===== */
+#update-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:10000;
+  background:rgba(13,59,102,0.96);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+#update-overlay .upd-icon{font-size:3.5rem;animation:updSpin 1.2s linear infinite;}
+#update-overlay .upd-label{
+  font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:700;
+  color:#fff;letter-spacing:.1em;margin-top:.8rem;text-align:center;
+}
+#update-overlay .upd-sub{
+  font-family:'Source Sans 3',sans-serif;font-size:.85rem;
+  color:rgba(255,255,255,.7);margin-top:.5rem;text-align:center;
+}
+@keyframes updSpin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
 /* Pagina welcome gioco: scrollabile, contenuto allineato in alto */
 #pageGameWelcome{overflow-y:auto;overflow-x:hidden;justify-content:flex-start;max-height:82vh;padding-bottom:3rem;}
 </style>
@@ -429,6 +446,13 @@ body{padding:.8rem .3rem 3rem;}
   <div class="att-label">ATTENDI STO CARICANDO</div>
   <div class="att-sub">Salvataggio in corso…</div>
 </div>
+<!-- OVERLAY AGGIORNAMENTO APP -->
+<div id="update-overlay" style="display:none">
+  <div class="upd-icon">🔄</div>
+  <div class="upd-label">AGGIORNAMENTO</div>
+  <div class="upd-sub">L'app è stata aggiornata.<br>Ricarico la pagina in pochi secondi…</div>
+</div>
+
 <div class="book">
   <div class="cover">
     <div class="cover-spine"></div>
@@ -1181,6 +1205,12 @@ body{padding:.8rem .3rem 3rem;}
   </div>
 
   <div class="sas">
+    <div class="sast">🔄 Aggiornamento App</div>
+    <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Dopo aver pubblicato un aggiornamento, premi questo bottone: tutti gli utenti connessi riceveranno una notifica e la pagina verrà ricaricata automaticamente entro 90 secondi.</p>
+    <button class="bh" onclick="saBumpAppVersion()" style="background:#c0392b;color:#fff;border-color:#c0392b;position:relative;z-index:2">🔄 Forza aggiornamento per tutti gli utenti</button>
+  </div>
+
+  <div class="sas">
     <div class="sast">📊 Esporta → Numbers via Shortcut</div>
     <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:1rem;position:relative;z-index:2;line-height:1.5">Copia il CSV negli appunti e avvia automaticamente la Shortcut su iPhone.</p>
     <div style="display:flex;flex-direction:column;margin-bottom:.5rem;position:relative;z-index:2">
@@ -1696,6 +1726,35 @@ async function dbSet(k,v,retries){
   }
   return false; // salvataggio NON riuscito dopo i tentativi
 }
+// ── POLLER VERSIONE APP ────────────────────────────────────────────────────
+let _appVersionAtLoad=null;
+let _versionPollTimer=null;
+async function startVersionPoller(){
+  _appVersionAtLoad=await dbGet('fleet-app-version');
+  clearInterval(_versionPollTimer);
+  _versionPollTimer=setInterval(async()=>{
+    try{
+      const v=await dbGet('fleet-app-version');
+      if(v&&_appVersionAtLoad&&v!==_appVersionAtLoad){
+        clearInterval(_versionPollTimer);
+        showUpdateOverlay();
+      }
+    }catch(e){}
+  },90000);
+}
+function stopVersionPoller(){clearInterval(_versionPollTimer);_versionPollTimer=null;}
+function showUpdateOverlay(){
+  const ov=document.getElementById('update-overlay');
+  if(!ov)return;
+  ov.style.display='flex';
+  setTimeout(()=>location.reload(true),4000);
+}
+async function saBumpAppVersion(){
+  const v=Date.now().toString();
+  const ok=await dbSet('fleet-app-version',v);
+  if(ok){_appVersionAtLoad=v;alert('✅ Aggiornamento inviato — tutti gli utenti verranno ricaricati entro 90 secondi');}
+  else{alert('❌ Errore nel salvataggio, riprova');}
+}
 // Recupera più chiavi in UNA sola richiesta (riduce drasticamente la latenza all'avvio)
 async function dbGetMany(keys){
   try{
@@ -2000,9 +2059,11 @@ async function enterApp(){
   renderDotazioniSera();
   checkTessereBlink();
   if(currentUser.isAdmin||currentUser.isSA){checkDotBlink();checkManBlink();}
+  startVersionPoller();
 }
 
 async function doLogout(){
+  stopVersionPoller();
   try{localStorage.removeItem('ccb_session');}catch(e){}
   if(currentUser)await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'logout','Logout');
   currentUser=null;isAdminMode=false;

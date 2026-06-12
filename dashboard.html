@@ -514,7 +514,7 @@ function renderAll(){
   const isGhost=r=>GHOST_BOATS.includes((r.mezzo||r.barca||'').trim());
   const isExcludedAut=r=>EXCLUDED_AUTISTI.includes((r.autista||'').trim());
   const adminMezzi=getAdminMezzi(); // null = tutte, array = filtrate per admin
-  const inAdmin=b=>!adminMezzi||adminMezzi.some(m=>m.trim().toLowerCase()===(b||'').trim().toLowerCase());
+  const inAdmin=b=>{if(!adminMezzi)return true;const mb=(b||'').trim().toLowerCase();return adminMezzi.some(m=>{const mm=m.trim().toLowerCase();return mb===mm||mb.includes(mm)||mm.includes(mb);});};
   const allRecords=(DB['fleet-records']||[]).filter(r=>!isGhost(r)&&!isExcludedAut(r)&&inAdmin(r.mezzo));
   const allFuel=(DB['fleet-fuel-records']||[]).filter(r=>!GHOST_BOATS.includes((r.barca||'').trim())&&!isExcludedAut(r)&&inAdmin(r.barca));
   const tessere=DB['fleet-tessere-barca']||{};
@@ -962,7 +962,7 @@ function renderDotazioniFlotta(){
   const dot=DB['fleet-dot-barca']||{};
   const today=new Date().toISOString().slice(0,10);
   const adminMezzi=getAdminMezzi();
-  const inAdm=b=>!adminMezzi||adminMezzi.some(m=>m.trim().toLowerCase()===b.trim().toLowerCase());
+  const inAdm=b=>{if(!adminMezzi)return true;const mb=(b||'').trim().toLowerCase();return adminMezzi.some(m=>{const mm=m.trim().toLowerCase();return mb===mm||mb.includes(mm)||mm.includes(mb);});};
   const barche=Object.keys(dot).filter(b=>!GHOST_BOATS.includes(b.trim())&&(dot[b]||[]).length>0&&inAdm(b)).sort();
   const el=document.getElementById('dotazioniFlotta');if(!el)return;
   if(!barche.length){el.innerHTML='<div class="empty" style="padding:.75rem 1rem">Nessuna dotazione registrata.</div>';return;}
@@ -997,7 +997,7 @@ function renderDotazioniFlotta(){
 function renderManutenzioneFlotta(){
   const recs=DB['fleet-man-records']||[];
   const adminMezzi=getAdminMezzi();
-  const inAdm=b=>!adminMezzi||adminMezzi.some(m=>m.trim().toLowerCase()===b.trim().toLowerCase());
+  const inAdm=b=>{if(!adminMezzi)return true;const mb=(b||'').trim().toLowerCase();return adminMezzi.some(m=>{const mm=m.trim().toLowerCase();return mb===mm||mb.includes(mm)||mm.includes(mb);});};
   const byBarca={};
   recs.forEach(r=>{if(!r.barca||GHOST_BOATS.includes(r.barca.trim()))return;if(!inAdm(r.barca))return;(byBarca[r.barca]=byBarca[r.barca]||[]).push(r);});
   const barche=Object.keys(byBarca).sort();

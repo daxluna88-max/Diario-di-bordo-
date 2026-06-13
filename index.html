@@ -1791,6 +1791,16 @@ async function freshRecords(){
 async function freshFuelRecords(){
   try{const d=await dbGet('fleet-fuel-records');if(d&&Array.isArray(d))fuelRecords=d;}catch(e){}
 }
+// Refresh immediato quando l'utente torna sull'app (schermo sbloccato, cambio scheda, ecc.)
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden&&currentUser){
+    refreshRecordsData();
+    // Controlla anche se nel frattempo è uscita una nuova versione
+    fetchHtmlSig().then(sig=>{
+      if(sig&&_htmlSigAtLoad&&sig!==_htmlSigAtLoad){clearInterval(_versionPollTimer);showUpdateOverlay();}
+    }).catch(()=>{});
+  }
+});
 // Salva record con verifica post-salvataggio: rilegge dal DB per confermare
 // che il record sia presente. Se qualcuno ha scritto nello stesso momento,
 // riprova fino a 3 volte fondendo il record mancante.

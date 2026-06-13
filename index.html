@@ -1807,6 +1807,13 @@ document.addEventListener('visibilitychange',()=>{
 window.addEventListener('pageshow',e=>{
   if(e.persisted&&currentUser)refreshRecordsData();
 });
+// Reload completo dopo 10 minuti di inattività
+let _idleTimer=null;
+function resetIdleTimer(){
+  clearTimeout(_idleTimer);
+  if(currentUser)_idleTimer=setTimeout(()=>location.reload(true),10*60*1000);
+}
+['touchstart','click','keydown','scroll'].forEach(ev=>document.addEventListener(ev,resetIdleTimer,{passive:true}));
 // Salva record con verifica post-salvataggio: rilegge dal DB per confermare
 // che il record sia presente. Se qualcuno ha scritto nello stesso momento,
 // riprova fino a 3 volte fondendo il record mancante.
@@ -2150,10 +2157,11 @@ async function enterApp(){
   if(currentUser.isAdmin||currentUser.isSA){checkDotBlink();checkManBlink();}
   startVersionPoller();
   startDataPoller();
+  resetIdleTimer();
 }
 
 async function doLogout(){
-  stopVersionPoller();stopDataPoller();
+  stopVersionPoller();stopDataPoller();clearTimeout(_idleTimer);
   try{localStorage.removeItem('ccb_session');}catch(e){}
   if(currentUser)await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'logout','Logout');
   currentUser=null;isAdminMode=false;

@@ -2058,6 +2058,16 @@ function toggleAdmin(){
 async function doLogin(){
   const name=document.getElementById('loginName').value.trim();
   if(!name)return;
+  // Se i dati non sono ancora pronti, fetch fresco prima di controllare
+  if(isAdminMode&&adminAccounts.length===0){
+    const fresh=await dbGet('fleet-admin-accounts');
+    if(fresh&&Array.isArray(fresh))adminAccounts=fresh;
+    const freshPw=await dbGet('fleet-admin-pw');if(freshPw)ADMIN_PW=freshPw;
+  }
+  if(!isAdminMode&&drivers.length===0){
+    const fresh=await dbGet('fleet-drivers');
+    if(fresh&&Array.isArray(fresh))drivers=fresh;
+  }
   if(isAdminMode){
     const pw=document.getElementById('loginPw').value;
     const acc=adminAccounts.find(a=>a.name.toLowerCase()===name.toLowerCase());

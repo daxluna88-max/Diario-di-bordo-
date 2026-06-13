@@ -470,10 +470,17 @@ function renderAdminFilter(){
   if(!bar||!pills)return;
   const admins=(DB['fleet-admin-accounts']||[]).filter(a=>a.active&&(a.mezziGroup||[]).length>0&&DASHBOARD_ADMINS.includes(a.name));
   bar.style.display='flex';
-  pills.innerHTML=
-    `<button class="pill admin-pill${!currentAdminFilter?' active':''}" onclick="setAdminFilter(null,this)">Tutte le barche</button>`+
-    `<button class="pill admin-pill${currentAdminFilter==='Dax'?' active':''}" onclick="setAdminFilter('Dax',this)">Dax</button>`+
-    admins.map(a=>`<button class="pill admin-pill${currentAdminFilter===a.name?' active':''}" onclick='setAdminFilter(${JSON.stringify(a.name)},this)'>${esc(a.name)}</button>`).join('');
+  pills.innerHTML='';
+  const mkPill=(label,val)=>{
+    const b=document.createElement('button');
+    b.className='pill admin-pill'+(currentAdminFilter===val?' active':'');
+    b.textContent=label;
+    b.addEventListener('click',()=>setAdminFilter(val,b));
+    return b;
+  };
+  pills.appendChild(mkPill('Tutte le barche',null));
+  pills.appendChild(mkPill('Dax','Dax'));
+  admins.forEach(a=>pills.appendChild(mkPill(a.name,a.name)));
 }
 
 function getDateRange(period){

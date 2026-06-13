@@ -1774,9 +1774,11 @@ async function refreshRecordsData(){
     const g=await dbGetMany(['fleet-records','fleet-fuel-records']);
     if(g['fleet-records'])records=g['fleet-records'];
     if(g['fleet-fuel-records'])fuelRecords=g['fleet-fuel-records'];
-    // Aggiorna le viste aperte senza disturbare l'utente
+    // Non ridisegnare la UI se l'utente sta scrivendo in un campo
+    const tag=document.activeElement?.tagName;
+    if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;
     if(document.getElementById('pageRegistro')?.classList.contains('active'))renderDash();
-    if(document.getElementById('pageCarburanti')?.classList.contains('active'))renderFuelHistory();
+    if(document.getElementById('pageCarburanti')?.classList.contains('active')){renderFuelHistory();renderUltimoRifornimento();}
   }catch(e){}
 }
 function startDataPoller(){

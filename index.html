@@ -900,6 +900,11 @@ body{padding:.8rem .3rem 3rem;}
     </div>
   </div>
   <div id="autoristaFuel">
+    <!-- ULTIMO RIFORNIMENTO -->
+    <div id="ultimoRifDiv" style="display:none;margin-bottom:1.1rem;padding:.75rem 1rem;background:rgba(74,144,184,.07);border:1.5px solid rgba(74,144,184,.28);border-radius:8px;">
+      <div style="font-size:.68rem;font-weight:700;color:var(--blue);letter-spacing:.09em;margin-bottom:.3rem;text-transform:uppercase">⛽ Ultimo rifornimento</div>
+      <div id="ultimoRifContent" style="font-family:'Source Sans 3',sans-serif;font-size:.92rem;line-height:1.75;color:var(--ink)"></div>
+    </div>
     <div class="fs2">
       <div class="fh">Scegli il carburante</div>
       <div class="fsel">
@@ -1776,7 +1781,7 @@ async function refreshRecordsData(){
 }
 function startDataPoller(){
   clearInterval(_dataPoller);
-  _dataPoller=setInterval(refreshRecordsData,120000); // ogni 2 minuti
+  _dataPoller=setInterval(refreshRecordsData,60000); // ogni 60 secondi
 }
 function stopDataPoller(){clearInterval(_dataPoller);_dataPoller=null;}
 // Fetch fresco di fleet-records prima di qualsiasi scrittura (evita sovrascritture)
@@ -2121,7 +2126,7 @@ function showPage(name,btn){
   const pg=document.getElementById('page'+name.charAt(0).toUpperCase()+name.slice(1));
   if(pg){pg.style.display='block';pg.classList.add('active');}
   if(btn)btn.classList.add('active');
-  if(name==='registro'){populateDashFilters();renderDash();}
+  if(name==='registro'){refreshRecordsData().then(()=>{populateDashFilters();renderDash();});}
   if(name==='compila')renderDotazioniSera();
   if(name==='admin'){renderAdmin();renderAttMsgAdmin();populateAttMsgTarget();}
   if(name==='superadmin')renderSA();
@@ -2134,13 +2139,15 @@ function showPage(name,btn){
     if(currentUser.isAdmin||currentUser.isSA){adminReg.style.display='block';populateFuelBarcoFilter();renderFuelHistory();}else{adminReg.style.display='none';}
     if(currentUser.isSA){autFuel.style.display='none';}else{
       autFuel.style.display='block';
-      // Per gli admin: form in alto, registro sotto
       if(currentUser.isAdmin&&autFuel.nextElementSibling!==adminReg){
         autFuel.parentNode.insertBefore(autFuel,adminReg);
       }
     }
     renderTessereAdminFuelSection();
     renderTessereAutistaSection();
+    renderUltimoRifornimento();
+    // Dati freschi ogni volta che si apre la pagina
+    refreshRecordsData().then(()=>renderUltimoRifornimento());
   }
 }
 
@@ -4122,8 +4129,31 @@ async function submitFuel(){
   if(document.getElementById('fTesseraCosto'))document.getElementById('fTesseraCosto').value='';
   const n=document.getElementById('successNoteFuel');n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2500);
   renderFuelHistory();
+  renderUltimoRifornimento();
 }
 
+function renderUltimoRifornimento(){
+  const div=document.getElementById('ultimoRifDiv');
+  const content=document.getElementById('ultimoRifContent');
+  if(!div||!content||!currentUser)return;
+  let myFuel=(fuelRecords||[]).filter(r=>!GHOST_BOATS.includes((r.barca||'').trim()));
+  if(currentUser.isAdmin&&!currentUser.isSA){
+    const mz=getAdminMezzi();
+    myFuel=myFuel.filter(r=>mz.some(m=>m.trim().toLowerCase()===(r.barca||'').trim().toLowerCase()||
+      (r.barca||'').trim().toLowerCase().includes(m.trim().toLowerCase())||
+      m.trim().toLowerCase().includes((r.barca||'').trim().toLowerCase())));
+  }else if(!currentUser.isAdmin&&!currentUser.isSA){
+    myFuel=myFuel.filter(r=>(r.autista||'').trim().toLowerCase()===(currentUser.name||'').trim().toLowerCase());
+  }
+  if(!myFuel.length){div.style.display='none';return;}
+  const last=myFuel[0];
+  const dataFmt=last.data?new Date(last.data).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+  content.innerHTML=`<strong>${escHtml(last.barca||'—')}</strong> &nbsp;·&nbsp; ${dataFmt}<br>`+
+    `<strong>${escHtml((last.tipo||'').toUpperCase())}</strong> &nbsp;${last.litri||'—'} L`+
+    (last.fornitori?` &nbsp;·&nbsp; ${escHtml(last.fornitori)}`:'') +
+    (last.note?`<br><span style="color:var(--ink-faded);font-size:.8rem">${escHtml(last.note)}</span>`:'');
+  div.style.display='block';
+}
 function renderFuelHistory(){
   let data=fuelRecords;
   if((currentUser.isAdmin||currentUser.isSA)&&document.getElementById('filterFuelType')){const ft=document.getElementById('filterFuelType').value;const fb=document.getElementById('filterFuelBarca').value;data=fuelRecords.filter(r=>(!ft||r.tipo===ft)&&(!fb||r.barca===fb));}

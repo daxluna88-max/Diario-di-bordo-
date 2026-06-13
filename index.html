@@ -4162,6 +4162,11 @@ async function submitFuel(){
   if(usaTessera&&!tesseraId){alert('Seleziona una tessera prepagata');return;}
   const tessera=tesseraId?tessereList.find(t=>t.id===tesseraId):null;
 
+  // Check doppio rifornimento: stessa barca + stesso giorno
+  const _dataGiorno=data.slice(0,10);
+  const _prevFuel=fuelRecords.find(r=>r.barca===barca&&(r.data||'').slice(0,10)===_dataGiorno);
+  if(_prevFuel&&!confirm(`⚠️ ${barca} ha già un rifornimento registrato oggi (${_prevFuel.litri}L ${(_prevFuel.tipo||'').toUpperCase()}${_prevFuel.autista?' — '+_prevFuel.autista:''}).\n\nHai già salvato una registrazione di rifornimento andata a buon fine.\nSei sicuro di voler fare un'altra registrazione?`))return;
+
   const rec={id:Date.now(),barca,data,tipo:selectedFuelType,litri,fornitori:tessera?'💳 '+tessera.nome:forn,autista:document.getElementById('fAutistaFuel').value.trim(),note:document.getElementById('fNoteFuel').value.trim(),salvato:new Date().toISOString()};
   await saveFuelRecordsVerified(rec);
   await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'save',`Rifornimento ${selectedFuelType.toUpperCase()} ${litri}L — ${barca}${tessera?' [💳 '+tessera.nome+']':''}`);

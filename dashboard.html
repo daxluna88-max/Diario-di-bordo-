@@ -473,7 +473,7 @@ function renderAdminFilter(){
   pills.innerHTML=
     `<button class="pill admin-pill${!currentAdminFilter?' active':''}" onclick="setAdminFilter(null,this)">Tutte le barche</button>`+
     `<button class="pill admin-pill${currentAdminFilter==='Dax'?' active':''}" onclick="setAdminFilter('Dax',this)">Dax</button>`+
-    admins.map(a=>`<button class="pill admin-pill${currentAdminFilter===a.name?' active':''}" onclick="setAdminFilter(${JSON.stringify(a.name)},this)">${esc(a.name)}</button>`).join('');
+    admins.map(a=>`<button class="pill admin-pill${currentAdminFilter===a.name?' active':''}" onclick='setAdminFilter(${JSON.stringify(a.name)},this)'>${esc(a.name)}</button>`).join('');
 }
 
 function getDateRange(period){

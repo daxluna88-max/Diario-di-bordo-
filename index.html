@@ -1628,6 +1628,7 @@ body{padding:.8rem .3rem 3rem;}
     <div class="edit-mb">
       <div class="field"><label class="fl">Barca</label><select id="eMezzo"><option value="">— seleziona —</option></select></div>
       <div class="field"><label class="fl">Data</label><input type="date" id="eData"></div>
+      <div id="eOraField" style="display:none;margin-bottom:.9rem"><label class="fl" style="color:var(--ink-faded)">Ora salvataggio</label><div id="eOraDisplay" style="font-family:'Source Sans 3',sans-serif;font-size:.9rem;color:var(--ink-faded);padding:.25rem 0;border-bottom:1px solid var(--line-light)">—</div></div>
       <div style="display:flex;gap:1.5rem"><div class="field" style="flex:1"><label class="fl">Ore motore</label><input type="number" id="eOre" placeholder="es. 8.5" step="0.5" min="0"></div><div class="field" style="flex:1"><label class="fl">Autista</label><input type="text" id="eAutista" placeholder="Nome cognome"></div></div>
       <div class="field"><label class="fl">Tipo intervento</label><textarea id="eIntervento" rows="3" style="resize:none;min-height:70px;line-height:1.8;border:1px solid var(--line);padding:.45rem .7rem;background:#fafaf8;font-family:'Source Sans 3',sans-serif;font-size:1rem;width:100%;outline:none;border-radius:2px;"></textarea></div>
       <div class="field"><label class="fl">Note</label><textarea id="eNote" rows="4"></textarea></div>
@@ -3924,6 +3925,7 @@ function renderDash(){
   if(!data.length){tb.innerHTML='<tr><td colspan="9" class="el">— nessuna registrazione —</td></tr>';return;}
   tb.innerHTML=data.map(r=>{
     const d=r.data?new Date(r.data+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'2-digit'}):'—';
+    const ora=r.salvato?new Date(r.salvato).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}):'';
     const fo=(r.foto||[]).map(u=>`<a href="${u}" target="_blank"><img src="${u}" class="fothumb" style="width:42px;height:42px;margin:1px"></a>`).join('');
     const pd=(r.pdf||[]).map((u,i)=>{const nm=decodeURIComponent(u.split('/').pop()).replace(/\.[^.]+$/,'').slice(0,22)||`PDF ${i+1}`;const viewUrl=u.includes('cloudinary.com')?u.replace('/upload/','/upload/fl_attachment/'):u;return`<a href="${viewUrl}" target="_blank" style="display:flex;align-items:center;gap:.3rem;font-family:'Source Sans 3',sans-serif;font-size:.75rem;color:var(--red);text-decoration:none;padding:.2rem .4rem;border:1px solid rgba(192,57,43,.2);border-radius:3px;white-space:nowrap;background:#fff9f9">📄 ${nm}</a>`;}).join('');
     let actBtns='';
@@ -3932,7 +3934,7 @@ function renderDash(){
     function dIcon(v){return v==='ok'?'✅':v==='no'?'❌':'—';}
     const fuelIcon=dot.carburante?`<span style="font-size:.75rem;font-weight:700;color:var(--blue)">${dot.carburante}</span>`:'—';
     const dotCell=`<div style="font-size:.78rem;line-height:1.7;white-space:nowrap">🥂 ${dIcon(dot.prosecco)} &nbsp;🫙 ${dIcon(dot.bicchieri)}<br>💧 ${dIcon(dot.acqua)} &nbsp;⛽ ${fuelIcon}</div>`;
-    return`<tr><td class="tm">${r.mezzo}</td><td class="td">${d}</td><td>${r.autista||'—'}</td><td>${r.ore?r.ore+'h':'—'}</td><td>${r.intervento||'—'}</td><td class="tn">${r.note||''}</td><td>${dotCell}</td><td>${fo}</td><td><div style="display:flex;flex-direction:column;gap:.25rem">${pd}</div></td><td style="white-space:nowrap">${actBtns}</td></tr>`;
+    return`<tr><td class="tm">${r.mezzo}</td><td class="td">${d}${ora?`<br><span style="font-size:.72rem;color:var(--ink-faded)">${ora}</span>`:''}</td><td>${r.autista||'—'}</td><td>${r.ore?r.ore+'h':'—'}</td><td>${r.intervento||'—'}</td><td class="tn">${r.note||''}</td><td>${dotCell}</td><td>${fo}</td><td><div style="display:flex;flex-direction:column;gap:.25rem">${pd}</div></td><td style="white-space:nowrap">${actBtns}</td></tr>`;
   }).join('');
 }
 async function delRec(id){if(!confirm('Eliminare?'))return;await freshRecords();const rec=records.find(r=>r.id===id);records=records.filter(r=>r.id!==id);await sv.records();await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','delete',`Eliminata registrazione "${rec?.mezzo||id}"`);populateDashFilters();renderDash();}
@@ -4183,7 +4185,7 @@ async function submitFuel(){
   if(selectedFuelType==='diesel'&&isCisternaCCB(forn)&&!tessera){
     cisternaDiesel.litriAttuali=Math.max(0,cisternaDiesel.litriAttuali-litri);
     if(!cisternaDiesel.storico)cisternaDiesel.storico=[];
-    cisternaDiesel.storico.unshift({id:Date.now(),tipo:'scarico',data:data.slice(0,10),barca,litri,livelloAfter:cisternaDiesel.litriAttuali,nota:'Scarico automatico da rifornimento',salvato:new Date().toISOString()});
+    cisternaDiesel.storico.unshift({id:Date.now(),fuelRecId:rec.id,tipo:'scarico',data:data.slice(0,10),barca,litri,livelloAfter:cisternaDiesel.litriAttuali,nota:'Scarico automatico da rifornimento',salvato:new Date().toISOString()});
     await sv.cisternaDiesel();
   }
   benzinaDieselDati.unshift({id:rec.id,data:data.slice(0,10),ora:data.includes('T')?data.slice(11,16):'',barca,tipo:selectedFuelType,litri,fornitori:rec.fornitori,note:rec.note,salvato:new Date().toISOString(),tessera:!!tessera});
@@ -4236,7 +4238,26 @@ function renderFuelHistory(){
   if(!data.length){tb.innerHTML='<tr><td colspan="7" class="el">— nessun rifornimento —</td></tr>';return;}
   tb.innerHTML=data.map(r=>{const d=new Date(r.data).toLocaleDateString('it-IT');return`<tr><td class="tm">${r.barca}</td><td class="td">${d}</td><td><strong>${r.tipo.toUpperCase()}</strong></td><td>${r.litri}L</td><td>${r.fornitori}</td><td class="tn">${r.note||'—'}</td><td>${(currentUser.isAdmin||currentUser.isSA)?`<button class="dx" onclick="delFuelRec(${r.id})">×</button>`:''}</td></tr>`;}).join('');
 }
-async function delFuelRec(id){if(!confirm('Eliminare rifornimento?'))return;await freshFuelRecords();fuelRecords=fuelRecords.filter(r=>r.id!==id);await sv.fuel();await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','delete',`Rifornimento ID ${id} eliminato`);renderFuelHistory();}
+async function delFuelRec(id){
+  if(!confirm('Eliminare rifornimento?'))return;
+  await freshFuelRecords();
+  const _dr=fuelRecords.find(r=>r.id===id);
+  fuelRecords=fuelRecords.filter(r=>r.id!==id);
+  if(_dr){
+    const _bData=(_dr.data||'').slice(0,10);
+    const _cIdx=cisternaDiesel.storico.findIndex(s=>s.fuelRecId===id||(s.nota==='Scarico automatico da rifornimento'&&s.barca===_dr.barca&&(s.data||'').slice(0,10)===_bData&&parseFloat(s.litri)===parseFloat(_dr.litri)));
+    if(_cIdx>=0){
+      cisternaDiesel.litriAttuali=Math.min(860,cisternaDiesel.litriAttuali+parseFloat(_dr.litri||0));
+      cisternaDiesel.storico.splice(_cIdx,1);
+      await sv.cisternaDiesel();
+    }
+    benzinaDieselDati=benzinaDieselDati.filter(r=>r.id!==id);
+    await sv.benzinaDiesel();
+  }
+  await sv.fuel();
+  await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','delete',`Rifornimento ID ${id} eliminato`);
+  renderFuelHistory();
+}
 
 // MODIFICA: solo SA può aggiungere/rimuovere fornitori → queste funzioni ora solo in renderSaFornitori
 async function updateBarcoFuel(b,t){if(t)barcoFuel[b]=t;else delete barcoFuel[b];await sv.barcoFuel();}
@@ -4533,6 +4554,8 @@ function openEditRecord(id){
   mezzoSel.innerHTML='<option value="">— seleziona —</option>'+mezzi.map(m=>`<option ${m===rec.mezzo?'selected':''}>${m}</option>`).join('');
   mezzoSel.disabled=!isAdmin;
   const eData=document.getElementById('eData');eData.value=rec.data||'';eData.disabled=!isAdmin;
+  const _eOraField=document.getElementById('eOraField');const _eOraDisplay=document.getElementById('eOraDisplay');
+  if(_eOraField&&_eOraDisplay&&rec.salvato){_eOraField.style.display='';_eOraDisplay.textContent=new Date(rec.salvato).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});}
   const eOre=document.getElementById('eOre');eOre.value=rec.ore||'';eOre.disabled=!isAdmin;
   const eAut=document.getElementById('eAutista');eAut.value=rec.autista||'';eAut.disabled=!isAdmin;
   document.getElementById('eIntervento').value=rec.intervento||'';

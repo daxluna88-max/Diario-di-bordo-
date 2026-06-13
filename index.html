@@ -1803,6 +1803,10 @@ document.addEventListener('visibilitychange',()=>{
     }).catch(()=>{});
   }
 });
+// Refresh anche se si torna via pulsante Indietro del browser (bfcache)
+window.addEventListener('pageshow',e=>{
+  if(e.persisted&&currentUser)refreshRecordsData();
+});
 // Salva record con verifica post-salvataggio: rilegge dal DB per confermare
 // che il record sia presente. Se qualcuno ha scritto nello stesso momento,
 // riprova fino a 3 volte fondendo il record mancante.

@@ -1791,6 +1791,43 @@ async function freshRecords(){
 async function freshFuelRecords(){
   try{const d=await dbGet('fleet-fuel-records');if(d&&Array.isArray(d))fuelRecords=d;}catch(e){}
 }
+// Salva record con verifica post-salvataggio: rilegge dal DB per confermare
+// che il record sia presente. Se qualcuno ha scritto nello stesso momento,
+// riprova fino a 3 volte fondendo il record mancante.
+async function saveRecordsVerified(newRec){
+  for(let i=0;i<3;i++){
+    await freshRecords();
+    if(!records.find(r=>r.id===newRec.id))records.unshift(newRec);
+    const ok=await sv.records();
+    if(!ok){await new Promise(r=>setTimeout(r,600*(i+1)));continue;}
+    // Verifica: rileggi e controlla che il record sia presente
+    await new Promise(r=>setTimeout(r,400));
+    try{
+      const check=await dbGet('fleet-records');
+      if(check&&Array.isArray(check)&&check.find(r=>r.id===newRec.id)){
+        records=check;return true; // confermato
+      }
+      // non trovato: qualcuno ha sovrascritto, riprova
+    }catch(e){}
+  }
+  return false;
+}
+async function saveFuelRecordsVerified(newRec){
+  for(let i=0;i<3;i++){
+    await freshFuelRecords();
+    if(!fuelRecords.find(r=>r.id===newRec.id))fuelRecords.unshift(newRec);
+    const ok=await sv.fuel();
+    if(!ok){await new Promise(r=>setTimeout(r,600*(i+1)));continue;}
+    await new Promise(r=>setTimeout(r,400));
+    try{
+      const check=await dbGet('fleet-fuel-records');
+      if(check&&Array.isArray(check)&&check.find(r=>r.id===newRec.id)){
+        fuelRecords=check;return true;
+      }
+    }catch(e){}
+  }
+  return false;
+}
 // Recupera più chiavi in UNA sola richiesta (riduce drasticamente la latenza all'avvio)
 async function dbGetMany(keys){
   try{
@@ -3796,9 +3833,8 @@ async function submitForm(){
   const _tbCC=document.getElementById('fTesseraCC')?.checked||false;
   const _tbRicVal=document.getElementById('fTesseraRic')?.value;
   const _tbRic=_tbRicVal?parseInt(_tbRicVal):null;
-  await freshRecords(); // fetch aggiornato prima di scrivere
-  records.unshift({id:Date.now(),mezzo,data,autista:document.getElementById('fAutista').value.trim(),ore:document.getElementById('fOre').value||'',intervento:document.getElementById('fIntervento').value.trim(),note:document.getElementById('fNote').value.trim(),foto:fotoUrls,pdf:pdfUrls,salvato:new Date().toISOString(),dotazioni:{prosecco:chkState.Prosecco,bicchieri:chkState.Bicchieri,acqua:chkState.Acqua,carburante:fuelLvlState},tessere:{mila:_tbMila,cc:_tbCC,ric:_tbRic}});
-  await sv.records();
+  const _newRec={id:Date.now(),mezzo,data,autista:document.getElementById('fAutista').value.trim(),ore:document.getElementById('fOre').value||'',intervento:document.getElementById('fIntervento').value.trim(),note:document.getElementById('fNote').value.trim(),foto:fotoUrls,pdf:pdfUrls,salvato:new Date().toISOString(),dotazioni:{prosecco:chkState.Prosecco,bicchieri:chkState.Bicchieri,acqua:chkState.Acqua,carburante:fuelLvlState},tessere:{mila:_tbMila,cc:_tbCC,ric:_tbRic}};
+  await saveRecordsVerified(_newRec);
   await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'save',`Registrazione "${mezzo}" del ${data}`);
   const _prevTB=tessereBarca[mezzo]||{mila:false,cc:false,ric:null};
   if(_prevTB.mila!==_tbMila||_prevTB.cc!==_tbCC||_prevTB.ric!==_tbRic){
@@ -4103,8 +4139,7 @@ async function submitFuel(){
   const tessera=tesseraId?tessereList.find(t=>t.id===tesseraId):null;
 
   const rec={id:Date.now(),barca,data,tipo:selectedFuelType,litri,fornitori:tessera?'💳 '+tessera.nome:forn,autista:document.getElementById('fAutistaFuel').value.trim(),note:document.getElementById('fNoteFuel').value.trim(),salvato:new Date().toISOString()};
-  await freshFuelRecords(); // fetch aggiornato prima di scrivere
-  fuelRecords.unshift(rec);await sv.fuel();
+  await saveFuelRecordsVerified(rec);
   await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'save',`Rifornimento ${selectedFuelType.toUpperCase()} ${litri}L — ${barca}${tessera?' [💳 '+tessera.nome+']':''}`);
   if(selectedFuelType==='diesel'&&isCisternaCCB(forn)&&!tessera){
     cisternaDiesel.litriAttuali=Math.max(0,cisternaDiesel.litriAttuali-litri);
@@ -4478,10 +4513,15 @@ async function saveEditRecord(){
   rec.intervento=document.getElementById('eIntervento').value.trim();rec.note=document.getElementById('eNote').value.trim();rec.modificato=new Date().toISOString();
   if(ePendingFotos.length){const btn=document.querySelector('.edit-mf button:last-child');if(btn){btn.textContent='⏳ Caricamento...';btn.disabled=true;}if(!rec.foto)rec.foto=[];for(const file of ePendingFotos){try{rec.foto.push(await uploadPhoto(file));}catch(e){console.error(e);}}ePendingFotos=[];if(btn){btn.textContent='✓ Salva modifiche';btn.disabled=false;}}
   if(ePendingPdfs.length){if(!rec.pdf)rec.pdf=[];for(const file of ePendingPdfs){try{rec.pdf.push(await uploadFile(file));}catch(e){console.error(e);}}ePendingPdfs=[];}
-  // fetch fresco prima di scrivere, poi riapplica la modifica sull'array aggiornato
-  await freshRecords();const recFresh=records.find(r=>r.id===editingRecordId);
-  if(recFresh)Object.assign(recFresh,{mezzo:rec.mezzo,data:rec.data,ore:rec.ore,autista:rec.autista,intervento:rec.intervento,note:rec.note,foto:rec.foto,pdf:rec.pdf,modificato:rec.modificato});
-  await sv.records();await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','save',`Modificata registrazione "${rec.mezzo}" del ${rec.data}`);
+  // fetch fresco + merge + verifica post-salvataggio
+  const _editId=editingRecordId;const _editSnap={mezzo:rec.mezzo,data:rec.data,ore:rec.ore,autista:rec.autista,intervento:rec.intervento,note:rec.note,foto:rec.foto,pdf:rec.pdf,modificato:rec.modificato};
+  for(let i=0;i<3;i++){
+    await freshRecords();const rf=records.find(r=>r.id===_editId);if(rf)Object.assign(rf,_editSnap);
+    const ok=await sv.records();if(!ok){await new Promise(r=>setTimeout(r,600*(i+1)));continue;}
+    await new Promise(r=>setTimeout(r,400));
+    try{const ch=await dbGet('fleet-records');const vf=ch&&Array.isArray(ch)&&ch.find(r=>r.id===_editId);if(vf&&vf.modificato===_editSnap.modificato){records=ch;break;}}catch(e){}
+  }
+  await addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','save',`Modificata registrazione "${rec.mezzo}" del ${rec.data}`);
   closeEditModal();populateDashFilters();renderDash();
 }
 

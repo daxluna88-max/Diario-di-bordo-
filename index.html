@@ -4236,7 +4236,12 @@ function renderFuelHistory(){
   else{data=fuelRecords.filter(r=>selectedFuelType?r.tipo===selectedFuelType:false).slice(0,20);}
   const tb=document.getElementById('fuelTableBody');
   if(!data.length){tb.innerHTML='<tr><td colspan="7" class="el">— nessun rifornimento —</td></tr>';return;}
-  tb.innerHTML=data.map(r=>{const d=new Date(r.data).toLocaleDateString('it-IT');return`<tr><td class="tm">${r.barca}</td><td class="td">${d}</td><td><strong>${r.tipo.toUpperCase()}</strong></td><td>${r.litri}L</td><td>${r.fornitori}</td><td class="tn">${r.note||'—'}</td><td>${(currentUser.isAdmin||currentUser.isSA)?`<button class="dx" onclick="delFuelRec(${r.id})">×</button>`:''}</td></tr>`;}).join('');
+  tb.innerHTML=data.map(r=>{
+    const _fd=new Date(r.data);
+    const d=_fd.toLocaleDateString('it-IT');
+    const ora=r.data&&r.data.includes('T')?r.data.slice(11,16):'';
+    return`<tr><td class="tm">${r.barca}</td><td class="td">${d}${ora?`<br><span style="font-size:.72rem;color:var(--ink-faded)">${ora}</span>`:''}</td><td><strong>${r.tipo.toUpperCase()}</strong></td><td>${r.litri}L</td><td>${r.fornitori}</td><td class="tn">${r.note||'—'}</td><td>${(currentUser.isAdmin||currentUser.isSA)?`<button class="dx" onclick="delFuelRec(${r.id})">×</button>`:''}</td></tr>`;
+  }).join('');
 }
 async function delFuelRec(id){
   if(!confirm('Eliminare rifornimento?'))return;

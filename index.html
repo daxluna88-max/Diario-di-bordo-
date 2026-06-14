@@ -1973,9 +1973,10 @@ async function init(){
   document.getElementById('carburantiDate').textContent=ds;
   document.getElementById('cisternaDate').textContent=ds;
   document.getElementById('saDate').textContent=ds;
-  document.getElementById('fData').value=now.toISOString().slice(0,10);
-  document.getElementById('fDataFuel').value=now.toISOString().slice(0,16);
-  document.getElementById('caricoData').value=now.toISOString().slice(0,10);
+  const _p=n=>(n<10?'0':'')+n;const _ld=now.getFullYear()+'-'+_p(now.getMonth()+1)+'-'+_p(now.getDate());
+  document.getElementById('fData').value=_ld;
+  document.getElementById('fDataFuel').value=_ld+'T'+_p(now.getHours())+':'+_p(now.getMinutes());
+  document.getElementById('caricoData').value=_ld;
   if(saContacts.email)document.getElementById('saEmail').value=saContacts.email;
   if(saContacts.phone)document.getElementById('saPhone').value=saContacts.phone;
   syncCisternaFromFuel();
@@ -2126,8 +2127,9 @@ async function enterApp(){
   badge.innerHTML=currentUser.isSA?'<span class="bsa">👑 SUPER ADMIN</span>':currentUser.isAdmin?'<span class="badm">ADMIN</span>':'';
   document.getElementById('userName').textContent=currentUser.name;
   document.getElementById('tabsSide').style.display='flex';
-  document.getElementById('fData').value=new Date().toISOString().slice(0,10);
-  document.getElementById('fDataFuel').value=new Date().toISOString().slice(0,16);
+  const _ea=new Date(),_pe=n=>(n<10?'0':'')+n,_lde=_ea.getFullYear()+'-'+_pe(_ea.getMonth()+1)+'-'+_pe(_ea.getDate());
+  document.getElementById('fData').value=_lde;
+  document.getElementById('fDataFuel').value=_lde+'T'+_pe(_ea.getHours())+':'+_pe(_ea.getMinutes());
   if(!currentUser.isSA){
     const _fa=document.getElementById('fAutista');
     _fa.value=currentUser.name;

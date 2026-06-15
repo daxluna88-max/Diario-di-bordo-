@@ -1243,11 +1243,11 @@ body{padding:.8rem .3rem 3rem;}
     <div class="sast">📊 Esporta → Numbers via Shortcut</div>
     <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:1rem;position:relative;z-index:2;line-height:1.5">Copia il CSV negli appunti e avvia automaticamente la Shortcut su iPhone.</p>
     <div style="display:flex;flex-direction:column;margin-bottom:.5rem;position:relative;z-index:2">
-      <button class="exb reg" onclick="exportCSV()">📋 REGISTRO<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">→ Shortcut: «Esporta Registro CCB»</span></button>
-      <button class="exb ben" onclick="exportBenzinaDiesel()">⛽ BENZINA / DIESEL<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">→ Shortcut: «Esporta Benzina CCB»</span></button>
-      <button class="exb cis" onclick="exportCisternaDiesel()">🛢️ CISTERNA CCB<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">→ Shortcut: «Esporta Cisterna CCB»</span></button>
-      <button class="exb" style="background:linear-gradient(135deg,#2d6a4f,#1a4f38)" onclick="exportAllDotazioniCSV()">🛡️ DOTAZIONI<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">CSV tutte le barche</span></button>
-      <button class="exb" style="background:linear-gradient(135deg,#c8854a,#a0602a)" onclick="exportAllManutenzioneCSV()">🔧 MANUTENZIONE<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">CSV tutti gli interventi</span></button>
+      <button class="exb reg" onclick="exportCSV()">📋 REGISTRO<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">↓ Numbers / Excel (.xlsx)</span></button>
+      <button class="exb ben" onclick="exportBenzinaDiesel()">⛽ BENZINA / DIESEL<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">↓ Numbers / Excel (.xlsx)</span></button>
+      <button class="exb cis" onclick="exportCisternaDiesel()">🛢️ CISTERNA CCB<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">↓ Numbers / Excel (.xlsx)</span></button>
+      <button class="exb" style="background:linear-gradient(135deg,#2d6a4f,#1a4f38)" onclick="exportAllDotazioniCSV()">🛡️ DOTAZIONI<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">↓ Numbers / Excel (.xlsx)</span></button>
+      <button class="exb" style="background:linear-gradient(135deg,#c8854a,#a0602a)" onclick="exportAllManutenzioneCSV()">🔧 MANUTENZIONE<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">↓ Numbers / Excel (.xlsx)</span></button>
       <button class="exb" style="background:linear-gradient(135deg,#4a90b8,#2a6080)" onclick="exportTessereCSV()">💳 TUTTE LE TESSERE<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">↓ Numbers / Excel (.xlsx)</span></button>
     </div>
   </div>
@@ -3901,9 +3901,20 @@ function renderAuditLog(){
 
 async function clearAuditLog(){if(!confirm('Svuotare tutto il log?'))return;auditLog=[];await sv.audit();renderAuditLog();}
 function exportAuditCSV(){
+  if(typeof XLSX==='undefined'){alert('Libreria XLSX non ancora caricata. Riprova tra qualche secondo.');return;}
   if(!auditLog.length){alert('Log vuoto.');return;}
-  const rows=auditLog.map(e=>[new Date(e.ts).toLocaleString('it-IT'),e.actor,e.role,e.action,e.desc,e.ip,e.ua||''].join('\t'));
-  downloadCSV('\uFEFF'+rows.join('\n'),'Audit Log CCB');
+  const _ml=m=>{const[a,mo]=m.split('-');const n=new Date(a,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return n.charAt(0).toUpperCase()+n.slice(1);};
+  const mesi=[...new Set(auditLog.map(e=>e.ts?e.ts.substring(0,7):'').filter(Boolean))].sort();
+  const wb=XLSX.utils.book_new();
+  mesi.forEach(m=>{
+    const d=auditLog.filter(e=>(e.ts||'').startsWith(m)).sort((a,b)=>a.ts.localeCompare(b.ts));
+    const rows=[['Data/Ora','Utente','Ruolo','Azione','Descrizione','IP','User Agent']];
+    d.forEach(e=>rows.push([new Date(e.ts).toLocaleString('it-IT'),e.actor,e.role,e.action,e.desc,e.ip,e.ua||'']));
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:17},{wch:18},{wch:12},{wch:10},{wch:40},{wch:15},{wch:22}];
+    XLSX.utils.book_append_sheet(wb,ws,_ml(m).substring(0,31));
+  });
+  XLSX.writeFile(wb,'audit-log-ccb.xlsx');
 }
 
 // =============================================
@@ -4487,33 +4498,52 @@ async function addCaricoCisterna(){
 // EXPORT
 // =============================================
 function exportCSV(){
+  if(typeof XLSX==='undefined'){alert('Libreria XLSX non ancora caricata. Riprova tra qualche secondo.');return;}
   const data=filtered();if(!data.length){alert('Nessun dato');return;}
-  const mesi=[...new Set(data.map(r=>r.data.substring(0,7)))].sort().reverse();
-  const lista=mesi.map(m=>{const[a,mo]=m.split('-');const n=new Date(a,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return`${m} - ${n.charAt(0).toUpperCase()+n.slice(1)}`;}).join('\n');
-  const sc=prompt(`Scegli il mese:\n\n${lista}`,mesi[0]);if(!sc)return;
-  const mese=sc.split(' - ')[0];const d=data.filter(r=>r.data.startsWith(mese));if(!d.length){alert('Nessun dato');return;}
-  const rows=[...d].sort((a,b)=>new Date(a.data)-new Date(b.data)).map(r=>[r.data||'',r.mezzo||'',r.autista||'',r.ore||'',r.intervento||'',r.note||'',(r.foto&&r.foto.length)?r.foto.join(' | '):'',r.salvato?new Date(r.salvato).toLocaleString('it-IT'):'',(r.pdf&&r.pdf.length)?r.pdf.join(' | '):''
-  ].join('\t'));
-  downloadCSV('\uFEFF'+rows.join('\n'),`Esporta Registro ${mese}`);
+  const _ml=m=>{const[a,mo]=m.split('-');const n=new Date(a,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return n.charAt(0).toUpperCase()+n.slice(1);};
+  const mesi=[...new Set(data.map(r=>(r.data||'').substring(0,7)).filter(Boolean))].sort();
+  const wb=XLSX.utils.book_new();
+  mesi.forEach(m=>{
+    const d=[...data.filter(r=>(r.data||'').startsWith(m))].sort((a,b)=>new Date(a.data)-new Date(b.data));
+    const rows=[['Data','Barca','Autista','Ore','Intervento','Note','Foto','Salvato','PDF']];
+    d.forEach(r=>rows.push([r.data||'',r.mezzo||'',r.autista||'',r.ore?Number(r.ore):'',r.intervento||'',r.note||'',(r.foto&&r.foto.length)?r.foto.join(' | '):'',r.salvato?new Date(r.salvato).toLocaleString('it-IT'):'',(r.pdf&&r.pdf.length)?r.pdf.join(' | '):'']));
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:11},{wch:22},{wch:18},{wch:6},{wch:28},{wch:36},{wch:14},{wch:17},{wch:14}];
+    XLSX.utils.book_append_sheet(wb,ws,_ml(m).substring(0,31));
+  });
+  XLSX.writeFile(wb,'registro-ccb.xlsx');
 }
 function exportCisternaDiesel(){
-  const stor=cisternaDiesel.storico||[];
-  if(!stor.length){alert('Nessun dato cisterna');return;}
-  const mesi=[...new Set(stor.map(s=>s.data.substring(0,7)))].sort().reverse();
-  const lista=mesi.map(m=>{const[a,mo]=m.split('-');const n=new Date(a,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return`${m} - ${n.charAt(0).toUpperCase()+n.slice(1)}`;}).join('\n');
-  const sc=prompt(`Scegli il mese:\n\n${lista}`,mesi[0]);if(!sc)return;
-  const mese=sc.split(' - ')[0];
-  const rows=stor.filter(s=>s.data.startsWith(mese)).map(s=>[s.data,s.tipo==='carico'?'CARICO':'SCARICO',s.barca||'',s.litri,(s.livelloAfter||0).toFixed(0),s.nota||''].join('\t'));
-  downloadCSV('\uFEFF'+rows.join('\n'),`Esporta Cisterna CCB ${mese}`);
+  if(typeof XLSX==='undefined'){alert('Libreria XLSX non ancora caricata. Riprova tra qualche secondo.');return;}
+  const stor=cisternaDiesel.storico||[];if(!stor.length){alert('Nessun dato cisterna');return;}
+  const _ml=m=>{const[a,mo]=m.split('-');const n=new Date(a,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return n.charAt(0).toUpperCase()+n.slice(1);};
+  const mesi=[...new Set(stor.map(s=>(s.data||'').substring(0,7)).filter(Boolean))].sort();
+  const wb=XLSX.utils.book_new();
+  mesi.forEach(m=>{
+    const d=stor.filter(s=>(s.data||'').startsWith(m)).sort((a,b)=>a.data.localeCompare(b.data));
+    const rows=[['Data','Tipo','Barca','Litri','Livello dopo (L)','Note']];
+    d.forEach(s=>rows.push([s.data,s.tipo==='carico'?'CARICO':'SCARICO',s.barca||'',Number(s.litri)||0,Number((s.livelloAfter||0).toFixed(0)),s.nota||''']));
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:11},{wch:9},{wch:22},{wch:8},{wch:15},{wch:30}];
+    XLSX.utils.book_append_sheet(wb,ws,_ml(m).substring(0,31));
+  });
+  XLSX.writeFile(wb,'cisterna-ccb.xlsx');
 }
 function exportBenzinaDiesel(){
+  if(typeof XLSX==='undefined'){alert('Libreria XLSX non ancora caricata. Riprova tra qualche secondo.');return;}
   if(!fuelRecords.length){alert('Nessun dato');return;}
-  const mesi=[...new Set(fuelRecords.map(r=>r.data.substring(0,7)))].sort().reverse();
-  const lista=mesi.map(m=>{const[a,mo]=m.split('-');const n=new Date(a,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return`${m} - ${n.charAt(0).toUpperCase()+n.slice(1)}`;}).join('\n');
-  const sc=prompt(`Scegli il mese:\n\n${lista}`,mesi[0]);if(!sc)return;
-  const mese=sc.split(' - ')[0];const d=fuelRecords.filter(r=>r.data.startsWith(mese));if(!d.length){alert('Nessun dato');return;}
-  const rows=[...d].sort((a,b)=>new Date(a.data)-new Date(b.data)).map(r=>[r.data.slice(0,10),r.data.includes('T')?r.data.slice(11,16):'',r.barca,r.tipo.toUpperCase(),r.litri,r.fornitori,r.note||''].join('\t'));
-  downloadCSV('\uFEFF'+rows.join('\n'),`Esporta Benzina ${mese}`);
+  const _ml=m=>{const[a,mo]=m.split('-');const n=new Date(a,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return n.charAt(0).toUpperCase()+n.slice(1);};
+  const mesi=[...new Set(fuelRecords.map(r=>(r.data||'').substring(0,7)).filter(Boolean))].sort();
+  const wb=XLSX.utils.book_new();
+  mesi.forEach(m=>{
+    const d=[...fuelRecords.filter(r=>(r.data||'').startsWith(m))].sort((a,b)=>new Date(a.data)-new Date(b.data));
+    const rows=[['Data','Ora','Barca','Tipo','Litri','Fornitore','Autista','Note']];
+    d.forEach(r=>rows.push([r.data?r.data.slice(0,10):'',r.data&&r.data.includes('T')?r.data.slice(11,16):'',r.barca||'',r.tipo.toUpperCase(),Number(r.litri)||0,r.fornitori||'',r.autista||'',r.note||''']));
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:11},{wch:6},{wch:22},{wch:9},{wch:7},{wch:20},{wch:18},{wch:24}];
+    XLSX.utils.book_append_sheet(wb,ws,_ml(m).substring(0,31));
+  });
+  XLSX.writeFile(wb,'benzina-diesel-ccb.xlsx');
 }
 
 async function downloadCSV(csv,name){
@@ -5064,11 +5094,17 @@ async function confirmMultiDot(){
 }
 
 function exportDotazioniCSV(){
+  if(typeof XLSX==='undefined'){alert('Libreria XLSX non ancora caricata. Riprova tra qualche secondo.');return;}
   const barca=document.getElementById('dotBarcaSelect').value;
   const items=dotBarcaDotazioni[barca]||[];
   if(!items.length){alert('Nessun oggetto');return;}
-  const rows=items.map(it=>[barca,it.name,it.qty||1,it.expDate||'',it.note||'',it.addedAt?new Date(it.addedAt).toLocaleDateString('it-IT'):''].join('\t'));
-  downloadCSV('\uFEFFBarca\tOggetto\tQuantità\tScadenza\tNote\tAggiunto\n'+rows.join('\n'),`Dotazioni_${barca}`);
+  const rows=[['Oggetto','Quantità','Scadenza','Note','Aggiunto il']];
+  items.forEach(it=>rows.push([it.name,it.qty||1,it.expDate||'',it.note||'',it.addedAt?new Date(it.addedAt).toLocaleDateString('it-IT'):'']));
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:28},{wch:9},{wch:12},{wch:26},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws,barca.substring(0,31));
+  XLSX.writeFile(wb,'dotazioni-'+barca.replace(/[^a-z0-9]/gi,'-').toLowerCase()+'.xlsx');
 }
 
 // =============================================
@@ -5186,29 +5222,58 @@ function renderManAvvisoReport(barca){
 }
 
 function exportManutenzioneCSV(){
+  if(typeof XLSX==='undefined'){alert('Libreria XLSX non ancora caricata. Riprova tra qualche secondo.');return;}
   const barca=document.getElementById('manBarcaSelect').value;
   const recs=manRecords.filter(r=>r.barca===barca);
   if(!recs.length){alert('Nessun dato');return;}
-  const rows=recs.map(r=>[r.barca,r.data,r.tipo,r.oreAttuali,r.note||'',r.autore||'',r.avviso?r.avviso.ore:'',r.avviso?r.avviso.tipo:'',r.avvisoSpento?'Spento':'Attivo'].join('\t'));
-  downloadCSV('\uFEFFBarca\tData\tIntervento\tOre motore\tNote\tAutore\tAvviso a ore\tTipo avviso\tStato\n'+rows.join('\n'),`Manutenzione_${barca}`);
+  const _ml=m=>{const[a,mo]=m.split('-');const n=new Date(a,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return n.charAt(0).toUpperCase()+n.slice(1);};
+  const mesi=[...new Set(recs.map(r=>(r.data||'').substring(0,7)).filter(Boolean))].sort();
+  const wb=XLSX.utils.book_new();
+  mesi.forEach(m=>{
+    const d=recs.filter(r=>(r.data||'').startsWith(m)).sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+    const rows=[['Barca','Data','Intervento','Ore motore','Note','Autore','Avviso a ore','Tipo avviso','Stato']];
+    d.forEach(r=>rows.push([r.barca,r.data,r.tipo,r.oreAttuali?Number(r.oreAttuali):'',r.note||'',r.autore||'',r.avviso?r.avviso.ore:'',r.avviso?r.avviso.tipo||'':'',r.avvisoSpento?'Spento':'Attivo']));
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:22},{wch:11},{wch:22},{wch:11},{wch:28},{wch:16},{wch:12},{wch:14},{wch:8}];
+    XLSX.utils.book_append_sheet(wb,ws,_ml(m).substring(0,31));
+  });
+  XLSX.writeFile(wb,'manutenzione-'+barca.replace(/[^a-z0-9]/gi,'-').toLowerCase()+'.xlsx');
 }
 
 function exportAllDotazioniCSV(){
+  if(typeof XLSX==='undefined'){alert('Libreria XLSX non ancora caricata. Riprova tra qualche secondo.');return;}
   const mezzi=currentUser.isSA?allMezzi:getAdminMezzi();
-  const rows=[];
+  let hasData=false;
+  const wb=XLSX.utils.book_new();
   mezzi.forEach(barca=>{
-    const items=dotBarcaDotazioni[barca]||[];
-    items.forEach(it=>{rows.push([barca,it.name,it.qty||1,it.expDate||'',it.note||'',it.addedAt?new Date(it.addedAt).toLocaleDateString('it-IT'):''].join('\t'));});
+    const items=dotBarcaDotazioni[barca]||[];if(!items.length)return;
+    hasData=true;
+    const rows=[['Oggetto','Quantità','Scadenza','Note','Aggiunto il']];
+    items.forEach(it=>rows.push([it.name,it.qty||1,it.expDate||'',it.note||'',it.addedAt?new Date(it.addedAt).toLocaleDateString('it-IT'):'']));
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:28},{wch:9},{wch:12},{wch:26},{wch:12}];
+    XLSX.utils.book_append_sheet(wb,ws,barca.substring(0,31));
   });
-  if(!rows.length){alert('Nessun dato dotazioni');return;}
-  downloadCSV('\uFEFFBarca\tOggetto\tQuantità\tScadenza\tNote\tAggiunto\n'+rows.join('\n'),'Dotazioni_CCB');
+  if(!hasData){alert('Nessun dato dotazioni');return;}
+  XLSX.writeFile(wb,'dotazioni-ccb.xlsx');
 }
 function exportAllManutenzioneCSV(){
+  if(typeof XLSX==='undefined'){alert('Libreria XLSX non ancora caricata. Riprova tra qualche secondo.');return;}
   const mezzi=currentUser.isSA?allMezzi:getAdminMezzi();
   const recs=manRecords.filter(r=>mezzi.includes(r.barca));
   if(!recs.length){alert('Nessun dato manutenzione');return;}
-  const rows=recs.map(r=>[r.barca,r.data,r.tipo,r.oreAttuali,r.note||'',r.autore||'',r.avviso?r.avviso.ore:'',r.avviso?r.avviso.tipo:'',r.avvisoSpento?'Spento':'Attivo'].join('\t'));
-  downloadCSV('\uFEFFBarca\tData\tIntervento\tOre motore\tNote\tAutore\tAvviso a ore\tTipo avviso\tStato\n'+rows.join('\n'),'Manutenzione_CCB');
+  const _ml=m=>{const[a,mo]=m.split('-');const n=new Date(a,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return n.charAt(0).toUpperCase()+n.slice(1);};
+  const mesi=[...new Set(recs.map(r=>(r.data||'').substring(0,7)).filter(Boolean))].sort();
+  const wb=XLSX.utils.book_new();
+  mesi.forEach(m=>{
+    const d=recs.filter(r=>(r.data||'').startsWith(m)).sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+    const rows=[['Barca','Data','Intervento','Ore motore','Note','Autore','Avviso a ore','Tipo avviso','Stato']];
+    d.forEach(r=>rows.push([r.barca,r.data,r.tipo,r.oreAttuali?Number(r.oreAttuali):'',r.note||'',r.autore||'',r.avviso?r.avviso.ore:'',r.avviso?r.avviso.tipo||'':'',r.avvisoSpento?'Spento':'Attivo']));
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:22},{wch:11},{wch:22},{wch:11},{wch:28},{wch:16},{wch:12},{wch:14},{wch:8}];
+    XLSX.utils.book_append_sheet(wb,ws,_ml(m).substring(0,31));
+  });
+  XLSX.writeFile(wb,'manutenzione-ccb.xlsx');
 }
 
 

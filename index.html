@@ -3996,12 +3996,12 @@ async function submitForm(){
   const _prevTB=tessereBarca[mezzo]||{mila:false,cc:false,ric:null,milaSer:'',ccSer:''};
   if(_prevTB.mila!==_tbMila||_prevTB.cc!==_tbCC||_prevTB.ric!==_tbRic||(_prevTB.milaSer||'')!==_tbMilaSer||(_prevTB.ccSer||'')!==_tbCCSer){
     const _logE={ts:new Date().toISOString(),autista:document.getElementById('fAutista').value.trim()||currentUser.name,barca:mezzo,from:Object.assign({},_prevTB),to:{mila:_tbMila,cc:_tbCC,ric:_tbRic,milaSer:_tbMilaSer,ccSer:_tbCCSer}};
-    // Esclusività: rimuovi la tessera da tutte le altre barche prima di assegnarla
+    // Esclusività per seriale: rimuovi solo se stesso seriale (stessa tessera fisica) o nessun seriale noto
     Object.keys(tessereBarca).forEach(b=>{
       if(b===mezzo)return;
       const s=tessereBarca[b];
-      if(_tbMila&&s.mila)s.mila=false;
-      if(_tbCC&&s.cc)s.cc=false;
+      if(_tbMila&&s.mila){const sameCard=!_tbMilaSer||!(s.milaSer)||_tbMilaSer===(s.milaSer);if(sameCard){s.mila=false;s.milaSer='';}}
+      if(_tbCC&&s.cc){const sameCard=!_tbCCSer||!(s.ccSer)||_tbCCSer===(s.ccSer);if(sameCard){s.cc=false;s.ccSer='';}}
       if(_tbRic&&s.ric===_tbRic)s.ric=null;
     });
     tessereBarca[mezzo]={mila:_tbMila,cc:_tbCC,ric:_tbRic,milaSer:_tbMilaSer,ccSer:_tbCCSer};
@@ -4272,8 +4272,9 @@ async function saveTesseraImmediato(){
   const logE={ts:new Date().toISOString(),autista:currentUser?.name||'',barca,from:Object.assign({},prev),to:{mila,cc,ric,milaSer,ccSer}};
   Object.keys(tessereBarca).forEach(b=>{
     if(b===barca)return;const s=tessereBarca[b];
-    if(mila&&s.mila)s.mila=false;
-    if(cc&&s.cc)s.cc=false;
+    // Esclusività per seriale: rimuovi solo se stesso seriale (stessa tessera fisica) o nessun seriale noto
+    if(mila&&s.mila){const sameCard=!milaSer||!(s.milaSer)||milaSer===(s.milaSer);if(sameCard){s.mila=false;s.milaSer='';}}
+    if(cc&&s.cc){const sameCard=!ccSer||!(s.ccSer)||ccSer===(s.ccSer);if(sameCard){s.cc=false;s.ccSer='';}}
     if(ric&&s.ric===ric)s.ric=null;
   });
   tessereBarca[barca]={mila,cc,ric,milaSer,ccSer};

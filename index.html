@@ -1235,7 +1235,7 @@ body{padding:.8rem .3rem 3rem;}
       <button class="exb cis" onclick="exportCisternaDiesel()">🛢️ CISTERNA CCB<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">→ Shortcut: «Esporta Cisterna CCB»</span></button>
       <button class="exb" style="background:linear-gradient(135deg,#2d6a4f,#1a4f38)" onclick="exportAllDotazioniCSV()">🛡️ DOTAZIONI<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">CSV tutte le barche</span></button>
       <button class="exb" style="background:linear-gradient(135deg,#c8854a,#a0602a)" onclick="exportAllManutenzioneCSV()">🔧 MANUTENZIONE<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">CSV tutti gli interventi</span></button>
-      <button class="exb" style="background:linear-gradient(135deg,#4a90b8,#2a6080)" onclick="exportTessereCSV()">💳 TESSERE PREPAGATE<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">→ Shortcut: «Tessere Prepagate CCB»</span></button>
+      <button class="exb" style="background:linear-gradient(135deg,#4a90b8,#2a6080)" onclick="exportTessereCSV()">💳 TESSERE PREPAGATE<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">↓ Scarica CSV</span></button>
     </div>
   </div>
 
@@ -5350,7 +5350,11 @@ function exportTessereCSV(){
       });
     }
   });
-  downloadCSV(header+'\n'+rows.join('\n'),'Tessere Prepagate CCB');
+  const csv=header+'\n'+rows.join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');
+  a.href=url;a.download='tessere-prepagate-ccb.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 
 // =============================================

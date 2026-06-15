@@ -1235,7 +1235,7 @@ body{padding:.8rem .3rem 3rem;}
       <button class="exb cis" onclick="exportCisternaDiesel()">🛢️ CISTERNA CCB<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">→ Shortcut: «Esporta Cisterna CCB»</span></button>
       <button class="exb" style="background:linear-gradient(135deg,#2d6a4f,#1a4f38)" onclick="exportAllDotazioniCSV()">🛡️ DOTAZIONI<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">CSV tutte le barche</span></button>
       <button class="exb" style="background:linear-gradient(135deg,#c8854a,#a0602a)" onclick="exportAllManutenzioneCSV()">🔧 MANUTENZIONE<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">CSV tutti gli interventi</span></button>
-      <button class="exb" style="background:linear-gradient(135deg,#4a90b8,#2a6080)" onclick="exportTessereCSV()">💳 TESSERE PREPAGATE<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">CSV ricariche e scarichi</span></button>
+      <button class="exb" style="background:linear-gradient(135deg,#4a90b8,#2a6080)" onclick="exportTessereCSV()">💳 TESSERE PREPAGATE<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">→ Shortcut: «Tessere Prepagate CCB»</span></button>
     </div>
   </div>
 
@@ -5329,7 +5329,7 @@ function renderTessereAutistaSection(){
 }
 
 function exportTessereCSV(){
-  if(!tessereList.length){alert('Nessun dato tessere');return;}
+  if(!tessereList.length&&!tessereMovimenti.length){alert('Nessun dato tessere');return;}
   const header='\uFEFFTessera\tTipo carb.\tFornitore\tSaldo attuale \u20ac\tBarca attuale\tData\tMovimento\tImporto \u20ac\tLitri\tCosto \u20ac\tBarca movimento\tAutore\tNote';
   const rows=[];
   tessereList.forEach(t=>{

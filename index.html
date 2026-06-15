@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Diario di Bordo CCB</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{
@@ -1247,7 +1248,7 @@ body{padding:.8rem .3rem 3rem;}
       <button class="exb cis" onclick="exportCisternaDiesel()">🛢️ CISTERNA CCB<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">→ Shortcut: «Esporta Cisterna CCB»</span></button>
       <button class="exb" style="background:linear-gradient(135deg,#2d6a4f,#1a4f38)" onclick="exportAllDotazioniCSV()">🛡️ DOTAZIONI<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">CSV tutte le barche</span></button>
       <button class="exb" style="background:linear-gradient(135deg,#c8854a,#a0602a)" onclick="exportAllManutenzioneCSV()">🔧 MANUTENZIONE<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">CSV tutti gli interventi</span></button>
-      <button class="exb" style="background:linear-gradient(135deg,#4a90b8,#2a6080)" onclick="exportTessereCSV()">💳 TUTTE LE TESSERE<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">↓ Prepagate · A bordo · Storico</span></button>
+      <button class="exb" style="background:linear-gradient(135deg,#4a90b8,#2a6080)" onclick="exportTessereCSV()">💳 TUTTE LE TESSERE<br><span style="font-size:.63rem;opacity:.85;font-family:'Source Sans 3',sans-serif;font-weight:400">↓ Numbers / Excel (.xlsx)</span></button>
     </div>
   </div>
 
@@ -5436,69 +5437,64 @@ function renderTessereAutistaSection(){
 }
 
 function exportTessereCSV(){
-  const lines=['﻿'];
-  // ── SEZIONE 1: TESSERE PREPAGATE ──────────────────────────────
-  lines.push('=== TESSERE PREPAGATE ===');
-  lines.push('Tessera\tTipo carb.\tFornitore\tSaldo attuale €\tBarca attuale\tData\tMovimento\tImporto €\tLitri\tCosto €\tBarca movimento\tAutore\tNote');
+  if(typeof XLSX==='undefined'){alert('Libreria XLSX non ancora caricata. Riprova tra qualche secondo.');return;}
+  const wb=XLSX.utils.book_new();
+  const ricMap={};tessereList.forEach(t=>ricMap[t.id]=t.nome);
+  // ── Foglio 1: Tessere Prepagate ────────────────────────────────
+  const s1=[['Tessera','Tipo carb.','Fornitore','Saldo attuale €','Barca attuale','Data','Movimento','Importo €','Litri','Costo €','Barca movimento','Autore','Note']];
   if(tessereList.length){
     tessereList.forEach(t=>{
       const movs=tessereMovimenti.filter(m=>m.tesseraId===t.id).sort((a,b)=>(a.data||'').localeCompare(b.data||''));
       const saldo=computeTesseraSaldo(tessereMovimenti.filter(m=>m.tesseraId===t.id));
       const barcaAtt=Object.entries(tessereBarca).filter(([,s])=>s.ric===t.id).map(([b])=>b).join(', ')||'—';
       if(!movs.length){
-        lines.push([t.nome,t.tipo.toUpperCase(),t.fornitore||'',saldo.toFixed(2),barcaAtt,'','—','','','','','',''].join('\t'));
+        s1.push([t.nome,t.tipo.toUpperCase(),t.fornitore||'',saldo,'',barcaAtt,'—','','','','','','']);
       }else{
         movs.forEach((m,i)=>{
-          lines.push([
-            i===0?t.nome:'',i===0?t.tipo.toUpperCase():'',i===0?t.fornitore||'':'',i===0?saldo.toFixed(2):'',i===0?barcaAtt:'',
+          s1.push([
+            i===0?t.nome:'',i===0?t.tipo.toUpperCase():'',i===0?t.fornitore||'':'',i===0?saldo:'',i===0?barcaAtt:'',
             m.data?m.data.slice(0,10):'',m.tipo.toUpperCase(),
-            (m.tipo==='ricarica'||m.tipo==='saldo')?(m.importo||0).toFixed(2):'',
-            m.tipo==='scarico'?m.litri:'',m.tipo==='scarico'?m.costo.toFixed(2):'',
+            (m.tipo==='ricarica'||m.tipo==='saldo')?(m.importo||0):null,
+            m.tipo==='scarico'?Number(m.litri):null,
+            m.tipo==='scarico'?m.costo:null,
             m.barca||'',m.autore||'',m.note||''
-          ].join('\t'));
+          ]);
         });
       }
     });
-  }else{lines.push('— nessuna tessera prepagata —');}
-  // ── SEZIONE 2: TESSERE FISICHE A BORDO (Mila / CC) ───────────
-  lines.push('');
-  lines.push('=== TESSERE A BORDO (Mila / Carta di credito) ===');
-  lines.push('Barca\tTessera Mila\tN° seriale Mila\tCarta di credito\tN° seriale CC\tTessera ricaricabile');
-  const ricMap={};tessereList.forEach(t=>ricMap[t.id]=t.nome);
+  }else{s1.push(['— nessuna tessera prepagata —']);}
+  const ws1=XLSX.utils.aoa_to_sheet(s1);
+  ws1['!cols']=[{wch:20},{wch:10},{wch:22},{wch:13},{wch:18},{wch:11},{wch:11},{wch:11},{wch:7},{wch:9},{wch:20},{wch:16},{wch:24}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Tessere Prepagate');
+  // ── Foglio 2: Tessere a Bordo ──────────────────────────────────
+  const s2=[['Barca','Tessera Mila','N° seriale Mila','Carta di credito','N° seriale CC','Tessera ricaricabile']];
   const barche=allMezzi.filter(m=>m);
-  if(barche.length){
-    barche.forEach(b=>{
-      const s=tessereBarca[b]||{};
-      lines.push([
-        b,
-        s.mila?'SI':'NO', s.milaSer||'',
-        s.cc?'SI':'NO', s.ccSer||'',
-        s.ric&&ricMap[s.ric]?ricMap[s.ric]:'—'
-      ].join('\t'));
-    });
-  }else{lines.push('— nessuna barca configurata —');}
-  // ── SEZIONE 3: STORICO MOVIMENTI TESSERE A BORDO ─────────────
-  lines.push('');
-  lines.push('=== STORICO MOVIMENTI TESSERE A BORDO ===');
-  lines.push('Data\tAutista\tBarca\tModifica');
+  barche.forEach(b=>{
+    const s=tessereBarca[b]||{};
+    s2.push([b,s.mila?'SI':'NO',s.milaSer||'',s.cc?'SI':'NO',s.ccSer||'',s.ric&&ricMap[s.ric]?ricMap[s.ric]:'—']);
+  });
+  if(!barche.length)s2.push(['— nessuna barca —']);
+  const ws2=XLSX.utils.aoa_to_sheet(s2);
+  ws2['!cols']=[{wch:22},{wch:13},{wch:20},{wch:16},{wch:22},{wch:22}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Tessere a Bordo');
+  // ── Foglio 3: Storico Movimenti ────────────────────────────────
+  const s3=[['Data','Autista','Barca','Modifica']];
   const log=[...tessereBarcaLog].sort((a,b)=>(b.ts||'').localeCompare(a.ts||''));
-  if(log.length){
-    log.slice(0,500).forEach(e=>{
-      const dt=e.ts?new Date(e.ts).toLocaleString('it-IT'):'';
-      const changes=[];
-      if((e.from||{}).mila!==(e.to||{}).mila)changes.push(e.to.mila?'Tessera Mila aggiunta':'Tessera Mila rimossa');
-      if((e.from?.milaSer||'')!==(e.to?.milaSer||''))changes.push('Ser. Mila: '+(e.to?.milaSer||'—'));
-      if((e.from||{}).cc!==(e.to||{}).cc)changes.push(e.to.cc?'Carta di credito aggiunta':'Carta di credito rimossa');
-      if((e.from?.ccSer||'')!==(e.to?.ccSer||''))changes.push('Ser. CC: '+(e.to?.ccSer||'—'));
-      if((e.from?.ric)!==(e.to?.ric)){const fn=e.from?.ric&&ricMap[e.from.ric]?ricMap[e.from.ric]:'nessuna';const tn=e.to?.ric&&ricMap[e.to.ric]?ricMap[e.to.ric]:'nessuna';changes.push('Ricaricabile: '+fn+' → '+tn);}
-      if(changes.length)lines.push([dt,e.autista||'',e.barca||'',changes.join(' | ')].join('\t'));
-    });
-  }else{lines.push('— nessun movimento registrato —');}
-  const csv=lines.join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');
-  a.href=url;a.download='tessere-ccb.csv';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  log.slice(0,500).forEach(e=>{
+    const dt=e.ts?new Date(e.ts).toLocaleString('it-IT'):'';
+    const changes=[];
+    if((e.from||{}).mila!==(e.to||{}).mila)changes.push(e.to.mila?'Tessera Mila aggiunta':'Tessera Mila rimossa');
+    if((e.from?.milaSer||'')!==(e.to?.milaSer||''))changes.push('Ser. Mila: '+(e.to?.milaSer||'—'));
+    if((e.from||{}).cc!==(e.to||{}).cc)changes.push(e.to.cc?'Carta di credito aggiunta':'Carta di credito rimossa');
+    if((e.from?.ccSer||'')!==(e.to?.ccSer||''))changes.push('Ser. CC: '+(e.to?.ccSer||'—'));
+    if((e.from?.ric)!==(e.to?.ric)){const fn=e.from?.ric&&ricMap[e.from.ric]?ricMap[e.from.ric]:'nessuna';const tn=e.to?.ric&&ricMap[e.to.ric]?ricMap[e.to.ric]:'nessuna';changes.push('Ricaricabile: '+fn+' → '+tn);}
+    if(changes.length)s3.push([dt,e.autista||'',e.barca||'',changes.join(' | ')]);
+  });
+  if(s3.length===1)s3.push(['— nessun movimento —']);
+  const ws3=XLSX.utils.aoa_to_sheet(s3);
+  ws3['!cols']=[{wch:18},{wch:18},{wch:22},{wch:50}];
+  XLSX.utils.book_append_sheet(wb,ws3,'Storico');
+  XLSX.writeFile(wb,'tessere-ccb.xlsx');
 }
 
 // =============================================

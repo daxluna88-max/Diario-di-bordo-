@@ -1193,6 +1193,11 @@ body{padding:.8rem .3rem 3rem;}
       <label class="fl">Iscritti al Torneo (<span id="saGamePlayersCount">0</span>)</label>
       <div id="saGamePlayersList" style="margin-top:.4rem"></div>
     </div>
+    <div style="margin-top:.9rem;position:relative;z-index:2;border-top:1px dashed var(--line);padding-top:.8rem">
+      <label class="fl">🎯 Punti & correzioni manuali</label>
+      <p style="font-family:'Source Sans 3',sans-serif;font-size:.74rem;color:var(--ink-faded);margin:.3rem 0 .5rem;line-height:1.5">Dettaglio punti di ogni iscritto. Puoi applicare una <strong>correzione manuale</strong> (anche negativa, es. <code>-50</code>) che si somma al totale. Lascia <code>0</code> per nessuna correzione.</p>
+      <div id="saPuntiList" style="margin-top:.4rem"></div>
+    </div>
     <div style="margin-top:1rem;position:relative;z-index:2;border-top:1px dashed var(--line);padding-top:.8rem">
       <label class="fl">📸 Figurine da approvare (<span class="figurinePendingCount">0</span>)</label>
       <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin:.4rem 0">
@@ -1925,6 +1930,7 @@ let gameChestsOpened={}; // scrigni aperti: {nomeLower: {giorno: true}}
 let gameFigurinePerms={}; // admin autorizzati ad approvare le figurine: {adminName: true}
 let gameVotes=[]; // voti sondaggio: {id, voter, figurinaId, week, ts}
 let gamePrizesGiven={}; // premi figurina già assegnati automaticamente: {chiavePremio: true}
+let gameManualAdj={}; // correzioni punti manuali del Super Admin: {nomeLower: punti (può essere negativo)}
 let _barcheConAvvisoMan=[];  // barche con avvisi manutenzione attivi (per notifica mobile)
 let fabTimer=null;
 
@@ -1936,7 +1942,7 @@ let auditPage=0;
 // =============================================
 async function init(){
   // Un solo round-trip per tutte le chiavi (prima erano 20 richieste in serie)
-  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages','game-config','game-players','game-figurine','game-msg-reads','game-bonus-fig','game-chests-opened','game-figurine-perms','game-votes','game-prizes-given','fleet-tessere-barca','fleet-tessere-barca-log','fleet-dashboard-pw']);
+  const g=await dbGetMany(['fleet-records','fleet-drivers','fleet-mezzi','fleet-fuel-records','fleet-fornitori','fleet-barco-fuel','fleet-cisterna-diesel','fleet-benzina-diesel-dati','fleet-audit-log','fleet-admin-accounts','fleet-sa-contacts','fleet-cisterna-perms','fleet-admin-pw','fleet-sa-pw','fleet-dot-items','fleet-dot-barca','fleet-man-records','fleet-tessere-list','fleet-tessere-movimenti','fleet-tessere-perms','fleet-att-messages','game-config','game-players','game-figurine','game-msg-reads','game-bonus-fig','game-chests-opened','game-figurine-perms','game-votes','game-prizes-given','game-manual-adj','fleet-tessere-barca','fleet-tessere-barca-log','fleet-dashboard-pw']);
   if(g['fleet-records'])records=g['fleet-records'];
   if(g['fleet-drivers'])drivers=g['fleet-drivers'];
   if(g['fleet-mezzi'])allMezzi=g['fleet-mezzi'];
@@ -1970,6 +1976,7 @@ async function init(){
   if(g['game-figurine-perms'])gameFigurinePerms=g['game-figurine-perms'];
   if(g['game-votes'])gameVotes=g['game-votes'];
   if(g['game-prizes-given'])gamePrizesGiven=g['game-prizes-given'];
+  if(g['game-manual-adj'])gameManualAdj=g['game-manual-adj'];
   if(g['fleet-tessere-barca'])tessereBarca=g['fleet-tessere-barca'];
   if(g['fleet-tessere-barca-log'])tessereBarcaLog=g['fleet-tessere-barca-log'];
   if(g['fleet-dashboard-pw'])DASHBOARD_PW=g['fleet-dashboard-pw'];
@@ -2040,6 +2047,7 @@ const sv={
   gameFigurinePerms:()=>dbSet('game-figurine-perms',gameFigurinePerms),
   gameVotes:()=>dbSet('game-votes',gameVotes),
   gamePrizesGiven:()=>dbSet('game-prizes-given',gamePrizesGiven),
+  gameManualAdj:()=>dbSet('game-manual-adj',gameManualAdj),
   tessereBarca:()=>dbSet('fleet-tessere-barca',tessereBarca),
   tessereBarcaLog:()=>dbSet('fleet-tessere-barca-log',tessereBarcaLog),
   dashboardPw:()=>dbSet('fleet-dashboard-pw',DASHBOARD_PW),
@@ -2474,11 +2482,14 @@ async function castVote(figId){
 // =============================================
 function openClassificaModal(){renderClassifica();document.getElementById('gameClassificaModal').classList.add('show');}
 function closeClassificaModal(){document.getElementById('gameClassificaModal').classList.remove('show');}
+// Set dei nomi (lowercase) iscritti al Torneo — usato per escludere chi non gioca dai premi/classifiche
+function gameEnrolledSet(){return new Set(gamePlayers.map(p=>String(p.name||'').toLowerCase().trim()));}
 function monthLeaders(){
   const m=gameMonthKey(new Date());
   const lb=getLeaderboard();
   const general=lb[0]||null;
-  const rifBy={};fuelRecords.forEach(f=>{if(f.autista&&gameInPeriod(f.data)&&gameMonthKey(f.data)===m)rifBy[f.autista]=(rifBy[f.autista]||0)+1;});
+  const enrolled=gameEnrolledSet();
+  const rifBy={};fuelRecords.forEach(f=>{if(f.autista&&enrolled.has(f.autista.toLowerCase().trim())&&gameInPeriod(f.data)&&gameMonthKey(f.data)===m)rifBy[f.autista]=(rifBy[f.autista]||0)+1;});
   let rifName=null,rifMax=0;Object.keys(rifBy).forEach(k=>{if(rifBy[k]>rifMax){rifMax=rifBy[k];rifName=k;}});
   const vBy={};gameVotes.forEach(v=>{if(gameMonthKey(v.ts)===m)vBy[v.figurinaId]=(vBy[v.figurinaId]||0)+1;});
   let figId=null,figMax=0;Object.keys(vBy).forEach(fid=>{if(vBy[fid]>figMax){figMax=vBy[fid];figId=fid;}});
@@ -2493,8 +2504,9 @@ async function autoAssignPrizes(){
   const grant=(k,nameLower)=>{if(!nameLower||gamePrizesGiven[k])return;gamePrizesGiven[k]=true;gameBonusFig[nameLower]=(gameBonusFig[nameLower]||0)+1;changed=true;};
   const ended=isGameEnded();
   // Competitivi mensili (mesi conclusi, o tutto a gioco finito): Re del Rifornimento + figurina più votata
+  const enrolled=gameEnrolledSet();
   const rifByMonth={};
-  fuelRecords.forEach(f=>{if(!f.autista||!gameInPeriod(f.data))return;const mk=gameMonthKey(f.data);if(!mk)return;(rifByMonth[mk]=rifByMonth[mk]||{});const n=f.autista.toLowerCase();rifByMonth[mk][n]=(rifByMonth[mk][n]||0)+1;});
+  fuelRecords.forEach(f=>{if(!f.autista||!gameInPeriod(f.data))return;const n=f.autista.toLowerCase().trim();if(!enrolled.has(n))return;const mk=gameMonthKey(f.data);if(!mk)return;(rifByMonth[mk]=rifByMonth[mk]||{});rifByMonth[mk][n]=(rifByMonth[mk][n]||0)+1;});
   Object.keys(rifByMonth).forEach(mk=>{if(mk>=nowM&&!ended)return;const c=rifByMonth[mk];let w=null,mx=0;Object.keys(c).forEach(n=>{if(c[n]>mx){mx=c[n];w=n;}});grant('rif:'+mk,w);});
   const voteByMonthFig={};
   gameVotes.forEach(v=>{const mk=gameMonthKey(v.ts);if(!mk)return;(voteByMonthFig[mk]=voteByMonthFig[mk]||{});voteByMonthFig[mk][v.figurinaId]=(voteByMonthFig[mk][v.figurinaId]||0)+1;});
@@ -2945,7 +2957,7 @@ function isGameFinalWeek(){
 }
 function computeGamePoints(name){
   const key=String(name||'').toLowerCase();
-  const parts={ore:0,rifornimento:0,figurine:0,antenna:0,giurato:0,penalita:0};
+  const parts={ore:0,rifornimento:0,figurine:0,antenna:0,giurato:0,penalita:0,manuale:0};
   const info={ore:{},rifornimento:{},figurine:{},antenna:{},giurato:{}};
   // --- Ore Motore: +30 per serie di 5 giorni di fila, -50 per ogni registrazione dopo le 12, +20 per spunta dotazioni completa ---
   const myRecs=records.filter(r=>r.autista&&r.autista.toLowerCase()===key&&gameInPeriod(r.data));
@@ -3006,7 +3018,9 @@ function computeGamePoints(name){
   gameDays.forEach(d=>{if(gameInPeriod(d)&&!logDays.has(d))noLogPlay++;});
   parts.penalita=noLogPlay*(-100);
   info.penalita={giorni:noLogPlay};
-  const total=parts.ore+parts.rifornimento+parts.figurine+parts.antenna+parts.giurato+parts.penalita;
+  // --- Correzione manuale del Super Admin ---
+  parts.manuale=Number(gameManualAdj[key])||0;
+  const total=parts.ore+parts.rifornimento+parts.figurine+parts.antenna+parts.giurato+parts.penalita+parts.manuale;
   return {total,parts,info};
 }
 function openMissioniModal(){renderMissioni();document.getElementById('gameMissioniModal').classList.add('show');}
@@ -3028,6 +3042,7 @@ function renderMissioni(){
     {ic:'⚖️',nome:'Il Giurato — Vota i sondaggi',rule:'+5 per ogni voto · la figurina più votata del mese vale +100',pts:p.parts.giurato,prog:`${p.info.giurato.voti} voti espressi`},
     {ic:'⛔',nome:'Penalità — Giochi ma non lavori',rule:'−100 per ogni giorno in cui giochi al Torneo ma NON compili il diario di bordo',pts:p.parts.penalita,prog:`${p.info.penalita.giorni} giorni senza diario`},
   ];
+  if(p.parts&&p.parts.manuale)missions.push({ic:'✏️',nome:'Correzione Super Admin',rule:'Aggiustamento punti applicato dalla direzione',pts:p.parts.manuale,prog:'Correzione manuale'});
   c.innerHTML=`<div style="text-align:center;margin-bottom:1rem">
     <div style="font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;color:#0d3b66;line-height:1">${p.total}</div>
     <div style="font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faded)">punti totali</div>
@@ -3219,9 +3234,46 @@ function renderSaGamePanel(){
       ? gamePlayers.map((p,i)=>{const d=p.consentAt?new Date(p.consentAt).toLocaleDateString('it-IT'):'';return`<div class="dot-item-row" style="display:flex;justify-content:space-between;align-items:center;padding:.3rem 0;border-bottom:1px dashed var(--line-light)"><span style="font-family:'Source Sans 3',sans-serif;font-size:.88rem">${escHtml(p.name)}${d?` <span style="font-size:.7rem;color:var(--ink-faded)">· iscritto ${d}</span>`:''}</span><button class="bh red" onclick="saRemoveGamePlayer(${i})">× rimuovi</button></div>`;}).join('')
       : '<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded)">Nessun iscritto.</p>';
   }
+  renderSaPuntiList();
   renderFigurineQueue();
   renderSaFigurinePerms();
   populateStaffFigOwners();
+}
+function renderSaPuntiList(){
+  const c=document.getElementById('saPuntiList');if(!c)return;
+  if(!gamePlayers.length){c.innerHTML='<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded)">Nessun iscritto.</p>';return;}
+  const rows=gamePlayers.map(p=>({name:p.name,d:computeGamePoints(p.name)})).sort((a,b)=>b.d.total-a.d.total);
+  c.innerHTML=rows.map((r,i)=>{
+    const key=String(r.name).toLowerCase();const pr=r.d.parts;const adj=Number(gameManualAdj[key])||0;
+    const fmt=n=>(n>0?'+':'')+n;
+    return`<div style="border:1px solid var(--line);border-radius:6px;padding:.5rem .6rem;margin-bottom:.5rem;background:#fafaf8">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem">
+        <strong style="font-family:'Source Sans 3',sans-serif;font-size:.9rem">#${i+1} ${escHtml(r.name)}</strong>
+        <span style="font-family:'Playfair Display',serif;font-weight:700;color:#0d3b66">${r.d.total}<span style="font-size:.58rem;font-weight:400"> pt</span></span>
+      </div>
+      <div style="font-size:.71rem;color:var(--ink-faded);line-height:1.7">
+        ⏱️ Ore: ${fmt(pr.ore)} · ⛽ Riforn.: ${fmt(pr.rifornimento)} · 📸 Figurine: ${fmt(pr.figurine)}<br>
+        📡 Antenna: ${fmt(pr.antenna)} · ⚖️ Giurato: ${fmt(pr.giurato)} · ⛔ Penalità: ${fmt(pr.penalita)}${adj?` · <span style="color:var(--blue);font-weight:600">✏️ Manuale: ${fmt(adj)}</span>`:''}
+      </div>
+      <div style="display:flex;gap:.4rem;align-items:center;margin-top:.45rem">
+        <input type="number" id="saAdjInput${i}" value="${adj}" step="1" placeholder="correzione (+/-)" style="flex:1;min-width:0;border:1px solid var(--line);border-radius:4px;padding:.3rem .5rem;font-family:'Source Sans 3',sans-serif;font-size:.85rem;background:#fff">
+        <button class="bh" data-adjkey="${escHtml(key)}" data-adjinput="saAdjInput${i}">Salva</button>
+      </div>
+    </div>`;
+  }).join('');
+  c.querySelectorAll('button[data-adjkey]').forEach(b=>{
+    b.addEventListener('click',()=>saSetManualAdj(b.getAttribute('data-adjkey'),b.getAttribute('data-adjinput')));
+  });
+}
+async function saSetManualAdj(key,inputId){
+  const el=document.getElementById(inputId);if(!el)return;
+  const v=Math.round(Number(el.value));
+  const prev=gameManualAdj[key];
+  if(!v||isNaN(v))delete gameManualAdj[key];else gameManualAdj[key]=v;
+  const ok=await sv.gameManualAdj();
+  if(!ok){if(prev===undefined)delete gameManualAdj[key];else gameManualAdj[key]=prev;alert('⚠️ Salvataggio non riuscito (connessione instabile). Riprova.');return;}
+  await addAudit(currentUser.name,'superadmin','save',`Correzione punti "${key}": ${v||0}`);
+  renderSaPuntiList();
 }
 function canApproveFigurine(){
   if(!currentUser)return false;

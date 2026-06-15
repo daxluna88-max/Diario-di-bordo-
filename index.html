@@ -2371,14 +2371,15 @@ function renderSondaggi(){
   const c=document.getElementById('sondaggiContent');if(!c)return;
   const me=gameMyName();const meLow=(me||'').toLowerCase();
   const approved=gameFigurine.filter(f=>f.status==='approved');
-  // In anteprima senza figurine reali, mostra esempi (non votabili)
   if(_gameDemo&&!approved.length){
-    c.innerHTML='<p style="font-size:.78rem;color:var(--ink-faded);margin-bottom:.6rem">🎬 Esempio: ecco come appaiono le figurine al voto.</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.7rem">'+GAME_DEMO.map((d,i)=>`
-      <div style="border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fafaf8">
-        <img src="${d.img}" loading="eager" style="width:100%;height:130px;object-fit:cover;display:block">
-        <div style="padding:.45rem .5rem">
-          <div style="font-size:.8rem;font-weight:600;color:var(--ink)">${escHtml(d.name)}</div>
-          <div style="font-size:.72rem;color:var(--blue);margin:.2rem 0">🗳️ ${[7,5,4,3,2,1][i]||1} voti</div>
+    c.innerHTML='<p style="font-size:.78rem;color:var(--ink-faded);margin-bottom:.6rem">🎬 Esempio: ecco come appaiono le figurine al voto.</p>'
+      +'<div style="display:flex;overflow-x:auto;gap:.7rem;padding:.4rem 0 .8rem;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;">'
+      +GAME_DEMO.map((d,i)=>`
+      <div style="flex:0 0 170px;scroll-snap-align:start;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fafaf8;box-shadow:0 1px 4px rgba(0,0,0,.07)">
+        <img src="${d.img}" loading="eager" style="width:170px;height:200px;object-fit:cover;display:block">
+        <div style="padding:.5rem .55rem">
+          <div style="font-size:.82rem;font-weight:700;color:var(--ink);margin-bottom:.15rem">${escHtml(d.name)}</div>
+          <div style="font-size:.72rem;color:var(--blue);margin-bottom:.35rem">🗳️ ${[7,5,4,3,2,1][i]||1} voti</div>
           <button class="bh" style="width:100%;font-size:.74rem;background:#0d3b66;color:#fff;border-color:#0d3b66">🗳️ Vota (+5)</button>
         </div>
       </div>`).join('')+'</div>';
@@ -2386,18 +2387,22 @@ function renderSondaggi(){
   }
   if(!approved.length){c.innerHTML='<p style="font-style:italic;color:var(--ink-faded);text-align:center;padding:1rem 0">Nessuna figurina approvata da votare. Carica le tue e attendi l\'approvazione!</p>';return;}
   const list=approved.map(f=>({f,votes:votesForFigurina(f.id)})).sort((a,b)=>b.votes-a.votes);
-  c.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.7rem">'+list.map(({f,votes})=>{
+  const tot=list.length;
+  c.innerHTML=`<div style="font-size:.72rem;color:var(--ink-faded);margin-bottom:.3rem;text-align:right">${tot} figurin${tot===1?'a':'e'} · scorri ▶</div>`
+    +'<div style="display:flex;overflow-x:auto;gap:.7rem;padding:.4rem 0 .8rem;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;">'
+    +list.map(({f,votes})=>{
     const mine=f.owner&&f.owner.toLowerCase()===meLow;
     const voted=gameVotes.some(v=>v.voter&&v.voter.toLowerCase()===meLow&&String(v.figurinaId)===String(f.id));
     let btn;
-    if(mine)btn='<div style="font-size:.7rem;color:var(--ink-faded);text-align:center;padding:.35rem">La tua figurina</div>';
+    if(mine)btn='<div style="font-size:.7rem;color:var(--ink-faded);text-align:center;padding:.35rem 0">La tua figurina</div>';
     else if(voted)btn='<button class="bh" style="width:100%;font-size:.74rem" disabled>✓ Votata</button>';
     else btn=`<button class="bh" style="width:100%;font-size:.74rem;background:#0d3b66;color:#fff;border-color:#0d3b66" onclick="castVote(${f.id})">🗳️ Vota (+5)</button>`;
-    return`<div style="border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fafaf8">
-      <img src="${f.url||f.raw||''}" loading="eager" onerror="if(this.src!==this.dataset.raw){this.src=this.dataset.raw;}else{this.style.background='#f0f2f5';}" data-raw="${f.raw||f.url||''}" style="width:100%;height:130px;object-fit:cover;display:block">
-      <div style="padding:.45rem .5rem">
-        <div style="font-size:.8rem;font-weight:600;color:var(--ink)">${escHtml(f.owner||'')}</div>
-        <div style="font-size:.72rem;color:var(--blue);margin:.2rem 0">🗳️ ${votes} ${votes===1?'voto':'voti'}</div>
+    return`<div style="flex:0 0 170px;scroll-snap-align:start;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fafaf8;box-shadow:0 1px 4px rgba(0,0,0,.07)">
+      <img src="${f.url||f.raw||''}" loading="eager" onerror="if(this.src!==this.dataset.raw){this.src=this.dataset.raw;}else{this.style.background='#f0f2f5';}" data-raw="${f.raw||f.url||''}" style="width:170px;height:200px;object-fit:cover;display:block">
+      <div style="padding:.5rem .55rem">
+        <div style="font-size:.82rem;font-weight:700;color:var(--ink);margin-bottom:.15rem">${escHtml(f.owner||'')}</div>
+        ${f.caption?`<div style="font-size:.7rem;color:var(--ink-faded);margin-bottom:.2rem;font-style:italic">${escHtml(f.caption)}</div>`:''}
+        <div style="font-size:.72rem;color:var(--blue);margin-bottom:.35rem">🗳️ ${votes} ${votes===1?'voto':'voti'}</div>
         ${btn}
       </div>
     </div>`;

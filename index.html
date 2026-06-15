@@ -599,7 +599,8 @@ body{padding:.8rem .3rem 3rem;}
     <div class="att-md" style="border-color:#0d3b66;max-width:540px">
       <div class="att-mh" style="background:#0d3b66">📸 Le mie Figurine</div>
       <div class="att-mb">
-        <p style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);line-height:1.55;margin-bottom:.8rem">Carica una figurina: verrà compressa, marchiata con il tuo nome e inviata al Super Admin per l'approvazione. Le figurine approvate sono scaricabili.</p>
+        <p style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);line-height:1.55;margin-bottom:.5rem">Carica una figurina: verrà compressa, marchiata con il tuo nome e inviata al Super Admin per l'approvazione. Le figurine approvate sono scaricabili.</p>
+        <div id="figDayLimit" style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;margin-bottom:.6rem"></div>
         <div style="border:1.5px dashed rgba(13,59,102,.3);border-radius:6px;padding:.8rem .9rem;margin-bottom:1rem">
           <div class="field"><label class="fl">Didascalia (opzionale)</label><input type="text" id="figCaption" maxlength="60" placeholder="es. Sorriso al pontile" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
           <input type="file" id="figFileInput" accept="image/*" style="display:none" onchange="uploadMyFigurina(event)">
@@ -632,7 +633,8 @@ body{padding:.8rem .3rem 3rem;}
           ⏱️ <strong>Ore motore</strong>: +30 pt/giorno · +30 bonus ogni 5 gg di fila · +20 dotazioni · −50 dopo le 12<br>
           ⛽ <strong>Rifornimento</strong>: +30 pt a settimana (registri il pieno a tuo nome)<br>
           📡 <strong>Messaggi</strong>: +10 pt per messaggio letto entro 12 ore<br>
-          📸 <strong>Figurine</strong>: +25/sett. (2 figurine/giorno × 5 gg) · +100/mese costante<br>
+          📸 <strong>Figurine</strong>: max 2/giorno · +25/sett. (2 fig. × 5 gg) · +100/mese costante<br>
+          🧰 <strong>Scrigni</strong>: trovali in classifica · +30 pt · +1 slot figurina extra (usalo subito!)<br>
           ⭐ <strong>Sondaggi</strong>: +10 pt per ogni voto ricevuto sulla tua figurina · +50 sett. · +100 mese
         </div>
         <p style="margin-top:.7rem;font-size:.8rem;color:var(--red)">⛔ Attenzione: se giochi ma non compili il diario di bordo, perdi 100 punti al giorno.</p>
@@ -2659,7 +2661,7 @@ async function openChest(name){
   gameBonusFig[key]=(gameBonusFig[key]||0)+1;
   await sv.gameChestsOpened();await sv.gameBonusFig();
   renderTorneoDash();
-  alert('🎁 Scrigno aperto! Hai trovato 1 figurina bonus 🐚');
+  alert('🎁 Scrigno aperto! +30 punti e 1 slot figurina bonus sbloccato 🐚\nCarica una 3ª figurina oggi per usare il bonus!');
 }
 // Decorazioni marine che variano nel corso della competizione (per settimana)
 function tdDecorations(){
@@ -2991,8 +2993,8 @@ function isGameFinalWeek(){
 }
 function computeGamePoints(name){
   const key=String(name||'').toLowerCase();
-  const parts={ore:0,rifornimento:0,figurine:0,votata:0,antenna:0,giurato:0,penalita:0,manuale:0};
-  const info={ore:{},rifornimento:{},figurine:{},votata:{},antenna:{},giurato:{}};
+  const parts={ore:0,rifornimento:0,figurine:0,votata:0,antenna:0,giurato:0,scrigno:0,penalita:0,manuale:0};
+  const info={ore:{},rifornimento:{},figurine:{},votata:{},antenna:{},giurato:{},scrigno:{}};
   // --- Ore Motore: +30 per serie di 5 giorni di fila, -50 per ogni registrazione dopo le 12, +20 per spunta dotazioni completa ---
   const myRecs=records.filter(r=>r.autista&&r.autista.toLowerCase()===key&&gameInPeriod(r.data));
   const days=[...new Set(myRecs.map(r=>r.data&&r.data.slice(0,10)).filter(Boolean))].sort();
@@ -3060,6 +3062,10 @@ function computeGamePoints(name){
   const myVotes=gameVotes.filter(v=>v.voter&&v.voter.toLowerCase()===key);
   parts.giurato=0;
   info.giurato={voti:myVotes.length};
+  // --- Scrigni: +30 pt per ogni scrigno aperto ---
+  const myChests=Object.keys(gameChestsOpened[key]||{}).length;
+  parts.scrigno=myChests*30;
+  info.scrigno={scrigni:myChests,bonus:gameBonusFig[key]||0};
   // --- Penalità: -100 per ogni giorno in cui gioca al Torneo ma NON compila il diario di bordo ---
   const gameDays=new Set();
   myVotes.forEach(v=>{const d=(v.ts||'').slice(0,10);if(d)gameDays.add(d);});
@@ -3073,7 +3079,7 @@ function computeGamePoints(name){
   info.penalita={giorni:noLogPlay};
   // --- Correzione manuale del Super Admin ---
   parts.manuale=Number(gameManualAdj[key])||0;
-  const total=parts.ore+parts.rifornimento+parts.figurine+parts.votata+parts.antenna+parts.giurato+parts.penalita+parts.manuale;
+  const total=parts.ore+parts.rifornimento+parts.figurine+parts.votata+parts.antenna+parts.giurato+parts.scrigno+parts.penalita+parts.manuale;
   return {total,parts,info};
 }
 function openMissioniModal(){renderMissioni();document.getElementById('gameMissioniModal').classList.add('show');}
@@ -3085,7 +3091,7 @@ function renderMissioni(){
   // In anteprima senza iscrizione, mostra un esempio con numeri di esempio
   const demo=!me&&_gameDemo;
   const p=demo
-    ?{total:395,parts:{ore:90,rifornimento:60,antenna:40,figurine:75,votata:230,giurato:0,penalita:0},info:{ore:{giorni:18,streaks:3,after12:0,serale:0},rifornimento:{rifornimenti:6,settimane:2},antenna:{inTempo:4,letti:5},figurine:{caricate:10,fotografoWeeks:3,registaMonths:0},votata:{mesiVinti:1,settVinte:3,votiRicevuti:8,votiMio:8,votiLeader:8,stoIlPrimo:true},giurato:{voti:6},penalita:{giorni:0}}}
+    ?{total:455,parts:{ore:90,rifornimento:60,antenna:40,figurine:75,votata:230,giurato:0,scrigno:60,penalita:0},info:{ore:{giorni:18,streaks:3,after12:0,serale:0},rifornimento:{rifornimenti:6,settimane:2},antenna:{inTempo:4,letti:5},figurine:{caricate:10,fotografoWeeks:3,registaMonths:0},votata:{mesiVinti:1,settVinte:3,votiRicevuti:8,votiMio:8,votiLeader:8,stoIlPrimo:true},giurato:{voti:6},scrigno:{scrigni:2,bonus:0},penalita:{giorni:0}}}
     :computeGamePoints(me);
   const missions=[
     {ic:'⏱️',nome:'Ore Motore (Spacca Minuto)',rule:'+30 per giorno di registrazione · +30 ogni serie da 5 giorni · −50 per registrazione dopo le 12 · +20 spunta dotazioni completa',pts:p.parts.ore,prog:`${p.info.ore.giorni} giorni · ${p.info.ore.streaks} serie da 5 · ${p.info.ore.after12} dopo le 12 · ${p.info.ore.serale} dotazioni complete`},
@@ -3094,6 +3100,7 @@ function renderMissioni(){
     {ic:'📸',nome:'Fotografo / Regista — Figurine',rule:'+25 a settimana (2 figurine/giorno × 5 gg) · +100 al mese costante (≥20 gg/mese)',pts:p.parts.figurine,prog:`${p.info.figurine.caricate} caricate · ${p.info.figurine.fotografoWeeks} sett. Fotografo · ${p.info.figurine.registaMonths} mesi Regista`},
     {ic:'⭐',nome:'Figurina più Votata — Sondaggio',rule:'+10 per ogni voto ricevuto · +50 a settimana · +100 a fine mese',pts:p.parts.votata,prog:p.info.votata.stoIlPrimo?`🏆 Sei in testa con ${p.info.votata.votiMio} voti! · ${p.info.votata.votiRicevuti} voti tot. (${p.info.votata.settVinte} sett. · ${p.info.votata.mesiVinti} mes${p.info.votata.mesiVinti===1?'e':'i'} vinti)`:p.info.votata.votiRicevuti>0?`${p.info.votata.votiRicevuti} voti ricevuti · leader mese: ${p.info.votata.votiLeader} · ${p.info.votata.settVinte} sett. · ${p.info.votata.mesiVinti} mes${p.info.votata.mesiVinti===1?'e':'i'} vinti`:`Nessuna figurina tua al voto ancora`},
     {ic:'⚖️',nome:'Il Giurato — Vota i sondaggi',rule:'Vota le figurine — i punti vanno a chi riceve voti (+10 a voto ricevuto)',pts:p.parts.giurato,prog:`${p.info.giurato.voti} voti espressi`},
+    {ic:'🧰',nome:'Scrigni — Bonus segreti',rule:'+30 pt per ogni scrigno aperto · sblocca 1 slot figurina extra per oggi',pts:p.parts.scrigno,prog:`${p.info.scrigno.scrigni} scrigni aperti · ${p.info.scrigno.bonus} bonus figurina disponibil${p.info.scrigno.bonus===1?'e':'i'}`},
     {ic:'⛔',nome:'Penalità — Giochi ma non lavori',rule:'−100 per ogni giorno in cui giochi al Torneo ma NON compili il diario di bordo',pts:p.parts.penalita,prog:`${p.info.penalita.giorni} giorni senza diario`},
   ];
   if(p.parts&&p.parts.manuale)missions.push({ic:'✏️',nome:'Correzione Super Admin',rule:'Aggiustamento punti applicato dalla direzione',pts:p.parts.manuale,prog:'Correzione manuale'});
@@ -3116,7 +3123,7 @@ function renderMissioni(){
         ⛔ <strong>−100 punti</strong> per ogni giorno in cui accedi e giochi al Torneo ma <strong>non compili il diario di bordo</strong>: il gioco premia chi usa l'app per lavorare, non solo per giocare.<br><br>
         🎨 <strong>Come creare le figurine:</strong> scarica ChatGPT, scrivi un prompt e incolla il viso di uno dei partecipanti al Torneo. Carica poi la figurina nella sezione dedicata (verrà compressa in .webp con il tuo nome stampato sopra).<br><br>
         🏅 <strong>Figurine premio:</strong> vengono assegnate <strong>in automatico</strong> ai vincitori (Re del Rifornimento, figurina più votata settimanale +50 · mensile +100, ecc.) a fine periodo.<br><br>
-        🧰 <strong>Scrigni:</strong> durante il percorso troverai degli scrigni che daranno figurine omaggio.
+        🧰 <strong>Scrigni:</strong> durante il percorso troverai degli scrigni. Aprirli vale <strong>+30 pt</strong> e sblocca <strong>1 slot figurina extra</strong> per quel giorno (normalmente il limite è 2 figurine/giorno; con il bonus puoi caricarne 3). Una volta usato il bonus caricando la 3ª figurina, ritorni al limite di 2.
       </div>
     </div>`;
 }
@@ -3147,6 +3154,17 @@ async function uploadMyFigurina(e){
   if(!file)return;
   const me=gameMyName();
   if(!me){alert('Devi prima iscriverti al Torneo.');return;}
+  // Limite giornaliero: 2 figurine (3 se hai un bonus scrigno disponibile)
+  const _today=new Date().toISOString().slice(0,10);
+  const _meLow=me.toLowerCase();
+  const _todayFigs=gameFigurine.filter(f=>f.owner&&f.owner.toLowerCase()===_meLow&&(f.uploadedAt||'').startsWith(_today)).length;
+  const _bonus=gameBonusFig[_meLow]||0;
+  const _maxToday=_bonus>0?3:2;
+  if(_todayFigs>=_maxToday){
+    alert(_bonus>0?`Hai già caricato 3 figurine oggi (bonus usato). Domani puoi caricarne altre.`:`Hai già caricato 2 figurine oggi. Apri uno scrigno per sbloccare 1 slot extra!`);return;
+  }
+  // Usa il bonus slot se è la 3ª figurina
+  const _usingBonus=_todayFigs>=2&&_bonus>0;
   if(!showAttendi('Caricamento figurina in corso…'))return;
   try{
     const raw=await uploadFigurinaCloudinary(file);
@@ -3154,6 +3172,7 @@ async function uploadMyFigurina(e){
     const url=gameWatermarkUrl(raw,me);
     const caption=document.getElementById('figCaption').value.trim().slice(0,60);
     gameFigurine.unshift({id:Date.now(),owner:me,url,raw,status:'pending',caption,uploadedAt:new Date().toISOString()});
+    if(_usingBonus){gameBonusFig[_meLow]=_bonus-1;await sv.gameBonusFig();}
     await sv.gameFigurine();
     document.getElementById('figCaption').value='';
     renderMyFigurine();
@@ -3194,7 +3213,15 @@ function statusBadgeFigurina(st){
 }
 function renderMyFigurine(){
   const c=document.getElementById('myFigurineList');if(!c)return;
-  const me=gameMyName().toLowerCase();
+  const me=gameMyName()?gameMyName().toLowerCase():'';
+  // Mostra status limite giornaliero
+  const _today=new Date().toISOString().slice(0,10);
+  const _todayFigs=gameFigurine.filter(f=>f.owner&&f.owner.toLowerCase()===me&&(f.uploadedAt||'').startsWith(_today)).length;
+  const _bonus=gameBonusFig[me]||0;
+  const _maxToday=_bonus>0?3:2;
+  const _rimaste=Math.max(0,_maxToday-_todayFigs);
+  const _statusEl=document.getElementById('figDayLimit');
+  if(_statusEl)_statusEl.innerHTML=_rimaste===0?'<span style="color:var(--red);font-weight:600">Limite giornaliero raggiunto'+(_bonus>0?' (bonus usato)':'')+'</span>':_bonus>0?`<span style="color:var(--green);font-weight:600">🎁 Bonus attivo! Puoi caricare ${_rimaste} figurin${_rimaste===1?'a':'e'} oggi (slot bonus: 1)</span>`:`<span style="color:var(--ink-faded)">${_rimaste} slot rimast${_rimaste===1?'o':'i'} oggi su 2</span>`;
   const mine=gameFigurine.filter(f=>f.owner&&f.owner.toLowerCase()===me);
   if(!mine.length){c.innerHTML='<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded);text-align:center;padding:.8rem 0">Nessuna figurina caricata.</p>';return;}
   c.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.7rem">'+mine.map(f=>`

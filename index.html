@@ -827,7 +827,8 @@ body{padding:.8rem .3rem 3rem;}
       </div>
       <div id="tessereBarcaSection" style="margin-top:.9rem;position:relative;z-index:2;border-top:1px solid var(--line-light);padding-top:.8rem">
         <div style="font-family:'Playfair Display',serif;font-size:.95rem;font-style:italic;color:var(--ink);margin-bottom:.3rem">Hai queste tessere a bordo?</div>
-        <div style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink-faded);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem">💳 Tessere a bordo</div>
+        <div style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink-faded);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">💳 Tessere a bordo</div>
+        <p style="font-family:'Source Sans 3',sans-serif;font-size:.73rem;color:var(--green);font-weight:600;margin-bottom:.6rem">✓ Basta spuntare — salvataggio automatico, non è necessario salvare</p>
         <div style="margin-bottom:.7rem">
           <label style="display:flex;align-items:center;gap:.65rem;cursor:pointer">
             <input type="checkbox" id="fTesseraMila" onchange="if(!document.getElementById('fMezzo').value){this.checked=false;alert('Seleziona prima la barca');}else saveTesseraImmediato();" style="accent-color:var(--blue);width:17px;height:17px;flex-shrink:0;cursor:pointer">
@@ -4173,6 +4174,8 @@ async function saveTesseraImmediato(){
   if(tessereBarcaLog.length>200)tessereBarcaLog=tessereBarcaLog.slice(0,200);
   await sv.tessereBarca();
   await sv.tessereBarcaLog();
+  renderSATessereBarca();
+  renderDashTessere();
 }
 
 function toggleUsaTessera(){

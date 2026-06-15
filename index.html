@@ -2457,12 +2457,11 @@ function renderSondaggi(){
   }
   if(!approved.length){c.innerHTML='<p style="font-style:italic;color:var(--ink-faded);text-align:center;padding:1rem 0">Nessuna figurina approvata da votare. Carica le tue e attendi l\'approvazione!</p>';return;}
   const list=approved.map(f=>({f,votes:votesForFigurina(f.id)})).sort((a,b)=>b.votes-a.votes);
-  const tot=list.length;
-  c.innerHTML=`<div style="font-size:.72rem;color:var(--ink-faded);margin-bottom:.3rem;text-align:right">${tot} figurin${tot===1?'a':'e'} · scorri ▶</div>`
-    +'<div style="display:flex;overflow-x:auto;gap:.7rem;padding:.4rem 0 .8rem;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;">'
-    +list.map(({f,votes})=>{
+  const haiVotato=f=>gameVotes.some(v=>v.voter&&v.voter.toLowerCase()===meLow&&String(v.figurinaId)===String(f.id));
+  // scheda singola figurina
+  const card=({f,votes})=>{
     const mine=f.owner&&f.owner.toLowerCase()===meLow;
-    const voted=gameVotes.some(v=>v.voter&&v.voter.toLowerCase()===meLow&&String(v.figurinaId)===String(f.id));
+    const voted=haiVotato(f);
     let btn;
     if(mine)btn='<div style="font-size:.7rem;color:var(--ink-faded);text-align:center;padding:.35rem 0">La tua figurina</div>';
     else if(voted)btn='<button class="bh" style="width:100%;font-size:.74rem" disabled>✓ Votata</button>';
@@ -2476,7 +2475,30 @@ function renderSondaggi(){
         ${btn}
       </div>
     </div>`;
-  }).join('')+'</div>';
+  };
+  const carousel=arr=>'<div style="display:flex;overflow-x:auto;gap:.7rem;padding:.4rem 0 .8rem;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;">'+arr.map(card).join('')+'</div>';
+  // separa: da votare (non ancora votate da me e non mie) vs già votate da me
+  const votate=list.filter(({f})=>haiVotato(f));
+  const daVotare=list.filter(({f})=>!haiVotato(f));
+  let html=`<div style="font-size:.72rem;color:var(--ink-faded);margin-bottom:.3rem;text-align:right">${daVotare.length} da votare · scorri ▶</div>`;
+  html+=daVotare.length?carousel(daVotare):'<p style="font-style:italic;color:var(--ink-faded);text-align:center;padding:.8rem 0">Hai votato tutte le figurine disponibili! 🎉</p>';
+  // cartella delle figurine già votate (collassabile)
+  if(votate.length){
+    html+=`<div onclick="toggleVotedFolder()" style="margin-top:.6rem;display:flex;align-items:center;gap:.5rem;padding:.6rem .7rem;background:#eef5ff;border:1px solid #ccd9ee;border-radius:10px;cursor:pointer;user-select:none">
+      <span style="font-size:1.1rem">📁</span>
+      <span style="font-family:'Source Sans 3',sans-serif;font-size:.86rem;font-weight:700;color:#0d3b66;flex:1">Già votate (${votate.length})</span>
+      <span id="votedFolderArrow" style="font-size:.9rem;color:#0d3b66">▸</span>
+    </div>
+    <div id="votedFolderBody" style="display:none">${carousel(votate)}</div>`;
+  }
+  c.innerHTML=html;
+}
+function toggleVotedFolder(){
+  const b=document.getElementById('votedFolderBody');const a=document.getElementById('votedFolderArrow');
+  if(!b)return;
+  const open=b.style.display==='none';
+  b.style.display=open?'block':'none';
+  if(a)a.textContent=open?'▾':'▸';
 }
 async function castVote(figId){
   const me=gameMyName();if(!me){alert('Iscriviti al Torneo per votare.');return;}

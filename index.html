@@ -835,14 +835,24 @@ body{padding:.8rem .3rem 3rem;}
       <div id="tessereBarcaSection" style="margin-top:.9rem;position:relative;z-index:2;border-top:1px solid var(--line-light);padding-top:.8rem">
         <div style="font-family:'Playfair Display',serif;font-size:.95rem;font-style:italic;color:var(--ink);margin-bottom:.3rem">Hai queste tessere a bordo?</div>
         <div style="font-family:'Source Sans 3',sans-serif;font-size:.72rem;color:var(--ink-faded);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem">💳 Tessere a bordo</div>
-        <label style="display:flex;align-items:center;gap:.65rem;margin-bottom:.5rem;cursor:pointer">
-          <input type="checkbox" id="fTesseraMila" onchange="if(!document.getElementById('fMezzo').value){this.checked=false;alert('Seleziona prima la barca');}" style="accent-color:var(--blue);width:17px;height:17px;flex-shrink:0;cursor:pointer">
-          <span style="font-family:'Source Sans 3',sans-serif;font-size:.9rem;color:var(--ink)">Tessera Mila</span>
-        </label>
-        <label style="display:flex;align-items:center;gap:.65rem;margin-bottom:.6rem;cursor:pointer">
-          <input type="checkbox" id="fTesseraCC" onchange="if(!document.getElementById('fMezzo').value){this.checked=false;alert('Seleziona prima la barca');}" style="accent-color:var(--blue);width:17px;height:17px;flex-shrink:0;cursor:pointer">
-          <span style="font-family:'Source Sans 3',sans-serif;font-size:.9rem;color:var(--ink)">Carta di credito</span>
-        </label>
+        <div style="margin-bottom:.7rem">
+          <label style="display:flex;align-items:center;gap:.65rem;cursor:pointer">
+            <input type="checkbox" id="fTesseraMila" onchange="if(!document.getElementById('fMezzo').value){this.checked=false;alert('Seleziona prima la barca');}else saveTesseraImmediato();" style="accent-color:var(--blue);width:17px;height:17px;flex-shrink:0;cursor:pointer">
+            <span style="font-family:'Source Sans 3',sans-serif;font-size:.9rem;color:var(--ink)">Tessera Mila</span>
+          </label>
+          <div style="margin-top:.35rem;padding-left:1.8rem">
+            <input type="text" id="fTesseraMilaSer" placeholder="N° seriale Mila" onblur="saveTesseraImmediato()" style="border:1px solid var(--line);border-radius:4px;padding:.35rem .55rem;width:100%;font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink);outline:none;background:#fff">
+          </div>
+        </div>
+        <div style="margin-bottom:.6rem">
+          <label style="display:flex;align-items:center;gap:.65rem;cursor:pointer">
+            <input type="checkbox" id="fTesseraCC" onchange="if(!document.getElementById('fMezzo').value){this.checked=false;alert('Seleziona prima la barca');}else saveTesseraImmediato();" style="accent-color:var(--blue);width:17px;height:17px;flex-shrink:0;cursor:pointer">
+            <span style="font-family:'Source Sans 3',sans-serif;font-size:.9rem;color:var(--ink)">Carta di credito</span>
+          </label>
+          <div style="margin-top:.35rem;padding-left:1.8rem">
+            <input type="text" id="fTesseraCCSer" placeholder="N° seriale carta di credito" onblur="saveTesseraImmediato()" style="border:1px solid var(--line);border-radius:4px;padding:.35rem .55rem;width:100%;font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink);outline:none;background:#fff">
+          </div>
+        </div>
         <div class="field" style="margin-top:.1rem">
           <label class="fl">Tessera ricaricabile</label>
           <select id="fTesseraRic" onchange="if(this.value&&!document.getElementById('fMezzo').value){this.value='';alert('Seleziona prima la barca');}" style="border:none;border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.9rem;color:var(--ink);width:100%;outline:none;padding:.25rem 0;appearance:none;cursor:pointer;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234a3f30'/%3E%3C/svg%3E&quot;);background-repeat:no-repeat;background-position:right .3rem center;padding-right:1.5rem;"><option value="">— nessuna —</option></select>
@@ -3637,13 +3647,13 @@ function dashDownloadCsv(section){
     filename='tessere_flotta.csv';
     const stateRows=Object.entries(tessereBarca).map(([b,s])=>{
       const ric=s.ric?(tessereList.find(t=>t.id===s.ric)?.nome||s.ric):'';
-      return[b,s.mila?'SI':'NO',s.cc?'SI':'NO',ric,'','','','',''];
+      return[b,s.mila?'SI':'NO',s.milaSer||'',s.cc?'SI':'NO',s.ccSer||'',ric,'','','',''];
     });
     const logRows=[...tessereBarcaLog].sort((a,b)=>(b.ts||'').localeCompare(a.ts||'')).slice(0,200).map(e=>{
       const fmt=s=>[s.mila?'Mila':'',s.cc?'CC':'',s.ric?'Ric.':''].filter(Boolean).join('; ')||'';
       return['','','','',e.ts?new Date(e.ts).toLocaleString('it-IT'):'',e.autista||'',e.barca||'',fmt(e.from||{}),fmt(e.to||{})];
     });
-    csv=toCsv(['Barca (stato)','Mila','CC','Ricaricabile','Data movimento','Autista','Barca movimento','Prima','Dopo'],[...stateRows,...logRows]);
+    csv=toCsv(['Barca (stato)','Mila','Ser. Mila','CC','Ser. CC','Ricaricabile','Data movimento','Autista','Barca movimento','Prima/Dopo'],[...stateRows,...logRows]);
   }
   if(!csv)return;
   const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
@@ -3975,14 +3985,16 @@ async function submitForm(){
   const pdfUrls=[];for(const file of pendingPdfs){try{pdfUrls.push(await uploadFile(file));}catch(e){console.error(e);}}
   const _tbMila=document.getElementById('fTesseraMila')?.checked||false;
   const _tbCC=document.getElementById('fTesseraCC')?.checked||false;
+  const _tbMilaSer=(document.getElementById('fTesseraMilaSer')?.value||'').trim();
+  const _tbCCSer=(document.getElementById('fTesseraCCSer')?.value||'').trim();
   const _tbRicVal=document.getElementById('fTesseraRic')?.value;
   const _tbRic=_tbRicVal?parseInt(_tbRicVal):null;
-  const _newRec={id:Date.now(),mezzo,data,autista:document.getElementById('fAutista').value.trim(),ore:document.getElementById('fOre').value||'',intervento:document.getElementById('fIntervento').value.trim(),note:document.getElementById('fNote').value.trim(),foto:fotoUrls,pdf:pdfUrls,salvato:new Date().toISOString(),dotazioni:{prosecco:chkState.Prosecco,bicchieri:chkState.Bicchieri,acqua:chkState.Acqua,carburante:fuelLvlState},tessere:{mila:_tbMila,cc:_tbCC,ric:_tbRic}};
+  const _newRec={id:Date.now(),mezzo,data,autista:document.getElementById('fAutista').value.trim(),ore:document.getElementById('fOre').value||'',intervento:document.getElementById('fIntervento').value.trim(),note:document.getElementById('fNote').value.trim(),foto:fotoUrls,pdf:pdfUrls,salvato:new Date().toISOString(),dotazioni:{prosecco:chkState.Prosecco,bicchieri:chkState.Bicchieri,acqua:chkState.Acqua,carburante:fuelLvlState},tessere:{mila:_tbMila,cc:_tbCC,ric:_tbRic,milaSer:_tbMilaSer,ccSer:_tbCCSer}};
   await saveRecordsVerified(_newRec);
   await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'save',`Registrazione "${mezzo}" del ${data}`);
-  const _prevTB=tessereBarca[mezzo]||{mila:false,cc:false,ric:null};
-  if(_prevTB.mila!==_tbMila||_prevTB.cc!==_tbCC||_prevTB.ric!==_tbRic){
-    const _logE={ts:new Date().toISOString(),autista:document.getElementById('fAutista').value.trim()||currentUser.name,barca:mezzo,from:Object.assign({},_prevTB),to:{mila:_tbMila,cc:_tbCC,ric:_tbRic}};
+  const _prevTB=tessereBarca[mezzo]||{mila:false,cc:false,ric:null,milaSer:'',ccSer:''};
+  if(_prevTB.mila!==_tbMila||_prevTB.cc!==_tbCC||_prevTB.ric!==_tbRic||(_prevTB.milaSer||'')!==_tbMilaSer||(_prevTB.ccSer||'')!==_tbCCSer){
+    const _logE={ts:new Date().toISOString(),autista:document.getElementById('fAutista').value.trim()||currentUser.name,barca:mezzo,from:Object.assign({},_prevTB),to:{mila:_tbMila,cc:_tbCC,ric:_tbRic,milaSer:_tbMilaSer,ccSer:_tbCCSer}};
     // Esclusività: rimuovi la tessera da tutte le altre barche prima di assegnarla
     Object.keys(tessereBarca).forEach(b=>{
       if(b===mezzo)return;
@@ -3991,7 +4003,7 @@ async function submitForm(){
       if(_tbCC&&s.cc)s.cc=false;
       if(_tbRic&&s.ric===_tbRic)s.ric=null;
     });
-    tessereBarca[mezzo]={mila:_tbMila,cc:_tbCC,ric:_tbRic};
+    tessereBarca[mezzo]={mila:_tbMila,cc:_tbCC,ric:_tbRic,milaSer:_tbMilaSer,ccSer:_tbCCSer};
     tessereBarcaLog.unshift(_logE);
     if(tessereBarcaLog.length>200)tessereBarcaLog=tessereBarcaLog.slice(0,200);
     await sv.tessereBarca();
@@ -4232,16 +4244,42 @@ function selectFuel(type,el){
 }
 
 function updateTessereBarcaForm(barca){
-  const state=tessereBarca[barca]||{mila:false,cc:false,ric:null};
+  const state=tessereBarca[barca]||{mila:false,cc:false,ric:null,milaSer:'',ccSer:''};
   const mila=document.getElementById('fTesseraMila');
   const cc=document.getElementById('fTesseraCC');
   const ric=document.getElementById('fTesseraRic');
+  const milaSer=document.getElementById('fTesseraMilaSer');
+  const ccSer=document.getElementById('fTesseraCCSer');
   if(mila)mila.checked=!!state.mila;
   if(cc)cc.checked=!!state.cc;
+  if(milaSer)milaSer.value=state.milaSer||'';
+  if(ccSer)ccSer.value=state.ccSer||'';
   if(ric){
     ric.innerHTML='<option value="">— nessuna —</option>'+tessereList.map(t=>`<option value="${t.id}"${state.ric===t.id?' selected':''}>${escHtml(t.nome)} (${t.tipo.toUpperCase()})</option>`).join('');
     if(state.ric)ric.value=state.ric;
   }
+}
+async function saveTesseraImmediato(){
+  const barca=document.getElementById('fMezzo')?.value;if(!barca)return;
+  const mila=document.getElementById('fTesseraMila')?.checked||false;
+  const cc=document.getElementById('fTesseraCC')?.checked||false;
+  const milaSer=(document.getElementById('fTesseraMilaSer')?.value||'').trim();
+  const ccSer=(document.getElementById('fTesseraCCSer')?.value||'').trim();
+  const ric=document.getElementById('fTesseraRic')?.value?parseInt(document.getElementById('fTesseraRic').value):null;
+  const prev=tessereBarca[barca]||{mila:false,cc:false,ric:null,milaSer:'',ccSer:''};
+  if(prev.mila===mila&&prev.cc===cc&&prev.ric===ric&&(prev.milaSer||'')===milaSer&&(prev.ccSer||'')===ccSer)return;
+  const logE={ts:new Date().toISOString(),autista:currentUser?.name||'',barca,from:Object.assign({},prev),to:{mila,cc,ric,milaSer,ccSer}};
+  Object.keys(tessereBarca).forEach(b=>{
+    if(b===barca)return;const s=tessereBarca[b];
+    if(mila&&s.mila)s.mila=false;
+    if(cc&&s.cc)s.cc=false;
+    if(ric&&s.ric===ric)s.ric=null;
+  });
+  tessereBarca[barca]={mila,cc,ric,milaSer,ccSer};
+  tessereBarcaLog.unshift(logE);
+  if(tessereBarcaLog.length>200)tessereBarcaLog=tessereBarcaLog.slice(0,200);
+  await sv.tessereBarca();
+  await sv.tessereBarcaLog();
 }
 
 function toggleUsaTessera(){
@@ -5242,8 +5280,10 @@ function renderSATessereBarca(){
   const ricMap={};tessereList.forEach(t=>ricMap[t.id]=t.nome);
   let html='<table class="at" style="margin-bottom:1.2rem"><thead><tr><th>Barca</th><th>Tessera Mila</th><th>Carta di credito</th><th>Ricaricabile</th></tr></thead><tbody>';
   allBarche.forEach(b=>{
-    const s=tessereBarca[b]||{mila:false,cc:false,ric:null};
-    html+=`<tr><td style="font-weight:600">${escHtml(b)}</td><td>${s.mila?'✅':'—'}</td><td>${s.cc?'✅':'—'}</td><td>${s.ric&&ricMap[s.ric]?escHtml(ricMap[s.ric]):'—'}</td></tr>`;
+    const s=tessereBarca[b]||{mila:false,cc:false,ric:null,milaSer:'',ccSer:''};
+    const milaCell=s.mila?`✅${s.milaSer?`<br><span style="font-size:.72rem;color:var(--ink-faded);font-family:'Source Sans 3',sans-serif">${escHtml(s.milaSer)}</span>`:''}`:s.milaSer?`<span style="font-size:.72rem;color:var(--ink-faded)">${escHtml(s.milaSer)}</span>`:'—';
+    const ccCell=s.cc?`✅${s.ccSer?`<br><span style="font-size:.72rem;color:var(--ink-faded);font-family:'Source Sans 3',sans-serif">${escHtml(s.ccSer)}</span>`:''}`:s.ccSer?`<span style="font-size:.72rem;color:var(--ink-faded)">${escHtml(s.ccSer)}</span>`:'—';
+    html+=`<tr><td style="font-weight:600">${escHtml(b)}</td><td>${milaCell}</td><td>${ccCell}</td><td>${s.ric&&ricMap[s.ric]?escHtml(ricMap[s.ric]):'—'}</td></tr>`;
   });
   html+='</tbody></table>';
   if(tessereBarcaLog.length){
@@ -5253,7 +5293,9 @@ function renderSATessereBarca(){
       const dt=e.ts?e.ts.replace('T',' ').slice(0,16):'';
       const changes=[];
       if(e.from.mila!==e.to.mila)changes.push(e.to.mila?'Tessera Mila aggiunta':'Tessera Mila rimossa');
+      if((e.from.milaSer||'')!==(e.to.milaSer||''))changes.push('Seriale Mila: '+(e.to.milaSer||'—'));
       if(e.from.cc!==e.to.cc)changes.push(e.to.cc?'Carta di credito aggiunta':'Carta di credito rimossa');
+      if((e.from.ccSer||'')!==(e.to.ccSer||''))changes.push('Seriale CC: '+(e.to.ccSer||'—'));
       if(e.from.ric!==e.to.ric){const fn=e.from.ric&&ricMap[e.from.ric]?ricMap[e.from.ric]:'nessuna';const tn=e.to.ric&&ricMap[e.to.ric]?ricMap[e.to.ric]:'nessuna';changes.push('Ricaricabile: '+fn+' → '+tn);}
       if(changes.length)html+=`<div style="font-family:'Source Sans 3',sans-serif;font-size:.8rem;padding:.4rem .5rem;border-bottom:1px solid var(--line-light)"><strong>${escHtml(e.barca)}</strong> · ${dt} · ${escHtml(e.autista)}<br><span style="color:var(--ink-faded)">${changes.join(', ')}</span></div>`;
     });

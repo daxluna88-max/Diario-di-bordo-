@@ -2982,7 +2982,7 @@ function computeGamePoints(name){
   }
   const after12=myRecs.filter(r=>{const t=r.salvato?new Date(r.salvato):null;return t&&!isNaN(t)&&t.getHours()>=12;}).length;
   const serale=myRecs.filter(r=>{const d=r.dotazioni||{};return d.prosecco!=null&&d.bicchieri!=null&&d.acqua!=null&&d.carburante!=null;}).length;
-  parts.ore=days.length*30+serale*20;
+  parts.ore=days.length*30+streaks*30+serale*20;
   info.ore={giorni:days.length,streaks,after12,serale};
   // --- Mister Pieno: rifornimenti attribuiti per nome, +30 a settimana ---
   const myFuel=fuelRecords.filter(f=>f.autista&&f.autista.toLowerCase()===key&&gameInPeriod(f.data));
@@ -3047,7 +3047,7 @@ function renderMissioni(){
     ?{total:295,parts:{ore:90,rifornimento:60,antenna:40,figurine:75,giurato:30,penalita:0},info:{ore:{giorni:18,streaks:3,after12:0,serale:0},rifornimento:{rifornimenti:6,settimane:2},antenna:{inTempo:4,letti:5},figurine:{caricate:10,fotografoWeeks:3,registaMonths:0},giurato:{voti:6},penalita:{giorni:0}}}
     :computeGamePoints(me);
   const missions=[
-    {ic:'⏱️',nome:'Ore Motore (Spacca Minuto)',rule:'+30 per giorno di registrazione · +20 spunta dotazioni completa',pts:p.parts.ore,prog:`${p.info.ore.giorni} giorni · ${p.info.ore.serale} dotazioni complete`},
+    {ic:'⏱️',nome:'Ore Motore (Spacca Minuto)',rule:'+30 per giorno di registrazione · +30 ogni serie da 5 giorni · +20 spunta dotazioni completa',pts:p.parts.ore,prog:`${p.info.ore.giorni} giorni · ${p.info.ore.streaks} serie da 5 · ${p.info.ore.serale} dotazioni complete`},
     {ic:'⛽',nome:'Mister Pieno — Rifornimento',rule:'+30 a settimana (registri il pieno a tuo nome)',pts:p.parts.rifornimento,prog:`${p.info.rifornimento.rifornimenti} rifornimenti · ${p.info.rifornimento.settimane} settimane`},
     {ic:'📡',nome:'Antenna Alzata — Leggi i messaggi',rule:'+10 per messaggio letto entro 12 ore',pts:p.parts.antenna,prog:`${p.info.antenna.inTempo} in tempo su ${p.info.antenna.letti} letti`},
     {ic:'📸',nome:'Fotografo / Regista — Figurine',rule:'+25 a settimana (2 figurine/giorno × 5 gg) · +100 al mese costante',pts:p.parts.figurine,prog:`${p.info.figurine.caricate} caricate · ${p.info.figurine.fotografoWeeks} sett. Fotografo · ${p.info.figurine.registaMonths} mesi Regista`},

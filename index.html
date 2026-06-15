@@ -633,7 +633,7 @@ body{padding:.8rem .3rem 3rem;}
           ⛽ <strong>Rifornimento</strong>: registra il pieno a tuo nome<br>
           📡 <strong>Messaggi</strong>: leggili entro 12 ore<br>
           📸 <strong>Figurine</strong>: caricale (col tuo volto/prompt)<br>
-          ⚖️ <strong>Sondaggi</strong>: vota la figurina più simpatica
+          ⚖️ <strong>Sondaggi</strong>: vota la figurina più simpatica · +5/voto · +50 sett. · +100 mese
         </div>
         <p style="margin-top:.7rem;font-size:.8rem;color:var(--red)">⛔ Attenzione: se giochi ma non compili il diario di bordo, perdi 100 punti al giorno.</p>
         <p style="margin-top:.5rem;font-size:.82rem;color:var(--ink-faded)">Apri <strong>🎯 Missioni</strong> per vedere tutti i punti, e <strong>🏆 Il Torneo</strong> per la classifica con il mare e gli scrigni.</p>
@@ -647,7 +647,7 @@ body{padding:.8rem .3rem 3rem;}
     <div class="att-md" style="border-color:#0d3b66;max-width:560px">
       <div class="att-mh" style="background:#0d3b66">⚖️ Sondaggi — Vota la figurina</div>
       <div class="att-mb">
-        <p style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);line-height:1.55;margin-bottom:.7rem">Vota la figurina più simpatica: <strong>+5 punti</strong> a voto. La più votata del mese vale <strong>+100</strong> e una figurina omaggio al suo autore. Si vota solo le figurine approvate dal Super Admin.</p>
+        <p style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);line-height:1.55;margin-bottom:.7rem">Vota la figurina più simpatica: <strong>+5 punti</strong> a voto. La più votata della settimana vale <strong>+50</strong> e quella del mese vale <strong>+100</strong> + una figurina omaggio al suo autore. Si vota solo le figurine approvate dal Super Admin.</p>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.9rem">
           <button class="bh" onclick="closeSondaggiModal();openMyFigurineModal()">📤 Carica figurina</button>
           <button class="bh" onclick="closeSondaggiModal();openMyFigurineModal()">📥 Le mie figurine</button>
@@ -3112,7 +3112,7 @@ function renderMissioni(){
       <div style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink);line-height:1.6">
         ⛔ <strong>−100 punti</strong> per ogni giorno in cui accedi e giochi al Torneo ma <strong>non compili il diario di bordo</strong>: il gioco premia chi usa l'app per lavorare, non solo per giocare.<br><br>
         🎨 <strong>Come creare le figurine:</strong> scarica ChatGPT, scrivi un prompt e incolla il viso di uno dei partecipanti al Torneo. Carica poi la figurina nella sezione dedicata (verrà compressa in .webp con il tuo nome stampato sopra).<br><br>
-        🏅 <strong>Figurine premio:</strong> vengono assegnate <strong>in automatico</strong> ai vincitori (Re del Rifornimento, figurina più votata, ecc.) a fine periodo.<br><br>
+        🏅 <strong>Figurine premio:</strong> vengono assegnate <strong>in automatico</strong> ai vincitori (Re del Rifornimento, figurina più votata settimanale +50 · mensile +100, ecc.) a fine periodo.<br><br>
         🧰 <strong>Scrigni:</strong> durante il percorso troverai degli scrigni che daranno figurine omaggio.
       </div>
     </div>`;

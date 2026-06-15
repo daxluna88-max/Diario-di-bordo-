@@ -3035,9 +3035,14 @@ function computeGamePoints(name){
   const allVoteCounts=Object.values(nowMonthVotes);
   const leaderVotes=allVoteCounts.length?Math.max(...allVoteCounts):0;
   const stoIlPrimo=leaderVotes>0&&myBestVotes>=leaderVotes;
-  parts.votata=premiVoti*100;
+  // Figurina più votata: calcolo settimanale (+50/settimana vinta)
+  const votesByWeekFig={};
+  gameVotes.forEach(v=>{const wk=gameWeekKey(v.ts);if(!wk)return;(votesByWeekFig[wk]=votesByWeekFig[wk]||{});votesByWeekFig[wk][v.figurinaId]=(votesByWeekFig[wk][v.figurinaId]||0)+1;});
+  let premiVotiSett=0;
+  Object.keys(votesByWeekFig).forEach(wk=>{const counts=votesByWeekFig[wk];let bestId=null,best=0;Object.keys(counts).forEach(fid=>{if(counts[fid]>best){best=counts[fid];bestId=fid;}});if(bestId!=null){const fig=gameFigurine.find(f=>String(f.id)===String(bestId));if(fig&&fig.owner&&fig.owner.toLowerCase()===key)premiVotiSett++;}});
+  parts.votata=premiVoti*100+premiVotiSett*50;
   info.figurine={caricate:myFig.length,approvate:myApproved.length,fotografoWeeks,registaMonths};
-  info.votata={mesiVinti:premiVoti,votiMio:myBestVotes,votiLeader:leaderVotes,stoIlPrimo};
+  info.votata={mesiVinti:premiVoti,settVinte:premiVotiSett,votiMio:myBestVotes,votiLeader:leaderVotes,stoIlPrimo};
   // --- Antenna Alzata: +10 per messaggio letto entro 12h dalla pubblicazione ---
   const reads=gameMsgReads[key]||{};
   let antennaCount=0;
@@ -3077,14 +3082,14 @@ function renderMissioni(){
   // In anteprima senza iscrizione, mostra un esempio con numeri di esempio
   const demo=!me&&_gameDemo;
   const p=demo
-    ?{total:395,parts:{ore:90,rifornimento:60,antenna:40,figurine:75,votata:100,giurato:30,penalita:0},info:{ore:{giorni:18,streaks:3,after12:0,serale:0},rifornimento:{rifornimenti:6,settimane:2},antenna:{inTempo:4,letti:5},figurine:{caricate:10,fotografoWeeks:3,registaMonths:0},votata:{mesiVinti:1,votiMio:8,votiLeader:8,stoIlPrimo:true},giurato:{voti:6},penalita:{giorni:0}}}
+    ?{total:395,parts:{ore:90,rifornimento:60,antenna:40,figurine:75,votata:100,giurato:30,penalita:0},info:{ore:{giorni:18,streaks:3,after12:0,serale:0},rifornimento:{rifornimenti:6,settimane:2},antenna:{inTempo:4,letti:5},figurine:{caricate:10,fotografoWeeks:3,registaMonths:0},votata:{mesiVinti:1,settVinte:3,votiMio:8,votiLeader:8,stoIlPrimo:true},giurato:{voti:6},penalita:{giorni:0}}}
     :computeGamePoints(me);
   const missions=[
     {ic:'⏱️',nome:'Ore Motore (Spacca Minuto)',rule:'+30 per giorno di registrazione · +30 ogni serie da 5 giorni · −50 per registrazione dopo le 12 · +20 spunta dotazioni completa',pts:p.parts.ore,prog:`${p.info.ore.giorni} giorni · ${p.info.ore.streaks} serie da 5 · ${p.info.ore.after12} dopo le 12 · ${p.info.ore.serale} dotazioni complete`},
     {ic:'⛽',nome:'Mister Pieno — Rifornimento',rule:'+30 a settimana (registri il pieno a tuo nome)',pts:p.parts.rifornimento,prog:`${p.info.rifornimento.rifornimenti} rifornimenti · ${p.info.rifornimento.settimane} settimane`},
     {ic:'📡',nome:'Antenna Alzata — Leggi i messaggi',rule:'+10 per messaggio letto entro 12 ore',pts:p.parts.antenna,prog:`${p.info.antenna.inTempo} in tempo su ${p.info.antenna.letti} letti`},
     {ic:'📸',nome:'Fotografo / Regista — Figurine',rule:'+25 a settimana (2 figurine/giorno × 5 gg) · +100 al mese costante (≥20 gg/mese)',pts:p.parts.figurine,prog:`${p.info.figurine.caricate} caricate · ${p.info.figurine.fotografoWeeks} sett. Fotografo · ${p.info.figurine.registaMonths} mesi Regista`},
-    {ic:'⭐',nome:'Figurina più Votata — Sondaggio mensile',rule:'+100 se la tua figurina riceve più voti di tutte a fine mese',pts:p.parts.votata,prog:p.info.votata.stoIlPrimo?`🏆 Sei in testa con ${p.info.votata.votiMio} voti! (${p.info.votata.mesiVinti} mes${p.info.votata.mesiVinti===1?'e':'i'} vinti)`:p.info.votata.votiMio>0?`${p.info.votata.votiMio} voti tuoi · leader: ${p.info.votata.votiLeader} · ${p.info.votata.mesiVinti} mes${p.info.votata.mesiVinti===1?'e':'i'} vinti`:`Nessuna figurina tua al voto · ${p.info.votata.mesiVinti} mes${p.info.votata.mesiVinti===1?'e':'i'} vinti`},
+    {ic:'⭐',nome:'Figurina più Votata — Sondaggio',rule:'+50 a settimana · +100 a fine mese (tua figurina più votata)',pts:p.parts.votata,prog:p.info.votata.stoIlPrimo?`🏆 Sei in testa con ${p.info.votata.votiMio} voti! (${p.info.votata.settVinte} sett. · ${p.info.votata.mesiVinti} mes${p.info.votata.mesiVinti===1?'e':'i'} vinti)`:p.info.votata.votiMio>0?`${p.info.votata.votiMio} voti tuoi · leader: ${p.info.votata.votiLeader} · ${p.info.votata.settVinte} sett. · ${p.info.votata.mesiVinti} mes${p.info.votata.mesiVinti===1?'e':'i'} vinti`:`Nessuna figurina tua al voto · ${p.info.votata.settVinte} sett. · ${p.info.votata.mesiVinti} mes${p.info.votata.mesiVinti===1?'e':'i'} vinti`},
     {ic:'⚖️',nome:'Il Giurato — Vota i sondaggi',rule:'+5 per ogni voto espresso nel sondaggio',pts:p.parts.giurato,prog:`${p.info.giurato.voti} voti espressi`},
     {ic:'⛔',nome:'Penalità — Giochi ma non lavori',rule:'−100 per ogni giorno in cui giochi al Torneo ma NON compili il diario di bordo',pts:p.parts.penalita,prog:`${p.info.penalita.giorni} giorni senza diario`},
   ];

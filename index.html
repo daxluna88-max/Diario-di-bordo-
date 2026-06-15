@@ -634,7 +634,7 @@ body{padding:.8rem .3rem 3rem;}
           ⛽ <strong>Rifornimento</strong>: +30 pt a settimana (registri il pieno a tuo nome)<br>
           📡 <strong>Messaggi</strong>: +10 pt per messaggio letto entro 12 ore<br>
           📸 <strong>Figurine</strong>: max 2/giorno · +25/sett. (2 fig. × 5 gg) · +100/mese costante<br>
-          🧰 <strong>Scrigni</strong>: trovali in classifica · +30 pt · +1 slot figurina extra (usalo subito!)<br>
+          🧰 <strong>Scrigni</strong>: trovali in classifica · +30 pt · +1 slot figurina extra (valido finché non lo usi)<br>
           ⭐ <strong>Sondaggi</strong>: +10 pt per ogni voto ricevuto sulla tua figurina · +50 sett. · +100 mese
         </div>
         <p style="margin-top:.7rem;font-size:.8rem;color:var(--red)">⛔ Attenzione: se giochi ma non compili il diario di bordo, perdi 100 punti al giorno.</p>
@@ -2661,7 +2661,7 @@ async function openChest(name){
   gameBonusFig[key]=(gameBonusFig[key]||0)+1;
   await sv.gameChestsOpened();await sv.gameBonusFig();
   renderTorneoDash();
-  alert('🎁 Scrigno aperto! +30 punti e 1 slot figurina bonus sbloccato 🐚\nCarica una 3ª figurina oggi per usare il bonus!');
+  alert('🎁 Scrigno aperto! +30 punti e 1 slot figurina bonus sbloccato 🐚\nPuoi caricare una 3ª figurina quando vuoi — il bonus rimane finché non lo usi!');
 }
 // Decorazioni marine che variano nel corso della competizione (per settimana)
 function tdDecorations(){
@@ -3100,7 +3100,7 @@ function renderMissioni(){
     {ic:'📸',nome:'Fotografo / Regista — Figurine',rule:'+25 a settimana (2 figurine/giorno × 5 gg) · +100 al mese costante (≥20 gg/mese)',pts:p.parts.figurine,prog:`${p.info.figurine.caricate} caricate · ${p.info.figurine.fotografoWeeks} sett. Fotografo · ${p.info.figurine.registaMonths} mesi Regista`},
     {ic:'⭐',nome:'Figurina più Votata — Sondaggio',rule:'+10 per ogni voto ricevuto · +50 a settimana · +100 a fine mese',pts:p.parts.votata,prog:p.info.votata.stoIlPrimo?`🏆 Sei in testa con ${p.info.votata.votiMio} voti! · ${p.info.votata.votiRicevuti} voti tot. (${p.info.votata.settVinte} sett. · ${p.info.votata.mesiVinti} mes${p.info.votata.mesiVinti===1?'e':'i'} vinti)`:p.info.votata.votiRicevuti>0?`${p.info.votata.votiRicevuti} voti ricevuti · leader mese: ${p.info.votata.votiLeader} · ${p.info.votata.settVinte} sett. · ${p.info.votata.mesiVinti} mes${p.info.votata.mesiVinti===1?'e':'i'} vinti`:`Nessuna figurina tua al voto ancora`},
     {ic:'⚖️',nome:'Il Giurato — Vota i sondaggi',rule:'Vota le figurine — i punti vanno a chi riceve voti (+10 a voto ricevuto)',pts:p.parts.giurato,prog:`${p.info.giurato.voti} voti espressi`},
-    {ic:'🧰',nome:'Scrigni — Bonus segreti',rule:'+30 pt per ogni scrigno aperto · sblocca 1 slot figurina extra per oggi',pts:p.parts.scrigno,prog:`${p.info.scrigno.scrigni} scrigni aperti · ${p.info.scrigno.bonus} bonus figurina disponibil${p.info.scrigno.bonus===1?'e':'i'}`},
+    {ic:'🧰',nome:'Scrigni — Bonus segreti',rule:'+30 pt per ogni scrigno aperto · sblocca 1 slot figurina extra (valido finché non lo usi)',pts:p.parts.scrigno,prog:`${p.info.scrigno.scrigni} scrigni aperti · ${p.info.scrigno.bonus} bonus figurina disponibil${p.info.scrigno.bonus===1?'e':'i'}`},
     {ic:'⛔',nome:'Penalità — Giochi ma non lavori',rule:'−100 per ogni giorno in cui giochi al Torneo ma NON compili il diario di bordo',pts:p.parts.penalita,prog:`${p.info.penalita.giorni} giorni senza diario`},
   ];
   if(p.parts&&p.parts.manuale)missions.push({ic:'✏️',nome:'Correzione Super Admin',rule:'Aggiustamento punti applicato dalla direzione',pts:p.parts.manuale,prog:'Correzione manuale'});
@@ -3123,7 +3123,7 @@ function renderMissioni(){
         ⛔ <strong>−100 punti</strong> per ogni giorno in cui accedi e giochi al Torneo ma <strong>non compili il diario di bordo</strong>: il gioco premia chi usa l'app per lavorare, non solo per giocare.<br><br>
         🎨 <strong>Come creare le figurine:</strong> scarica ChatGPT, scrivi un prompt e incolla il viso di uno dei partecipanti al Torneo. Carica poi la figurina nella sezione dedicata (verrà compressa in .webp con il tuo nome stampato sopra).<br><br>
         🏅 <strong>Figurine premio:</strong> vengono assegnate <strong>in automatico</strong> ai vincitori (Re del Rifornimento, figurina più votata settimanale +50 · mensile +100, ecc.) a fine periodo.<br><br>
-        🧰 <strong>Scrigni:</strong> durante il percorso troverai degli scrigni. Aprirli vale <strong>+30 pt</strong> e sblocca <strong>1 slot figurina extra</strong> per quel giorno (normalmente il limite è 2 figurine/giorno; con il bonus puoi caricarne 3). Una volta usato il bonus caricando la 3ª figurina, ritorni al limite di 2.
+        🧰 <strong>Scrigni:</strong> durante il percorso troverai degli scrigni. Aprirli vale <strong>+30 pt</strong> e sblocca <strong>1 slot figurina extra</strong> (normalmente il limite è 2 figurine/giorno; con il bonus puoi caricarne 3). Il bonus rimane disponibile finché non carichi la 3ª figurina, dopodiché ritorni al limite di 2.
       </div>
     </div>`;
 }

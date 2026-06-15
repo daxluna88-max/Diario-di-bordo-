@@ -5436,13 +5436,27 @@ function renderTessereAutistaSection(){
 }
 
 function exportTessereCSV(){
-  if(!tessereMovimenti.length){alert('Nessun dato tessere');return;}
-  const rows=tessereMovimenti.map(m=>{
-    const t=tessereList.find(x=>x.id===m.tesseraId);
-    return[m.data?m.data.slice(0,10):'',t?t.nome:'—',t?t.tipo.toUpperCase():'',t?t.fornitore||'—':'',m.tipo.toUpperCase(),
-      (m.tipo==='ricarica'||m.tipo==='saldo')?(m.importo||0).toFixed(2):'',m.tipo==='scarico'?m.litri:'',m.tipo==='scarico'?m.costo.toFixed(2):'',m.barca||'',m.autore||'',m.note||''].join('\t');
+  if(!tessereList.length){alert('Nessun dato tessere');return;}
+  const header='\uFEFFTessera\tTipo carb.\tFornitore\tSaldo attuale \u20ac\tData\tMovimento\tImporto \u20ac\tLitri\tCosto \u20ac\tBarca\tAutore\tNote';
+  const rows=[];
+  tessereList.forEach(t=>{
+    const movs=tessereMovimenti.filter(m=>m.tesseraId===t.id).sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+    const saldo=computeTesseraSaldo(tessereMovimenti.filter(m=>m.tesseraId===t.id));
+    if(!movs.length){
+      rows.push([t.nome,t.tipo.toUpperCase(),t.fornitore||'',saldo.toFixed(2),'','—','','','','','',''].join('\t'));
+    }else{
+      movs.forEach((m,i)=>{
+        rows.push([
+          i===0?t.nome:'',i===0?t.tipo.toUpperCase():'',i===0?t.fornitore||'':'',i===0?saldo.toFixed(2):'',
+          m.data?m.data.slice(0,10):'',m.tipo.toUpperCase(),
+          (m.tipo==='ricarica'||m.tipo==='saldo')?(m.importo||0).toFixed(2):'',
+          m.tipo==='scarico'?m.litri:'',m.tipo==='scarico'?m.costo.toFixed(2):'',
+          m.barca||'',m.autore||'',m.note||''
+        ].join('\t'));
+      });
+    }
   });
-  downloadCSV('\uFEFFData\tTessera\tTipo carb.\tFornitore\tMovimento\tRicarica/Saldo €\tLitri\tCosto €\tBarca\tAutore\tNote\n'+rows.join('\n'),'Tessere Prepagate CCB');
+  downloadCSV(header+'\n'+rows.join('\n'),'Tessere Prepagate CCB');
 }
 
 // =============================================

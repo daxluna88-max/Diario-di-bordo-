@@ -4522,7 +4522,7 @@ function exportCisternaDiesel(){
   mesi.forEach(m=>{
     const d=stor.filter(s=>(s.data||'').startsWith(m)).sort((a,b)=>a.data.localeCompare(b.data));
     const rows=[['Data','Tipo','Barca','Litri','Livello dopo (L)','Note']];
-    d.forEach(s=>rows.push([s.data,s.tipo==='carico'?'CARICO':'SCARICO',s.barca||'',Number(s.litri)||0,Number((s.livelloAfter||0).toFixed(0)),s.nota||''']));
+    d.forEach(s=>rows.push([s.data,s.tipo==='carico'?'CARICO':'SCARICO',s.barca||'',Number(s.litri)||0,Number((s.livelloAfter||0).toFixed(0)),s.nota||'']));
     const ws=XLSX.utils.aoa_to_sheet(rows);
     ws['!cols']=[{wch:11},{wch:9},{wch:22},{wch:8},{wch:15},{wch:30}];
     XLSX.utils.book_append_sheet(wb,ws,_ml(m).substring(0,31));
@@ -4538,7 +4538,7 @@ function exportBenzinaDiesel(){
   mesi.forEach(m=>{
     const d=[...fuelRecords.filter(r=>(r.data||'').startsWith(m))].sort((a,b)=>new Date(a.data)-new Date(b.data));
     const rows=[['Data','Ora','Barca','Tipo','Litri','Fornitore','Autista','Note']];
-    d.forEach(r=>rows.push([r.data?r.data.slice(0,10):'',r.data&&r.data.includes('T')?r.data.slice(11,16):'',r.barca||'',r.tipo.toUpperCase(),Number(r.litri)||0,r.fornitori||'',r.autista||'',r.note||''']));
+    d.forEach(r=>rows.push([r.data?r.data.slice(0,10):'',r.data&&r.data.includes('T')?r.data.slice(11,16):'',r.barca||'',r.tipo.toUpperCase(),Number(r.litri)||0,r.fornitori||'',r.autista||'',r.note||'']));
     const ws=XLSX.utils.aoa_to_sheet(rows);
     ws['!cols']=[{wch:11},{wch:6},{wch:22},{wch:9},{wch:7},{wch:20},{wch:18},{wch:24}];
     XLSX.utils.book_append_sheet(wb,ws,_ml(m).substring(0,31));

@@ -418,23 +418,23 @@ body{padding:.8rem .3rem 3rem;}
 @keyframes attendiPulse{
   0%,100%{opacity:1;}50%{opacity:.5;}
 }
-/* ===== OVERLAY AGGIORNAMENTO ===== */
+/* ===== BANNER AGGIORNAMENTO ===== */
 #update-overlay{
-  position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:10000;
-  background:rgba(13,59,102,0.96);
-  display:none;flex-direction:column;align-items:center;justify-content:center;
-  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  position:fixed;top:0;left:0;right:0;z-index:10000;
+  background:#0d3b66;
+  display:none;flex-direction:row;align-items:center;justify-content:center;gap:.7rem;
+  padding:.6rem 1rem;box-shadow:0 2px 8px rgba(0,0,0,.25);
 }
-#update-overlay .upd-icon{font-size:3.5rem;animation:updSpin 1.2s linear infinite;}
+#update-overlay .upd-icon{font-size:1.1rem;}
 #update-overlay .upd-label{
-  font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:700;
-  color:#fff;letter-spacing:.1em;margin-top:.8rem;text-align:center;
+  font-family:'Source Sans 3',sans-serif;font-size:.88rem;font-weight:600;
+  color:#fff;
 }
-#update-overlay .upd-sub{
-  font-family:'Source Sans 3',sans-serif;font-size:.85rem;
-  color:rgba(255,255,255,.7);margin-top:.5rem;text-align:center;
+#update-overlay .upd-btn{
+  font-family:'Source Sans 3',sans-serif;font-size:.82rem;font-weight:700;
+  background:#fff;color:#0d3b66;border:none;border-radius:6px;
+  padding:.3rem .8rem;cursor:pointer;white-space:nowrap;
 }
-@keyframes updSpin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
 /* Pagina welcome gioco: scrollabile, contenuto allineato in alto */
 #pageGameWelcome{overflow-y:auto;overflow-x:hidden;justify-content:flex-start;max-height:82vh;padding-bottom:3rem;}
 </style>
@@ -447,11 +447,11 @@ body{padding:.8rem .3rem 3rem;}
   <div class="att-label">ATTENDI STO CARICANDO</div>
   <div class="att-sub">Salvataggio in corso…</div>
 </div>
-<!-- OVERLAY AGGIORNAMENTO APP -->
+<!-- BANNER AGGIORNAMENTO APP -->
 <div id="update-overlay" style="display:none">
   <div class="upd-icon">🔄</div>
-  <div class="upd-label">AGGIORNAMENTO</div>
-  <div class="upd-sub">L'app è stata aggiornata.<br>Ricarico la pagina in pochi secondi…</div>
+  <div class="upd-label">Aggiornamento disponibile</div>
+  <button class="upd-btn" onclick="location.reload(true)">Ricarica ora</button>
 </div>
 
 <div class="book">
@@ -1792,7 +1792,6 @@ function showUpdateOverlay(){
   const ov=document.getElementById('update-overlay');
   if(!ov)return;
   ov.style.display='flex';
-  setTimeout(()=>location.reload(true),4000);
 }
 async function saBumpAppVersion(){
   const v=Date.now().toString();

@@ -556,7 +556,7 @@ body{padding:.8rem .3rem 3rem;}
         <!-- Riga: Figurine + Classifica -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:.55rem">
           <button id="gameFigurineBtn" onclick="openMyFigurineModal()" style="display:flex;flex-direction:column;align-items:center;gap:.3rem;padding:.75rem .5rem;background:linear-gradient(135deg,#1a6ca8,#0d3b66);color:#fff;border:none;border-radius:12px;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:.9rem;font-weight:600;box-shadow:0 3px 10px rgba(13,59,102,.25)">
-            <span style="font-size:1.6rem">📸</span>Le mie Figurine
+            <span style="font-size:1.6rem">📸</span>Le mie Figurine<span id="figBtnCount" style="font-size:.72rem;opacity:.8;font-weight:400;margin-top:-.1rem"></span>
           </button>
           <button id="gameClassificaBtn" onclick="openClassificaModal()" style="display:flex;flex-direction:column;align-items:center;gap:.3rem;padding:.75rem .5rem;background:#eef5ff;color:#0d3b66;border:1.5px solid #ccd9ee;border-radius:12px;cursor:pointer;font-family:'Source Sans 3',sans-serif;font-size:.9rem;font-weight:600">
             <span style="font-size:1.6rem">📊</span>Classifica
@@ -3255,6 +3255,7 @@ function renderMyFigurine(){
   const _statusEl=document.getElementById('figDayLimit');
   if(_statusEl)_statusEl.innerHTML=_rimaste===0?'<span style="color:var(--red);font-weight:600">Limite giornaliero raggiunto'+(_bonus>0?' (bonus usato)':'')+'</span>':_bonus>0?`<span style="color:var(--green);font-weight:600">🎁 Bonus attivo! Puoi caricare ${_rimaste} figurin${_rimaste===1?'a':'e'} oggi (slot bonus: 1)</span>`:`<span style="color:var(--ink-faded)">${_rimaste} slot rimast${_rimaste===1?'o':'i'} oggi su 2</span>`;
   const mine=gameFigurine.filter(f=>f.owner&&f.owner.toLowerCase()===me);
+  const _fc=document.getElementById('figBtnCount');if(_fc)_fc.textContent=mine.length?'('+mine.length+')':'';
   if(!mine.length){c.innerHTML='<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded);text-align:center;padding:.8rem 0">Nessuna figurina caricata.</p>';return;}
   c.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.7rem">'+mine.map(f=>`
     <div style="border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fafaf8">

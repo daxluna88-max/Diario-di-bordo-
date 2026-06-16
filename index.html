@@ -650,7 +650,7 @@ body{padding:.8rem .3rem 3rem;}
     <div class="att-md" style="border-color:#0d3b66;max-width:560px">
       <div class="att-mh" style="background:#0d3b66">⚖️ Sondaggi — Vota la figurina</div>
       <div class="att-mb">
-        <p style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);line-height:1.55;margin-bottom:.7rem">Vota la figurina più simpatica. Chi riceve voti guadagna <strong>+10 pt a voto</strong>. La figurina più votata della settimana vale <strong>+50</strong> e quella del mese vale <strong>+100</strong> + una figurina omaggio. Si vota solo le figurine approvate dal Super Admin.</p>
+        <p style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);line-height:1.55;margin-bottom:.7rem">Vota la figurina più simpatica. Chi riceve voti guadagna <strong>+10 pt a voto</strong>. La figurina più votata della settimana vale <strong>+50</strong> e quella del mese vale <strong>+100</strong> + una figurina omaggio. Si vota solo le figurine approvate dal Super Admin. Le figurine restano in gara per <strong>15 giorni</strong> dall'approvazione.</p>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.9rem">
           <button class="bh" onclick="closeSondaggiModal();openMyFigurineModal()">📤 Carica figurina</button>
           <button class="bh" onclick="closeSondaggiModal();openMyFigurineModal()">📥 Le mie figurine</button>
@@ -830,7 +830,7 @@ body{padding:.8rem .3rem 3rem;}
       <div class="field"><label class="fl">Barca</label><select id="fMezzo" onchange="updateTessereBarcaForm(this.value)"><option value="">— seleziona —</option></select></div>
       <div class="field"><label class="fl">Data</label><input type="date" id="fData"></div>
       <div class="fr">
-        <div class="field"><label class="fl">Ore motore</label><div style="display:flex;align-items:center;gap:.6rem"><input type="number" id="fOre" placeholder="es. 8.5" step="0.5" min="0" style="flex:1;min-width:0"><span id="fOreUltima" style="font-size:.78rem;color:#bbb;white-space:nowrap;font-family:'Source Sans 3',sans-serif"></span></div><div style="font-size:.72rem;color:#bbb;margin-top:.15rem;font-family:'Source Sans 3',sans-serif">Per 2 motori: usa il motore con più ore · inserire le ore per esteso (es. 447)</div></div>
+        <div class="field"><label class="fl">Ore motore</label><div style="display:flex;align-items:center;gap:.6rem"><input type="number" id="fOre" placeholder="es. 8.5" step="0.5" min="0" style="flex:1;min-width:0"><span id="fOreUltima" style="font-size:.78rem;color:#bbb;white-space:nowrap;font-family:'Source Sans 3',sans-serif"></span></div><div style="font-size:.72rem;color:#bbb;margin-top:.15rem;font-family:'Source Sans 3',sans-serif">Per 2 motori: usa il motore con più ore</div></div>
         <div class="field"><label class="fl">Autista</label><input type="text" id="fAutista" placeholder="Nome cognome"></div>
       </div>
       <div class="field">
@@ -3261,6 +3261,7 @@ function renderMyFigurine(){
       <img src="${f.url}" alt="figurina" loading="lazy" style="width:100%;height:120px;object-fit:cover;display:block">
       <div style="padding:.45rem .5rem">
         <div style="margin-bottom:.35rem">${statusBadgeFigurina(f.status)}</div>
+        ${f.status==='approved'?`<div style="font-size:.72rem;color:var(--blue);margin-bottom:.2rem">🗳️ ${votesForFigurina(f.id)} vot${votesForFigurina(f.id)===1?'o':'i'} ricevut${votesForFigurina(f.id)===1?'o':'i'}</div>`:''}
         ${f.caption?`<div style="font-size:.74rem;color:var(--ink);margin-bottom:.35rem">${escHtml(f.caption)}</div>`:''}
         ${f.status==='rejected'&&f.rejectReason?`<div style="font-size:.68rem;color:var(--red);margin-bottom:.35rem">Motivo: ${escHtml(f.rejectReason)}</div>`:''}
         <div style="display:flex;gap:.35rem;flex-wrap:wrap">

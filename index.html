@@ -4109,12 +4109,12 @@ async function submitForm(){
   const _tbRicVal=document.getElementById('fTesseraRic')?.value;
   let _tbRic=_tbRicVal?parseInt(_tbRicVal):null;
   let _tbMila2=_tbMila,_tbCC2=_tbCC,_tbMilaSer2=_tbMilaSer,_tbCCSer2=_tbCCSer;
-  if(isTestBarca(mezzo)){_tbMila2=false;_tbCC2=false;_tbMilaSer2='';_tbCCSer2='';_tbRic=null;}
+  if(isTestBarca(mezzo)&&!(currentUser&&currentUser.isSA)){_tbMila2=false;_tbCC2=false;_tbMilaSer2='';_tbCCSer2='';_tbRic=null;}
   const _newRec={id:Date.now(),mezzo,data,autista:document.getElementById('fAutista').value.trim(),ore:document.getElementById('fOre').value||'',intervento:document.getElementById('fIntervento').value.trim(),note:document.getElementById('fNote').value.trim(),foto:fotoUrls,pdf:pdfUrls,salvato:new Date().toISOString(),dotazioni:{prosecco:chkState.Prosecco,bicchieri:chkState.Bicchieri,acqua:chkState.Acqua,carburante:fuelLvlState},tessere:{mila:_tbMila2,cc:_tbCC2,ric:_tbRic,milaSer:_tbMilaSer2,ccSer:_tbCCSer2}};
   await saveRecordsVerified(_newRec);
   await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'save',`Registrazione "${mezzo}" del ${data}`);
   const _prevTB=tessereBarca[mezzo]||{mila:false,cc:false,ric:null,milaSer:'',ccSer:''};
-  if(!isTestBarca(mezzo)&&(_prevTB.mila!==_tbMila2||_prevTB.cc!==_tbCC2||_prevTB.ric!==_tbRic||(_prevTB.milaSer||'')!==_tbMilaSer2||(_prevTB.ccSer||'')!==_tbCCSer2)){
+  if((!isTestBarca(mezzo)||(currentUser&&currentUser.isSA))&&(_prevTB.mila!==_tbMila2||_prevTB.cc!==_tbCC2||_prevTB.ric!==_tbRic||(_prevTB.milaSer||'')!==_tbMilaSer2||(_prevTB.ccSer||'')!==_tbCCSer2)){
     const _logE={ts:new Date().toISOString(),autista:document.getElementById('fAutista').value.trim()||currentUser.name,barca:mezzo,from:Object.assign({},_prevTB),to:{mila:_tbMila2,cc:_tbCC2,ric:_tbRic,milaSer:_tbMilaSer2,ccSer:_tbCCSer2}};
     // Esclusività per seriale: rimuovi solo se stesso seriale (stessa tessera fisica)
     Object.keys(tessereBarca).forEach(b=>{
@@ -4366,7 +4366,7 @@ function selectFuel(type,el){
 
 function updateTessereBarcaForm(barca){
   const _sec=document.getElementById('tessereBarcaSection');
-  if(_sec)_sec.style.display=isTestBarca(barca)?'none':'';
+  if(_sec)_sec.style.display=(isTestBarca(barca)&&!(currentUser&&currentUser.isSA))?'none':'';
   const state=tessereBarca[barca]||{mila:false,cc:false,ric:null,milaSer:'',ccSer:''};
   const mila=document.getElementById('fTesseraMila');
   const cc=document.getElementById('fTesseraCC');
@@ -4384,7 +4384,7 @@ function updateTessereBarcaForm(barca){
 }
 async function saveTesseraImmediato(){
   const barca=document.getElementById('fMezzo')?.value;if(!barca)return;
-  if(isTestBarca(barca)){return;}
+  if(isTestBarca(barca)&&!(currentUser&&currentUser.isSA)){return;}
   const mila=document.getElementById('fTesseraMila')?.checked||false;
   const cc=document.getElementById('fTesseraCC')?.checked||false;
   const milaSer=(document.getElementById('fTesseraMilaSer')?.value||'').trim();

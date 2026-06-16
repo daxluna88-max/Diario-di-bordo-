@@ -830,7 +830,7 @@ body{padding:.8rem .3rem 3rem;}
       <div class="field"><label class="fl">Barca</label><select id="fMezzo" onchange="updateTessereBarcaForm(this.value)"><option value="">— seleziona —</option></select></div>
       <div class="field"><label class="fl">Data</label><input type="date" id="fData"></div>
       <div class="fr">
-        <div class="field"><label class="fl">Ore motore</label><input type="number" id="fOre" placeholder="es. 8.5" step="0.5" min="0"></div>
+        <div class="field"><label class="fl">Ore motore</label><div style="display:flex;align-items:center;gap:.6rem"><input type="number" id="fOre" placeholder="es. 8.5" step="0.5" min="0" style="flex:1;min-width:0"><span id="fOreUltima" style="font-size:.78rem;color:#bbb;white-space:nowrap;font-family:'Source Sans 3',sans-serif"></span></div><div style="font-size:.72rem;color:#bbb;margin-top:.15rem;font-family:'Source Sans 3',sans-serif">Per 2 motori: usa il motore con più ore</div></div>
         <div class="field"><label class="fl">Autista</label><input type="text" id="fAutista" placeholder="Nome cognome"></div>
       </div>
       <div class="field">
@@ -4381,6 +4381,8 @@ function updateTessereBarcaForm(barca){
     ric.innerHTML='<option value="">— nessuna —</option>'+tessereList.map(t=>`<option value="${t.id}"${state.ric===t.id?' selected':''}>${escHtml(t.nome)} (${t.tipo.toUpperCase()})</option>`).join('');
     if(state.ric)ric.value=state.ric;
   }
+  const _ou=document.getElementById('fOreUltima');
+  if(_ou){const _lr=records.filter(r=>r.mezzo===barca&&r.ore&&parseFloat(r.ore)>0).sort((a,b)=>(b.data||'').localeCompare(a.data||''));_ou.textContent=_lr.length?'ultima: '+_lr[0].ore+'h':'';}
 }
 async function saveTesseraImmediato(){
   const barca=document.getElementById('fMezzo')?.value;if(!barca)return;

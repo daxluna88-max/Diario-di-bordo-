@@ -847,7 +847,7 @@ body{padding:.8rem .3rem 3rem;}
         <p style="font-family:'Source Sans 3',sans-serif;font-size:.73rem;color:var(--green);font-weight:600;margin-bottom:.6rem">✓ Basta spuntare — salvataggio automatico, non è necessario salvare</p>
         <div style="margin-bottom:.7rem">
           <label style="display:flex;align-items:center;gap:.65rem;cursor:pointer">
-            <input type="checkbox" id="fTesseraMila" onchange="if(!document.getElementById('fMezzo').value){this.checked=false;alert('Seleziona prima la barca');}else saveTesseraImmediato();" style="accent-color:var(--blue);width:17px;height:17px;flex-shrink:0;cursor:pointer">
+            <input type="checkbox" id="fTesseraMila" onchange="if(!document.getElementById('fMezzo').value){this.checked=false;alert('Seleziona prima la barca');}else if(!this.checked&&!confirm('Sei sicuro di voler togliere la Tessera Mila da questa barca?')){this.checked=true;}else saveTesseraImmediato();" style="accent-color:var(--blue);width:17px;height:17px;flex-shrink:0;cursor:pointer">
             <span style="font-family:'Source Sans 3',sans-serif;font-size:.9rem;color:var(--ink)">Tessera Mila</span>
           </label>
           <div style="margin-top:.35rem;padding-left:1.8rem">
@@ -856,7 +856,7 @@ body{padding:.8rem .3rem 3rem;}
         </div>
         <div style="margin-bottom:.6rem">
           <label style="display:flex;align-items:center;gap:.65rem;cursor:pointer">
-            <input type="checkbox" id="fTesseraCC" onchange="if(!document.getElementById('fMezzo').value){this.checked=false;alert('Seleziona prima la barca');}else saveTesseraImmediato();" style="accent-color:var(--blue);width:17px;height:17px;flex-shrink:0;cursor:pointer">
+            <input type="checkbox" id="fTesseraCC" onchange="if(!document.getElementById('fMezzo').value){this.checked=false;alert('Seleziona prima la barca');}else if(!this.checked&&!confirm('Sei sicuro di voler togliere la Carta di credito da questa barca?')){this.checked=true;}else saveTesseraImmediato();" style="accent-color:var(--blue);width:17px;height:17px;flex-shrink:0;cursor:pointer">
             <span style="font-family:'Source Sans 3',sans-serif;font-size:.9rem;color:var(--ink)">Carta di credito</span>
           </label>
           <div style="margin-top:.35rem;padding-left:1.8rem">
@@ -3750,7 +3750,7 @@ function dashDownloadCsv(section){
     filename='tessere_flotta.csv';
     const stateRows=Object.entries(tessereBarca).map(([b,s])=>{
       const ric=s.ric?(tessereList.find(t=>t.id===s.ric)?.nome||s.ric):'';
-      return[b,s.mila?'SI':'NO',s.milaSer||'',s.cc?'SI':'NO',s.ccSer||'',ric,'','','',''];
+      return[b,s.mila?'SI':'NO',s.mila?(s.milaSer||''):'',s.cc?'SI':'NO',s.cc?(s.ccSer||''):'',ric,'','','',''];
     });
     const logRows=[...tessereBarcaLog].sort((a,b)=>(b.ts||'').localeCompare(a.ts||'')).slice(0,200).map(e=>{
       const fmt=s=>[s.mila?'Mila':'',s.cc?'CC':'',s.ric?'Ric.':''].filter(Boolean).join('; ')||'';
@@ -5637,7 +5637,7 @@ function exportTessereCSV(){
   const barche=allMezzi.filter(m=>m);
   barche.forEach(b=>{
     const s=tessereBarca[b]||{};
-    s2.push([b,s.mila?'SI':'NO',s.milaSer||'',s.cc?'SI':'NO',s.ccSer||'',s.ric&&ricMap[s.ric]?ricMap[s.ric]:'—']);
+    s2.push([b,s.mila?'SI':'NO',s.mila?(s.milaSer||''):'',s.cc?'SI':'NO',s.cc?(s.ccSer||''):'',s.ric&&ricMap[s.ric]?ricMap[s.ric]:'—']);
   });
   if(!barche.length)s2.push(['— nessuna barca —']);
   const ws2=XLSX.utils.aoa_to_sheet(s2);

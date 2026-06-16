@@ -1825,6 +1825,10 @@ async function freshRecords(){
 async function freshFuelRecords(){
   try{const d=await dbGet('fleet-fuel-records');if(d&&Array.isArray(d))fuelRecords=d;}catch(e){}
 }
+// Fetch fresco dei dati di gioco prima di scrivere (evita sovrascritture tra utenti)
+async function freshGameVotes(){try{const d=await dbGet('game-votes');if(d&&Array.isArray(d))gameVotes=d;}catch(e){}}
+async function freshGameFigurine(){try{const d=await dbGet('game-figurine');if(d&&Array.isArray(d))gameFigurine=d;}catch(e){}}
+async function freshTessere(){try{const a=await dbGet('fleet-tessere-barca');if(a&&typeof a==='object')tessereBarca=a;const b=await dbGet('fleet-tessere-barca-log');if(b&&Array.isArray(b))tessereBarcaLog=b;}catch(e){}}
 // Refresh immediato quando l'utente torna sull'app (schermo sbloccato, cambio scheda, ecc.)
 document.addEventListener('visibilitychange',()=>{
   if(!document.hidden&&currentUser){
@@ -2462,11 +2466,19 @@ function closeSondaggiModal(){document.getElementById('gameSondaggiModal').class
     lb.removeEventListener('touchend',onTE);
   };
 })();
+var FIG_GIACENZA_DAYS=15;
+function figInGara(f,ref){
+  if(!f||f.status!=='approved')return false;
+  const appr=f.reviewedAt||f.uploadedAt;if(!appr)return true;
+  const a=new Date(appr).getTime();if(isNaN(a))return true;
+  const r=ref?new Date(ref).getTime():Date.now();
+  return (r-a)<=FIG_GIACENZA_DAYS*86400000;
+}
 function votesForFigurina(figId){return gameVotes.filter(v=>String(v.figurinaId)===String(figId)).length;}
 function renderSondaggi(){
   const c=document.getElementById('sondaggiContent');if(!c)return;
   const me=gameMyName();const meLow=(me||'').toLowerCase();
-  const approved=gameFigurine.filter(f=>f.status==='approved');
+  const approved=gameFigurine.filter(f=>f.status==='approved'&&figInGara(f));
   if(_gameDemo&&!approved.length){
     c.innerHTML='<p style="font-size:.78rem;color:var(--ink-faded);margin-bottom:.6rem">🎬 Esempio: ecco come appaiono le figurine al voto.</p>'
       +'<div style="display:flex;overflow-x:auto;gap:.7rem;padding:.4rem 0 .8rem;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;">'
@@ -2529,9 +2541,12 @@ function toggleVotedFolder(){
 async function castVote(figId){
   const me=gameMyName();if(!me){alert('Iscriviti al Torneo per votare.');return;}
   const fig=gameFigurine.find(f=>String(f.id)===String(figId));if(!fig||fig.status!=='approved')return;
+  if(!figInGara(fig)){alert('Questa figurina non è più in gara (scaduta dopo 15 giorni).');renderSondaggi();return;}
   if(fig.owner&&fig.owner.toLowerCase()===me.toLowerCase()){alert('Non puoi votare una tua figurina 😄');return;}
-  if(gameVotes.some(v=>v.voter&&v.voter.toLowerCase()===me.toLowerCase()&&String(v.figurinaId)===String(figId))){alert('Hai già votato questa figurina.');return;}
-  gameVotes.push({id:Date.now(),voter:me,figurinaId:figId,week:gameWeekKey(new Date()),ts:new Date().toISOString()});
+  const newVote={id:Date.now(),voter:me,figurinaId:figId,week:gameWeekKey(new Date()),ts:new Date().toISOString()};
+  await freshGameVotes();
+  if(gameVotes.some(v=>v.voter&&v.voter.toLowerCase()===me.toLowerCase()&&String(v.figurinaId)===String(figId))){alert('Hai già votato questa figurina.');renderSondaggi();return;}
+  gameVotes.push(newVote);
   await sv.gameVotes();
   renderSondaggi();
   alert('🗳️ Voto registrato! +10 punti all\'autore della figurina 🎉');
@@ -3046,16 +3061,19 @@ function computeGamePoints(name){
   const fotografoWeeks=Object.keys(weekFull).filter(wk=>weekFull[wk]>=5).length;
   const monthDays={};Object.keys(perDay).forEach(d=>{const mk=gameMonthKey(d);(monthDays[mk]=monthDays[mk]||new Set()).add(d);});
   const registaMonths=Object.keys(monthDays).filter(mk=>monthDays[mk].size>=20).length;
-  // Premio mensile: +100 al proprietario della figurina più votata del mese
+  // Voti validi solo nel periodo del Torneo
+  const votesInPeriod=gameVotes.filter(v=>gameInPeriod(v.ts));
+  const _curMonthKey=gameMonthKey(new Date());
+  // Premio mensile: +100 al proprietario della figurina più votata del mese (solo mesi conclusi)
   const votesByMonthFig={};
-  gameVotes.forEach(v=>{const mk=gameMonthKey(v.ts);if(!mk)return;(votesByMonthFig[mk]=votesByMonthFig[mk]||{});votesByMonthFig[mk][v.figurinaId]=(votesByMonthFig[mk][v.figurinaId]||0)+1;});
+  votesInPeriod.forEach(v=>{const mk=gameMonthKey(v.ts);if(!mk||mk===_curMonthKey)return;(votesByMonthFig[mk]=votesByMonthFig[mk]||{});votesByMonthFig[mk][v.figurinaId]=(votesByMonthFig[mk][v.figurinaId]||0)+1;});
   let premiVoti=0;
   Object.keys(votesByMonthFig).forEach(mk=>{const counts=votesByMonthFig[mk];let bestId=null,best=0;Object.keys(counts).forEach(fid=>{if(counts[fid]>best){best=counts[fid];bestId=fid;}});if(bestId!=null){const fig=gameFigurine.find(f=>String(f.id)===String(bestId));if(fig&&fig.owner&&fig.owner.toLowerCase()===key)premiVoti++;}});
   parts.figurine=fotografoWeeks*25+registaMonths*100;
   // --- Figurina più votata: +100 per ogni mese in cui la tua figurina ha vinto il sondaggio ---
-  const nowM2=gameMonthKey(new Date());
+  const nowM2=_curMonthKey;
   const nowMonthVotes={};
-  gameVotes.filter(v=>gameMonthKey(v.ts)===nowM2).forEach(v=>{nowMonthVotes[v.figurinaId]=(nowMonthVotes[v.figurinaId]||0)+1;});
+  votesInPeriod.filter(v=>gameMonthKey(v.ts)===nowM2).forEach(v=>{nowMonthVotes[v.figurinaId]=(nowMonthVotes[v.figurinaId]||0)+1;});
   const myApproved=gameFigurine.filter(f=>f.owner&&f.owner.toLowerCase()===key&&f.status==='approved');
   let myBestVotes=0;myApproved.forEach(f=>{myBestVotes=Math.max(myBestVotes,nowMonthVotes[String(f.id)]||0);});
   const allVoteCounts=Object.values(nowMonthVotes);
@@ -3063,12 +3081,12 @@ function computeGamePoints(name){
   const stoIlPrimo=leaderVotes>0&&myBestVotes>=leaderVotes;
   // Figurina più votata: calcolo settimanale (+50/settimana vinta)
   const votesByWeekFig={};
-  gameVotes.forEach(v=>{const wk=gameWeekKey(v.ts);if(!wk)return;(votesByWeekFig[wk]=votesByWeekFig[wk]||{});votesByWeekFig[wk][v.figurinaId]=(votesByWeekFig[wk][v.figurinaId]||0)+1;});
+  votesInPeriod.forEach(v=>{const wk=gameWeekKey(v.ts);if(!wk)return;(votesByWeekFig[wk]=votesByWeekFig[wk]||{});votesByWeekFig[wk][v.figurinaId]=(votesByWeekFig[wk][v.figurinaId]||0)+1;});
   let premiVotiSett=0;
   Object.keys(votesByWeekFig).forEach(wk=>{const counts=votesByWeekFig[wk];let bestId=null,best=0;Object.keys(counts).forEach(fid=>{if(counts[fid]>best){best=counts[fid];bestId=fid;}});if(bestId!=null){const fig=gameFigurine.find(f=>String(f.id)===String(bestId));if(fig&&fig.owner&&fig.owner.toLowerCase()===key)premiVotiSett++;}});
   // +10 per ogni voto ricevuto sulle mie figurine (in tutto il periodo)
   const myFigIds=new Set(myApproved.map(f=>String(f.id)));
-  const votiRicevuti=gameVotes.filter(v=>myFigIds.has(String(v.figurinaId))).length;
+  const votiRicevuti=votesInPeriod.filter(v=>myFigIds.has(String(v.figurinaId))).length;
   parts.votata=premiVoti*100+premiVotiSett*50+votiRicevuti*10;
   info.figurine={caricate:myFig.length,approvate:myApproved.length,fotografoWeeks,registaMonths};
   info.votata={mesiVinti:premiVoti,settVinte:premiVotiSett,votiRicevuti,votiMio:myBestVotes,votiLeader:leaderVotes,stoIlPrimo};
@@ -3083,8 +3101,8 @@ function computeGamePoints(name){
   parts.antenna=antennaCount*10;
   info.antenna={letti:Object.keys(reads).length,inTempo:antennaCount};
   // --- Il Giurato: +100/settimana con ≥75% figurine votate; +100/mese se ≥75% nel mese ---
-  const myVotes=gameVotes.filter(v=>v.voter&&v.voter.toLowerCase()===key);
-  const othersAppr=gameFigurine.filter(f=>f.status==='approved'&&!(f.owner&&f.owner.toLowerCase()===key));
+  const myVotes=votesInPeriod.filter(v=>v.voter&&v.voter.toLowerCase()===key);
+  const othersAppr=gameFigurine.filter(f=>f.status==='approved'&&figInGara(f)&&!(f.owner&&f.owner.toLowerCase()===key));
   const totalAvailG=othersAppr.length;
   const votedPerWeekG={};myVotes.forEach(v=>{const wk=gameWeekKey(v.ts);if(!wk)return;if(!votedPerWeekG[wk])votedPerWeekG[wk]=new Set();votedPerWeekG[wk].add(String(v.figurinaId));});
   const settGiurato=totalAvailG>0?Object.keys(votedPerWeekG).filter(wk=>votedPerWeekG[wk].size/totalAvailG>=0.75).length:0;
@@ -3121,7 +3139,7 @@ function renderMissioni(){
   // In anteprima senza iscrizione, mostra un esempio con numeri di esempio
   const demo=!me&&_gameDemo;
   const p=demo
-    ?{total:655,parts:{ore:90,rifornimento:60,antenna:40,figurine:75,votata:230,giurato:200,scrigno:60,penalita:0},info:{ore:{giorni:18,streaks:3,after12:0,serale:0},rifornimento:{rifornimenti:6,settimane:2},antenna:{inTempo:4,letti:5},figurine:{caricate:10,fotografoWeeks:3,registaMonths:0},votata:{mesiVinti:1,settVinte:3,votiRicevuti:8,votiMio:8,votiLeader:8,stoIlPrimo:true},giurato:{voti:12,settimane:2,mesi:1,totalAvail:8},scrigno:{scrigni:2,bonus:0},penalita:{giorni:0}}}
+    ?{total:755,parts:{ore:90,rifornimento:60,antenna:40,figurine:75,votata:230,giurato:200,scrigno:60,penalita:0,manuale:0},info:{ore:{giorni:18,streaks:3,after12:0,serale:0},rifornimento:{rifornimenti:6,settimane:2},antenna:{inTempo:4,letti:5},figurine:{caricate:10,fotografoWeeks:3,registaMonths:0},votata:{mesiVinti:1,settVinte:3,votiRicevuti:8,votiMio:8,votiLeader:8,stoIlPrimo:true},giurato:{voti:12,settimane:2,mesi:1,totalAvail:8},scrigno:{scrigni:2,bonus:0},penalita:{giorni:0}}}
     :computeGamePoints(me);
   const missions=[
     {ic:'⏱️',nome:'Ore Motore (Spacca Minuto)',rule:'+30 per giorno di registrazione · +30 ogni serie da 5 giorni · −50 per registrazione dopo le 12 · +20 spunta dotazioni completa',pts:p.parts.ore,prog:`${p.info.ore.giorni} giorni · ${p.info.ore.streaks} serie da 5 · ${p.info.ore.after12} dopo le 12 · ${p.info.ore.serale} dotazioni complete`},
@@ -3185,6 +3203,7 @@ async function uploadMyFigurina(e){
   if(!file)return;
   const me=gameMyName();
   if(!me){alert('Devi prima iscriverti al Torneo.');return;}
+  await freshGameFigurine();
   // Limite giornaliero: 2 figurine (3 se hai un bonus scrigno disponibile)
   const _today=new Date().toISOString().slice(0,10);
   const _meLow=me.toLowerCase();
@@ -3202,7 +3221,9 @@ async function uploadMyFigurina(e){
     if(!raw){alert('Caricamento non riuscito. Riprova.');return;}
     const url=gameWatermarkUrl(raw,me);
     const caption=document.getElementById('figCaption').value.trim().slice(0,60);
-    gameFigurine.unshift({id:Date.now(),owner:me,url,raw,status:'pending',caption,uploadedAt:new Date().toISOString()});
+    const _newFig={id:Date.now(),owner:me,url,raw,status:'pending',caption,uploadedAt:new Date().toISOString()};
+    await freshGameFigurine();
+    gameFigurine.unshift(_newFig);
     if(_usingBonus){gameBonusFig[_meLow]=_bonus-1;await sv.gameBonusFig();}
     await sv.gameFigurine();
     document.getElementById('figCaption').value='';
@@ -3229,7 +3250,9 @@ async function staffUploadFigurina(e){
     const raw=await uploadFigurinaCloudinary(file);
     if(!raw){alert('Caricamento non riuscito. Riprova.');return;}
     const url=gameWatermarkUrl(raw,owner);
-    gameFigurine.unshift({id:Date.now(),owner,url,raw,status:'approved',caption:'',uploadedAt:new Date().toISOString(),reviewedAt:new Date().toISOString(),reviewedBy:currentUser?currentUser.name:'Staff'});
+    const _newFig={id:Date.now(),owner,url,raw,status:'approved',caption:'',uploadedAt:new Date().toISOString(),reviewedAt:new Date().toISOString(),reviewedBy:currentUser?currentUser.name:'Staff'};
+    await freshGameFigurine();
+    gameFigurine.unshift(_newFig);
     await sv.gameFigurine();
     if(currentUser)addAudit(currentUser.name,currentUser.isSA?'superadmin':'admin','save','Figurina caricata dallo staff'+(assigned?' per '+assigned:''));
     renderFigurineQueue();
@@ -3262,6 +3285,7 @@ function renderMyFigurine(){
       <div style="padding:.45rem .5rem">
         <div style="margin-bottom:.35rem">${statusBadgeFigurina(f.status)}</div>
         ${f.status==='approved'?`<div style="font-size:.72rem;color:var(--blue);margin-bottom:.2rem">🗳️ ${votesForFigurina(f.id)} vot${votesForFigurina(f.id)===1?'o':'i'} ricevut${votesForFigurina(f.id)===1?'o':'i'}</div>`:''}
+        ${f.status==='approved'&&!figInGara(f)?`<div style="font-size:.68rem;color:var(--ink-faded);margin-bottom:.2rem">⏳ fuori gara (15 gg passati)</div>`:''}
         ${f.caption?`<div style="font-size:.74rem;color:var(--ink);margin-bottom:.35rem">${escHtml(f.caption)}</div>`:''}
         ${f.status==='rejected'&&f.rejectReason?`<div style="font-size:.68rem;color:var(--red);margin-bottom:.35rem">Motivo: ${escHtml(f.rejectReason)}</div>`:''}
         <div style="display:flex;gap:.35rem;flex-wrap:wrap">
@@ -3273,8 +3297,9 @@ function renderMyFigurine(){
 }
 async function deleteMyFigurina(id){
   const f=gameFigurine.find(x=>x.id===id);if(!f)return;
-  if(f.owner.toLowerCase()!==gameMyName().toLowerCase())return;
+  const _me=gameMyName();if(!_me||!f.owner||f.owner.toLowerCase()!==_me.toLowerCase())return;
   if(!confirm('Eliminare questa figurina?'))return;
+  await freshGameFigurine();
   gameFigurine=gameFigurine.filter(x=>x.id!==id);
   await sv.gameFigurine();
   renderMyFigurine();
@@ -3441,8 +3466,9 @@ async function toggleFigurinaPerm(name,val){
 }
 async function approveFigurina(id){
   if(!canApproveFigurine()){alert('Non hai i permessi per approvare le figurine.');return;}
-  const f=gameFigurine.find(x=>x.id===id);if(!f)return;
   const role=currentUser&&currentUser.isSA?'superadmin':'admin';
+  await freshGameFigurine();
+  const f=gameFigurine.find(x=>x.id===id);if(!f)return;
   f.status='approved';f.reviewedAt=new Date().toISOString();f.reviewedBy=currentUser?currentUser.name:'';f.rejectReason='';
   await sv.gameFigurine();
   if(currentUser)addAudit(currentUser.name,role,'save',`Figurina approvata (${f.owner})`);
@@ -3450,9 +3476,10 @@ async function approveFigurina(id){
 }
 async function rejectFigurina(id){
   if(!canApproveFigurine()){alert('Non hai i permessi per gestire le figurine.');return;}
-  const f=gameFigurine.find(x=>x.id===id);if(!f)return;
   const role=currentUser&&currentUser.isSA?'superadmin':'admin';
   const reason=prompt('Motivo del rifiuto (opzionale):','')||'';
+  await freshGameFigurine();
+  const f=gameFigurine.find(x=>x.id===id);if(!f)return;
   f.status='rejected';f.reviewedAt=new Date().toISOString();f.reviewedBy=currentUser?currentUser.name:'';f.rejectReason=reason.trim().slice(0,120);
   await sv.gameFigurine();
   if(currentUser)addAudit(currentUser.name,role,'delete',`Figurina rifiutata (${f.owner})`);
@@ -3603,9 +3630,9 @@ function _calcOreMotore(){
     if(isTestBarca(r.mezzo))return;
     const ore=parseFloat(r.ore);if(isNaN(ore)||ore<=0)return;
     const b=(r.mezzo||'—').trim()||'—';
-    (byBarca[b]=byBarca[b]||[]).push({data:r.data||'',autista:(r.autista||'—').trim()||'—',ore});
+    (byBarca[b]=byBarca[b]||[]).push({data:r.data||'',autista:(r.autista||'—').trim()||'—',ore,salvato:r.salvato||''});
   });
-  Object.values(byBarca).forEach(arr=>arr.sort((a,b)=>a.data.localeCompare(b.data)));
+  Object.values(byBarca).forEach(arr=>arr.sort((a,b)=>{const c=String(a.data).localeCompare(String(b.data));return c!==0?c:String(a.salvato).localeCompare(String(b.salvato));}));
   const byAutista={},byBarcaTot={};let totale=0;
   Object.entries(byBarca).forEach(([barca,arr])=>{
     for(let i=0;i<arr.length-1;i++){
@@ -4162,7 +4189,7 @@ function filtered(){const fm=document.getElementById('filterMezzo').value,fme=do
 function populateDashFilters(){const b=myRecs();const mz=[...new Set(b.map(r=>r.mezzo))].sort();const ms=[...new Set(b.map(r=>r.data.slice(0,7)))].sort().reverse();document.getElementById('filterMezzo').innerHTML='<option value="">Tutti i mezzi</option>'+mz.map(m=>`<option>${m}</option>`).join('');document.getElementById('filterMese').innerHTML='<option value="">Tutti i mesi</option>'+ms.map(m=>{const[y,mo]=m.split('-');const l=new Date(+y,+mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return`<option value="${m}">${l.charAt(0).toUpperCase()+l.slice(1)}</option>`;}).join('');}
 function renderDash(){
   const data=filtered();document.getElementById('statReg').textContent=data.length;
-  const _ob={};data.forEach(r=>{const o=parseFloat(r.ore);if(isNaN(o)||o<=0)return;const b=(r.mezzo||'—').trim()||'—';(_ob[b]=_ob[b]||[]).push({data:r.data||'',ore:o});});let _to=0;Object.values(_ob).forEach(arr=>{arr.sort((a,b)=>a.data.localeCompare(b.data));for(let i=0;i<arr.length-1;i++){const d=arr[i+1].ore-arr[i].ore;if(d>0&&d<=200)_to+=d;}});
+  const _ob={};data.forEach(r=>{const o=parseFloat(r.ore);if(isNaN(o)||o<=0)return;const b=(r.mezzo||'—').trim()||'—';(_ob[b]=_ob[b]||[]).push({data:r.data||'',ore:o,salvato:r.salvato||''});});let _to=0;Object.values(_ob).forEach(arr=>{arr.sort((a,b)=>{const c=String(a.data).localeCompare(String(b.data));return c!==0?c:String(a.salvato).localeCompare(String(b.salvato));});for(let i=0;i<arr.length-1;i++){const d=arr[i+1].ore-arr[i].ore;if(d>0&&d<=200)_to+=d;}});
   document.getElementById('statOre').textContent=_to>0?_to.toFixed(1):'0';
   const tb=document.getElementById('tableBody');
   if(!data.length){tb.innerHTML='<tr><td colspan="9" class="el">— nessuna registrazione —</td></tr>';return;}
@@ -4388,6 +4415,7 @@ function updateTessereBarcaForm(barca){
 async function saveTesseraImmediato(){
   const barca=document.getElementById('fMezzo')?.value;if(!barca)return;
   if(isTestBarca(barca)){return;}
+  await freshTessere();
   const mila=document.getElementById('fTesseraMila')?.checked||false;
   const cc=document.getElementById('fTesseraCC')?.checked||false;
   const milaSer=(document.getElementById('fTesseraMilaSer')?.value||'').trim();

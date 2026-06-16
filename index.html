@@ -2506,7 +2506,7 @@ function renderSondaggi(){
   const carousel=arr=>'<div style="display:flex;overflow-x:auto;gap:.7rem;padding:.4rem 0 .8rem;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;">'+arr.map(card).join('')+'</div>';
   // separa: da votare (non ancora votate da me e non mie) vs già votate da me
   const votate=list.filter(({f})=>haiVotato(f));
-  const daVotare=list.filter(({f})=>!haiVotato(f));
+  const daVotare=list.filter(({f})=>!haiVotato(f)&&!(f.owner&&f.owner.toLowerCase()===meLow));
   let html=`<div style="font-size:.72rem;color:var(--ink-faded);margin-bottom:.3rem;text-align:right">${daVotare.length} da votare · scorri ▶</div>`;
   html+=daVotare.length?carousel(daVotare):'<p style="font-style:italic;color:var(--ink-faded);text-align:center;padding:.8rem 0">Hai votato tutte le figurine disponibili! 🎉</p>';
   // cartella delle figurine già votate (collassabile)

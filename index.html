@@ -3599,6 +3599,7 @@ function _dotSummary(dot){
 function _calcOreMotore(){
   const byBarca={};
   records.forEach(r=>{
+    if(isTestBarca(r.mezzo))return;
     const ore=parseFloat(r.ore);if(isNaN(ore)||ore<=0)return;
     const b=(r.mezzo||'—').trim()||'—';
     (byBarca[b]=byBarca[b]||[]).push({data:r.data||'',autista:(r.autista||'—').trim()||'—',ore});
@@ -3618,6 +3619,7 @@ function _calcOreMotore(){
   });
   return {byBarca,byAutista,byBarcaTot,totale};
 }
+function isTestBarca(name){return String(name||'').toLowerCase().trim()==='barca fantasma';}
 function renderDashboard(){
   const el=document.getElementById('dashLastUpdate');
   if(el)el.textContent=new Date().toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
@@ -3629,12 +3631,13 @@ function renderDashboard(){
 }
 function renderDashKpis(){
   const el=document.getElementById('dashKpiStrip');if(!el)return;
-  const totLitri=fuelRecords.reduce((s,r)=>s+(parseFloat(r.litri)||0),0);
+  const _recs=records.filter(r=>!isTestBarca(r.mezzo)),_frecs=fuelRecords.filter(r=>!isTestBarca(r.barca));
+  const totLitri=_frecs.reduce((s,r)=>s+(parseFloat(r.litri)||0),0);
   const ore=_calcOreMotore().totale;
-  const barche=new Set([...records.map(r=>(r.mezzo||'').trim()).filter(Boolean),...fuelRecords.map(r=>(r.barca||'').trim()).filter(Boolean)]);
-  const autisti=new Set([...records.map(r=>(r.autista||'').trim()).filter(Boolean),...fuelRecords.map(r=>(r.autista||'').trim()).filter(Boolean)]);
+  const barche=new Set([..._recs.map(r=>(r.mezzo||'').trim()).filter(Boolean),..._frecs.map(r=>(r.barca||'').trim()).filter(Boolean)]);
+  const autisti=new Set([..._recs.map(r=>(r.autista||'').trim()).filter(Boolean),..._frecs.map(r=>(r.autista||'').trim()).filter(Boolean)]);
   const cards=[
-    {ico:'📋',val:records.length,lbl:'Registrazioni',c:'linear-gradient(135deg,#2d6a4f,#1a4f38)'},
+    {ico:'📋',val:_recs.length,lbl:'Registrazioni',c:'linear-gradient(135deg,#2d6a4f,#1a4f38)'},
     {ico:'⏱',val:_fmtH(Math.round(ore*10)/10),lbl:'Ore motore',c:'linear-gradient(135deg,#4a90b8,#2a6080)'},
     {ico:'⛽',val:Math.round(totLitri)+' L',lbl:'Carburante',c:'linear-gradient(135deg,#c8854a,#a0602a)'},
     {ico:'🚤',val:barche.size,lbl:'Barche',c:'linear-gradient(135deg,#7b4fa0,#5a3080)'},
@@ -3646,14 +3649,15 @@ function renderDashRegistrazioni(){
   const ch=document.getElementById('dashRegCharts');
   const el=document.getElementById('dashRegList');if(!el)return;
   if(ch){
-    const perBarca=_objToRows(_countBy(records,r=>(r.mezzo||'').trim()),8);
-    const perAutista=_objToRows(_countBy(records,r=>(r.autista||'').trim()),8);
-    const perMese=Object.entries(_countBy(records,r=>(r.data||'').slice(0,7))).sort((a,b)=>a[0].localeCompare(b[0])).slice(-6).map(([k,v])=>({label:_monthLabel(k),value:v}));
+    const _recs=records.filter(r=>!isTestBarca(r.mezzo));
+    const perBarca=_objToRows(_countBy(_recs,r=>(r.mezzo||'').trim()),8);
+    const perAutista=_objToRows(_countBy(_recs,r=>(r.autista||'').trim()),8);
+    const perMese=Object.entries(_countBy(_recs,r=>(r.data||'').slice(0,7))).sort((a,b)=>a[0].localeCompare(b[0])).slice(-6).map(([k,v])=>({label:_monthLabel(k),value:v}));
     ch.innerHTML=dashCard('🚤 Registrazioni per barca',dashBars(perBarca))+
       dashCard('👤 Registrazioni per autista',dashBars(perAutista))+
       dashCard('📅 Registrazioni per mese',dashBars(perMese));
   }
-  const sorted=[...records].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  const sorted=[...records].filter(r=>!isTestBarca(r.mezzo)).sort((a,b)=>(b.data||'').localeCompare(a.data||''));
   if(!sorted.length){el.innerHTML='<div class="dash-empty">Nessuna registrazione.</div>';return;}
   el.innerHTML='<div style="overflow-x:auto"><table class="audit-table"><thead><tr><th>Data</th><th>Autista</th><th>Barca</th><th>Ore</th><th>Intervento</th><th>Note</th><th>Dotaz.</th></tr></thead><tbody>'+
     sorted.map(r=>{
@@ -3665,16 +3669,17 @@ function renderDashRifornimenti(){
   const ch=document.getElementById('dashFuelCharts');
   const el=document.getElementById('dashFuelList');if(!el)return;
   if(ch){
-    const litriBarca=_objToRows(_sumBy(fuelRecords,r=>(r.barca||'').trim(),r=>parseFloat(r.litri)||0),8).map(r=>({label:r.label,value:Math.round(r.value)}));
-    const tipoMap=_sumBy(fuelRecords,r=>(r.tipo||'altro').trim().toLowerCase(),r=>parseFloat(r.litri)||0);
+    const _frecs=fuelRecords.filter(r=>!isTestBarca(r.barca));
+    const litriBarca=_objToRows(_sumBy(_frecs,r=>(r.barca||'').trim(),r=>parseFloat(r.litri)||0),8).map(r=>({label:r.label,value:Math.round(r.value)}));
+    const tipoMap=_sumBy(_frecs,r=>(r.tipo||'altro').trim().toLowerCase(),r=>parseFloat(r.litri)||0);
     const tipoColors={diesel:'#c8854a',benzina:'#4a90b8',elettrica:'#2d6a4f'};
     const segs=Object.entries(tipoMap).map(([k,v],i)=>({label:k.charAt(0).toUpperCase()+k.slice(1),value:Math.round(v),color:tipoColors[k]||DASH_PALETTE[i%DASH_PALETTE.length]}));
-    const perMese=Object.entries(_sumBy(fuelRecords,r=>(r.data||'').slice(0,7),r=>parseFloat(r.litri)||0)).sort((a,b)=>a[0].localeCompare(b[0])).slice(-6).map(([k,v])=>({label:_monthLabel(k),value:Math.round(v)}));
+    const perMese=Object.entries(_sumBy(_frecs,r=>(r.data||'').slice(0,7),r=>parseFloat(r.litri)||0)).sort((a,b)=>a[0].localeCompare(b[0])).slice(-6).map(([k,v])=>({label:_monthLabel(k),value:Math.round(v)}));
     ch.innerHTML=dashCard('🚤 Litri per barca',dashBars(litriBarca,{fmt:v=>v+' L'}))+
       dashCard('⛽ Litri per tipo',dashDonut(segs))+
       dashCard('📅 Litri per mese',dashBars(perMese,{fmt:v=>v+' L'}));
   }
-  const sorted=[...fuelRecords].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  const sorted=[...fuelRecords].filter(r=>!isTestBarca(r.barca)).sort((a,b)=>(b.data||'').localeCompare(a.data||''));
   if(!sorted.length){el.innerHTML='<div class="dash-empty">Nessun rifornimento.</div>';return;}
   el.innerHTML='<div style="overflow-x:auto"><table class="audit-table"><thead><tr><th>Data</th><th>Autista</th><th>Barca</th><th>Tipo</th><th>Litri</th><th>Fornitore</th><th>Note</th></tr></thead><tbody>'+
     sorted.map(r=>{
@@ -3701,7 +3706,7 @@ function renderDashOreMotore(){
 }
 function renderDashTessere(){
   const el=document.getElementById('dashTessereList');if(!el)return;
-  const barche=Object.keys(tessereBarca).sort();
+  const barche=Object.keys(tessereBarca).filter(b=>!isTestBarca(b)).sort();
   const chip=(on,txt,col)=>`<span class="dash-chip" style="background:${on?col:'var(--line-light)'};color:${on?'#fff':'var(--ink-faded)'}">${txt}</span>`;
   const stateHtml=barche.length?
     barche.map(b=>{
@@ -3727,12 +3732,12 @@ function dashDownloadCsv(section){
   let filename,csv;
   if(section==='registrazioni'){
     filename='registrazioni_flotta.csv';
-    const sorted=[...records].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+    const sorted=[...records].filter(r=>!isTestBarca(r.mezzo)).sort((a,b)=>(b.data||'').localeCompare(a.data||''));
     csv=toCsv(['Data','Autista','Barca','Ore motore','Intervento','Note','Dotazioni','Salvato'],
       sorted.map(r=>[r.data||'',r.autista||'',r.mezzo||'',r.ore||'',r.intervento||'',r.note||'',_dotSummary(r.dotazioni),r.salvato?new Date(r.salvato).toLocaleString('it-IT'):'']));
   }else if(section==='rifornimenti'){
     filename='rifornimenti_flotta.csv';
-    const sorted=[...fuelRecords].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+    const sorted=[...fuelRecords].filter(r=>!isTestBarca(r.barca)).sort((a,b)=>(b.data||'').localeCompare(a.data||''));
     csv=toCsv(['Data','Autista','Barca','Tipo','Litri','Fornitore','Note','Salvato'],
       sorted.map(r=>[r.data?r.data.slice(0,10):'',r.autista||'',r.barca||'',r.tipo||'',r.litri||'',r.fornitori||'',r.note||'',r.salvato?new Date(r.salvato).toLocaleString('it-IT'):'']));
   }else if(section==='ore'){
@@ -3748,7 +3753,7 @@ function dashDownloadCsv(section){
     csv=toCsv(['Autista','Barca','Data lettura precedente','Data lettura successiva','Ore (delta)'],rows);
   }else if(section==='tessere'){
     filename='tessere_flotta.csv';
-    const stateRows=Object.entries(tessereBarca).map(([b,s])=>{
+    const stateRows=Object.entries(tessereBarca).filter(([b])=>!isTestBarca(b)).map(([b,s])=>{
       const ric=s.ric?(tessereList.find(t=>t.id===s.ric)?.nome||s.ric):'';
       return[b,s.mila?'SI':'NO',s.mila?(s.milaSer||''):'',s.cc?'SI':'NO',s.cc?(s.ccSer||''):'',ric,'','','',''];
     });
@@ -4102,22 +4107,24 @@ async function submitForm(){
   const _tbMilaSer=(document.getElementById('fTesseraMilaSer')?.value||'').trim();
   const _tbCCSer=(document.getElementById('fTesseraCCSer')?.value||'').trim();
   const _tbRicVal=document.getElementById('fTesseraRic')?.value;
-  const _tbRic=_tbRicVal?parseInt(_tbRicVal):null;
-  const _newRec={id:Date.now(),mezzo,data,autista:document.getElementById('fAutista').value.trim(),ore:document.getElementById('fOre').value||'',intervento:document.getElementById('fIntervento').value.trim(),note:document.getElementById('fNote').value.trim(),foto:fotoUrls,pdf:pdfUrls,salvato:new Date().toISOString(),dotazioni:{prosecco:chkState.Prosecco,bicchieri:chkState.Bicchieri,acqua:chkState.Acqua,carburante:fuelLvlState},tessere:{mila:_tbMila,cc:_tbCC,ric:_tbRic,milaSer:_tbMilaSer,ccSer:_tbCCSer}};
+  let _tbRic=_tbRicVal?parseInt(_tbRicVal):null;
+  let _tbMila2=_tbMila,_tbCC2=_tbCC,_tbMilaSer2=_tbMilaSer,_tbCCSer2=_tbCCSer;
+  if(isTestBarca(mezzo)){_tbMila2=false;_tbCC2=false;_tbMilaSer2='';_tbCCSer2='';_tbRic=null;}
+  const _newRec={id:Date.now(),mezzo,data,autista:document.getElementById('fAutista').value.trim(),ore:document.getElementById('fOre').value||'',intervento:document.getElementById('fIntervento').value.trim(),note:document.getElementById('fNote').value.trim(),foto:fotoUrls,pdf:pdfUrls,salvato:new Date().toISOString(),dotazioni:{prosecco:chkState.Prosecco,bicchieri:chkState.Bicchieri,acqua:chkState.Acqua,carburante:fuelLvlState},tessere:{mila:_tbMila2,cc:_tbCC2,ric:_tbRic,milaSer:_tbMilaSer2,ccSer:_tbCCSer2}};
   await saveRecordsVerified(_newRec);
   await addAudit(currentUser.name,currentUser.isSA?'superadmin':(currentUser.isAdmin?'admin':'driver'),'save',`Registrazione "${mezzo}" del ${data}`);
   const _prevTB=tessereBarca[mezzo]||{mila:false,cc:false,ric:null,milaSer:'',ccSer:''};
-  if(_prevTB.mila!==_tbMila||_prevTB.cc!==_tbCC||_prevTB.ric!==_tbRic||(_prevTB.milaSer||'')!==_tbMilaSer||(_prevTB.ccSer||'')!==_tbCCSer){
-    const _logE={ts:new Date().toISOString(),autista:document.getElementById('fAutista').value.trim()||currentUser.name,barca:mezzo,from:Object.assign({},_prevTB),to:{mila:_tbMila,cc:_tbCC,ric:_tbRic,milaSer:_tbMilaSer,ccSer:_tbCCSer}};
-    // Esclusività per seriale: rimuovi solo se stesso seriale (stessa tessera fisica) o nessun seriale noto
+  if(!isTestBarca(mezzo)&&(_prevTB.mila!==_tbMila2||_prevTB.cc!==_tbCC2||_prevTB.ric!==_tbRic||(_prevTB.milaSer||'')!==_tbMilaSer2||(_prevTB.ccSer||'')!==_tbCCSer2)){
+    const _logE={ts:new Date().toISOString(),autista:document.getElementById('fAutista').value.trim()||currentUser.name,barca:mezzo,from:Object.assign({},_prevTB),to:{mila:_tbMila2,cc:_tbCC2,ric:_tbRic,milaSer:_tbMilaSer2,ccSer:_tbCCSer2}};
+    // Esclusività per seriale: rimuovi solo se stesso seriale (stessa tessera fisica)
     Object.keys(tessereBarca).forEach(b=>{
       if(b===mezzo)return;
       const s=tessereBarca[b];
-      if(_tbMila&&s.mila&&_tbMilaSer&&s.milaSer&&_tbMilaSer===s.milaSer){s.mila=false;s.milaSer='';}
-      if(_tbCC&&s.cc&&_tbCCSer&&s.ccSer&&_tbCCSer===s.ccSer){s.cc=false;s.ccSer='';}
+      if(_tbMila2&&s.mila&&_tbMilaSer2&&s.milaSer&&_tbMilaSer2===s.milaSer){s.mila=false;s.milaSer='';}
+      if(_tbCC2&&s.cc&&_tbCCSer2&&s.ccSer&&_tbCCSer2===s.ccSer){s.cc=false;s.ccSer='';}
       if(_tbRic&&s.ric===_tbRic)s.ric=null;
     });
-    tessereBarca[mezzo]={mila:_tbMila,cc:_tbCC,ric:_tbRic,milaSer:_tbMilaSer,ccSer:_tbCCSer};
+    tessereBarca[mezzo]={mila:_tbMila2,cc:_tbCC2,ric:_tbRic,milaSer:_tbMilaSer2,ccSer:_tbCCSer2};
     tessereBarcaLog.unshift(_logE);
     if(tessereBarcaLog.length>200)tessereBarcaLog=tessereBarcaLog.slice(0,200);
     await sv.tessereBarca();
@@ -4358,6 +4365,8 @@ function selectFuel(type,el){
 }
 
 function updateTessereBarcaForm(barca){
+  const _sec=document.getElementById('tessereBarcaSection');
+  if(_sec)_sec.style.display=isTestBarca(barca)?'none':'';
   const state=tessereBarca[barca]||{mila:false,cc:false,ric:null,milaSer:'',ccSer:''};
   const mila=document.getElementById('fTesseraMila');
   const cc=document.getElementById('fTesseraCC');
@@ -4375,6 +4384,7 @@ function updateTessereBarcaForm(barca){
 }
 async function saveTesseraImmediato(){
   const barca=document.getElementById('fMezzo')?.value;if(!barca)return;
+  if(isTestBarca(barca)){return;}
   const mila=document.getElementById('fTesseraMila')?.checked||false;
   const cc=document.getElementById('fTesseraCC')?.checked||false;
   const milaSer=(document.getElementById('fTesseraMilaSer')?.value||'').trim();
@@ -4600,7 +4610,7 @@ async function addCaricoCisterna(){
 // =============================================
 function exportCSV(){
   if(typeof XLSX==='undefined'){alert('Libreria XLSX non ancora caricata. Riprova tra qualche secondo.');return;}
-  const data=filtered();if(!data.length){alert('Nessun dato');return;}
+  const data=filtered().filter(r=>!isTestBarca(r.mezzo));if(!data.length){alert('Nessun dato');return;}
   const _ml=m=>{const[a,mo]=m.split('-');const n=new Date(a,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return n.charAt(0).toUpperCase()+n.slice(1);};
   const mesi=[...new Set(data.map(r=>(r.data||'').substring(0,7)).filter(Boolean))].sort();
   const wb=XLSX.utils.book_new();
@@ -4616,7 +4626,7 @@ function exportCSV(){
 }
 function exportCisternaDiesel(){
   if(typeof XLSX==='undefined'){alert('Libreria XLSX non ancora caricata. Riprova tra qualche secondo.');return;}
-  const stor=cisternaDiesel.storico||[];if(!stor.length){alert('Nessun dato cisterna');return;}
+  const stor=(cisternaDiesel.storico||[]).filter(s=>!isTestBarca(s.barca));if(!stor.length){alert('Nessun dato cisterna');return;}
   const _ml=m=>{const[a,mo]=m.split('-');const n=new Date(a,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return n.charAt(0).toUpperCase()+n.slice(1);};
   const mesi=[...new Set(stor.map(s=>(s.data||'').substring(0,7)).filter(Boolean))].sort();
   const wb=XLSX.utils.book_new();
@@ -4632,12 +4642,13 @@ function exportCisternaDiesel(){
 }
 function exportBenzinaDiesel(){
   if(typeof XLSX==='undefined'){alert('Libreria XLSX non ancora caricata. Riprova tra qualche secondo.');return;}
-  if(!fuelRecords.length){alert('Nessun dato');return;}
+  const _fr=fuelRecords.filter(r=>!isTestBarca(r.barca));
+  if(!_fr.length){alert('Nessun dato');return;}
   const _ml=m=>{const[a,mo]=m.split('-');const n=new Date(a,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return n.charAt(0).toUpperCase()+n.slice(1);};
-  const mesi=[...new Set(fuelRecords.map(r=>(r.data||'').substring(0,7)).filter(Boolean))].sort();
+  const mesi=[...new Set(_fr.map(r=>(r.data||'').substring(0,7)).filter(Boolean))].sort();
   const wb=XLSX.utils.book_new();
   mesi.forEach(m=>{
-    const d=[...fuelRecords.filter(r=>(r.data||'').startsWith(m))].sort((a,b)=>new Date(a.data)-new Date(b.data));
+    const d=[..._fr.filter(r=>(r.data||'').startsWith(m))].sort((a,b)=>new Date(a.data)-new Date(b.data));
     const rows=[['Data','Ora','Barca','Tipo','Litri','Fornitore','Autista','Note']];
     d.forEach(r=>rows.push([r.data?r.data.slice(0,10):'',r.data&&r.data.includes('T')?r.data.slice(11,16):'',r.barca||'',r.tipo.toUpperCase(),Number(r.litri)||0,r.fornitori||'',r.autista||'',r.note||'']));
     const ws=XLSX.utils.aoa_to_sheet(rows);
@@ -5343,7 +5354,7 @@ function exportManutenzioneCSV(){
 
 function exportAllDotazioniCSV(){
   if(typeof XLSX==='undefined'){alert('Libreria XLSX non ancora caricata. Riprova tra qualche secondo.');return;}
-  const mezzi=currentUser.isSA?allMezzi:getAdminMezzi();
+  const mezzi=(currentUser.isSA?allMezzi:getAdminMezzi()).filter(b=>!isTestBarca(b));
   let hasData=false;
   const wb=XLSX.utils.book_new();
   mezzi.forEach(barca=>{
@@ -5360,7 +5371,7 @@ function exportAllDotazioniCSV(){
 }
 function exportAllManutenzioneCSV(){
   if(typeof XLSX==='undefined'){alert('Libreria XLSX non ancora caricata. Riprova tra qualche secondo.');return;}
-  const mezzi=currentUser.isSA?allMezzi:getAdminMezzi();
+  const mezzi=(currentUser.isSA?allMezzi:getAdminMezzi()).filter(b=>!isTestBarca(b));
   const recs=manRecords.filter(r=>mezzi.includes(r.barca));
   if(!recs.length){alert('Nessun dato manutenzione');return;}
   const _ml=m=>{const[a,mo]=m.split('-');const n=new Date(a,mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return n.charAt(0).toUpperCase()+n.slice(1);};
@@ -5446,7 +5457,7 @@ function renderSaTesserePerms(){
 
 function renderSATessereBarca(){
   const el=document.getElementById('saTessereBarcaList');if(!el)return;
-  const allBarche=allMezzi.filter(m=>m);
+  const allBarche=allMezzi.filter(m=>m&&!isTestBarca(m));
   if(!allBarche.length){el.innerHTML='<div class="ib">Nessuna barca configurata.</div>';return;}
   const ricMap={};tessereList.forEach(t=>ricMap[t.id]=t.nome);
   let html='<table class="at" style="margin-bottom:1.2rem"><thead><tr><th>Barca</th><th>Tessera Mila</th><th>Carta di credito</th><th>Ricaricabile</th></tr></thead><tbody>';
@@ -5612,7 +5623,7 @@ function exportTessereCSV(){
     tessereList.forEach(t=>{
       const movs=tessereMovimenti.filter(m=>m.tesseraId===t.id).sort((a,b)=>(a.data||'').localeCompare(b.data||''));
       const saldo=computeTesseraSaldo(tessereMovimenti.filter(m=>m.tesseraId===t.id));
-      const barcaAtt=Object.entries(tessereBarca).filter(([,s])=>s.ric===t.id).map(([b])=>b).join(', ')||'—';
+      const barcaAtt=Object.entries(tessereBarca).filter(([b,s])=>s.ric===t.id&&!isTestBarca(b)).map(([b])=>b).join(', ')||'—';
       if(!movs.length){
         s1.push([t.nome,t.tipo.toUpperCase(),t.fornitore||'',saldo,'',barcaAtt,'—','','','','','','']);
       }else{
@@ -5634,7 +5645,7 @@ function exportTessereCSV(){
   XLSX.utils.book_append_sheet(wb,ws1,'Tessere Prepagate');
   // ── Foglio 2: Tessere a Bordo ──────────────────────────────────
   const s2=[['Barca','Tessera Mila','N° seriale Mila','Carta di credito','N° seriale CC','Tessera ricaricabile']];
-  const barche=allMezzi.filter(m=>m);
+  const barche=allMezzi.filter(m=>m&&!isTestBarca(m));
   barche.forEach(b=>{
     const s=tessereBarca[b]||{};
     s2.push([b,s.mila?'SI':'NO',s.mila?(s.milaSer||''):'',s.cc?'SI':'NO',s.cc?(s.ccSer||''):'',s.ric&&ricMap[s.ric]?ricMap[s.ric]:'—']);

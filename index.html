@@ -2452,7 +2452,7 @@ function renderSondaggi(){
         <div style="padding:.5rem .55rem">
           <div style="font-size:.82rem;font-weight:700;color:var(--ink);margin-bottom:.15rem">${escHtml(d.name)}</div>
           <div style="font-size:.72rem;color:var(--blue);margin-bottom:.35rem">🗳️ ${[7,5,4,3,2,1][i]||1} voti</div>
-          <button class="bh" style="width:100%;font-size:.74rem;background:#0d3b66;color:#fff;border-color:#0d3b66">🗳️ Vota (+5)</button>
+          <button class="bh" style="width:100%;font-size:.74rem;background:#0d3b66;color:#fff;border-color:#0d3b66">🗳️ Vota</button>
         </div>
       </div>`).join('')+'</div>';
     return;
@@ -2467,7 +2467,7 @@ function renderSondaggi(){
     let btn;
     if(mine)btn='<div style="font-size:.7rem;color:var(--ink-faded);text-align:center;padding:.35rem 0">La tua figurina</div>';
     else if(voted)btn='<button class="bh" style="width:100%;font-size:.74rem" disabled>✓ Votata</button>';
-    else btn=`<button class="bh" style="width:100%;font-size:.74rem;background:#0d3b66;color:#fff;border-color:#0d3b66" onclick="castVote(${f.id})">🗳️ Vota (+5)</button>`;
+    else btn=`<button class="bh" style="width:100%;font-size:.74rem;background:#0d3b66;color:#fff;border-color:#0d3b66" onclick="castVote(${f.id})">🗳️ Vota</button>`;
     return`<div style="flex:0 0 170px;scroll-snap-align:start;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fafaf8;box-shadow:0 1px 4px rgba(0,0,0,.07)">
       <img src="${f.url||f.raw||''}" loading="eager" onerror="if(this.src!==this.dataset.raw){this.src=this.dataset.raw;}else{this.style.background='#f0f2f5';}" data-raw="${f.raw||f.url||''}" onclick="openFigLightbox(this.src)" style="width:170px;height:200px;object-fit:cover;display:block;cursor:zoom-in">
       <div style="padding:.5rem .55rem">
@@ -2510,7 +2510,7 @@ async function castVote(figId){
   gameVotes.push({id:Date.now(),voter:me,figurinaId:figId,week:gameWeekKey(new Date()),ts:new Date().toISOString()});
   await sv.gameVotes();
   renderSondaggi();
-  alert('🗳️ Voto registrato! +5 punti');
+  alert('🗳️ Voto registrato! +10 punti all\'autore della figurina 🎉');
 }
 
 // =============================================

@@ -4113,8 +4113,8 @@ async function submitForm(){
     Object.keys(tessereBarca).forEach(b=>{
       if(b===mezzo)return;
       const s=tessereBarca[b];
-      if(_tbMila&&s.mila){const sameCard=!_tbMilaSer||!(s.milaSer)||_tbMilaSer===(s.milaSer);if(sameCard){s.mila=false;s.milaSer='';}}
-      if(_tbCC&&s.cc){const sameCard=!_tbCCSer||!(s.ccSer)||_tbCCSer===(s.ccSer);if(sameCard){s.cc=false;s.ccSer='';}}
+      if(_tbMila&&s.mila&&_tbMilaSer&&s.milaSer&&_tbMilaSer===s.milaSer){s.mila=false;s.milaSer='';}
+      if(_tbCC&&s.cc&&_tbCCSer&&s.ccSer&&_tbCCSer===s.ccSer){s.cc=false;s.ccSer='';}
       if(_tbRic&&s.ric===_tbRic)s.ric=null;
     });
     tessereBarca[mezzo]={mila:_tbMila,cc:_tbCC,ric:_tbRic,milaSer:_tbMilaSer,ccSer:_tbCCSer};
@@ -4386,8 +4386,8 @@ async function saveTesseraImmediato(){
   Object.keys(tessereBarca).forEach(b=>{
     if(b===barca)return;const s=tessereBarca[b];
     // Esclusività per seriale: rimuovi solo se stesso seriale (stessa tessera fisica) o nessun seriale noto
-    if(mila&&s.mila){const sameCard=!milaSer||!(s.milaSer)||milaSer===(s.milaSer);if(sameCard){s.mila=false;s.milaSer='';}}
-    if(cc&&s.cc){const sameCard=!ccSer||!(s.ccSer)||ccSer===(s.ccSer);if(sameCard){s.cc=false;s.ccSer='';}}
+    if(mila&&s.mila&&milaSer&&s.milaSer&&milaSer===s.milaSer){s.mila=false;s.milaSer='';}
+    if(cc&&s.cc&&ccSer&&s.ccSer&&ccSer===s.ccSer){s.cc=false;s.ccSer='';}
     if(ric&&s.ric===ric)s.ric=null;
   });
   tessereBarca[barca]={mila,cc,ric,milaSer,ccSer};

@@ -906,10 +906,10 @@ body{padding:.8rem .3rem 3rem;}
   </div>
   <div class="ss">
     <div><span class="sn2" id="statReg">0</span><span class="sl">registrazioni</span></div>
-    <div><span class="sn2" id="statOre">0</span><span class="sl">ore motore (max)</span></div>
+    <div><span class="sn2" id="statOre">0</span><span class="sl">ore lavorate</span></div>
   </div>
   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-    <table class="at"><thead><tr><th>Barca</th><th>Data</th><th>Autista</th><th>Ore</th><th>Intervento</th><th>Note</th><th>🛟 Dotazioni</th><th>Foto</th><th>PDF</th><th></th></tr></thead><tbody id="tableBody"></tbody></table>
+    <table class="at"><thead><tr><th>Barca</th><th>Data</th><th>Autista</th><th>Contaore</th><th>Intervento</th><th>Note</th><th>🛟 Dotazioni</th><th>Foto</th><th>PDF</th><th></th></tr></thead><tbody id="tableBody"></tbody></table>
   </div>
 </div>
 
@@ -3608,7 +3608,7 @@ function _calcOreMotore(){
   const byAutista={},byBarcaTot={};let totale=0;
   Object.entries(byBarca).forEach(([barca,arr])=>{
     for(let i=0;i<arr.length-1;i++){
-      const delta=arr[i+1].ore-arr[i].ore;if(delta<=0)continue;
+      const delta=arr[i+1].ore-arr[i].ore;if(delta<=0||delta>200)continue;
       const nome=arr[i].autista;
       (byAutista[nome]=byAutista[nome]||{totale:0,barche:{}});
       byAutista[nome].totale+=delta;byAutista[nome].barche[barca]=(byAutista[nome].barche[barca]||0)+delta;
@@ -3746,7 +3746,7 @@ function dashDownloadCsv(section){
     const rows=[];
     Object.entries(byBarca).forEach(([barca,arr])=>{
       for(let i=0;i<arr.length-1;i++){
-        const delta=arr[i+1].ore-arr[i].ore;if(delta<=0)continue;
+        const delta=arr[i+1].ore-arr[i].ore;if(delta<=0||delta>200)continue;
         rows.push([arr[i].autista,barca,arr[i].data,arr[i+1].data,delta.toFixed(1)]);
       }
     });
@@ -4161,8 +4161,8 @@ function filtered(){const fm=document.getElementById('filterMezzo').value,fme=do
 function populateDashFilters(){const b=myRecs();const mz=[...new Set(b.map(r=>r.mezzo))].sort();const ms=[...new Set(b.map(r=>r.data.slice(0,7)))].sort().reverse();document.getElementById('filterMezzo').innerHTML='<option value="">Tutti i mezzi</option>'+mz.map(m=>`<option>${m}</option>`).join('');document.getElementById('filterMese').innerHTML='<option value="">Tutti i mesi</option>'+ms.map(m=>{const[y,mo]=m.split('-');const l=new Date(+y,+mo-1,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});return`<option value="${m}">${l.charAt(0).toUpperCase()+l.slice(1)}</option>`;}).join('');}
 function renderDash(){
   const data=filtered();document.getElementById('statReg').textContent=data.length;
-  const ov=data.filter(r=>r.ore&&r.ore!=='').map(r=>parseFloat(r.ore));
-  document.getElementById('statOre').textContent=ov.length?Math.max(...ov).toFixed(1):'0';
+  const _ob={};data.forEach(r=>{const o=parseFloat(r.ore);if(isNaN(o)||o<=0)return;const b=(r.mezzo||'—').trim()||'—';(_ob[b]=_ob[b]||[]).push({data:r.data||'',ore:o});});let _to=0;Object.values(_ob).forEach(arr=>{arr.sort((a,b)=>a.data.localeCompare(b.data));for(let i=0;i<arr.length-1;i++){const d=arr[i+1].ore-arr[i].ore;if(d>0&&d<=200)_to+=d;}});
+  document.getElementById('statOre').textContent=_to>0?_to.toFixed(1):'0';
   const tb=document.getElementById('tableBody');
   if(!data.length){tb.innerHTML='<tr><td colspan="9" class="el">— nessuna registrazione —</td></tr>';return;}
   tb.innerHTML=data.map(r=>{

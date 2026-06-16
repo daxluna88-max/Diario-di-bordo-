@@ -635,6 +635,7 @@ body{padding:.8rem .3rem 3rem;}
           📡 <strong>Messaggi</strong>: +10 pt per messaggio letto entro 12 ore<br>
           📸 <strong>Figurine</strong>: max 2/giorno · +25/sett. (2 fig. × 5 gg) · +100/mese costante<br>
           🧰 <strong>Scrigni</strong>: trovali in classifica · +30 pt · +1 slot figurina extra (valido finché non lo usi)<br>
+          ⚖️ <strong>Il Giurato</strong>: +100 a settimana (voti ≥75% figurine) · +100 al mese costante<br>
           ⭐ <strong>Sondaggi</strong>: +10 pt per ogni voto ricevuto sulla tua figurina · +50 sett. · +100 mese
         </div>
         <p style="margin-top:.7rem;font-size:.8rem;color:var(--red)">⛔ Attenzione: se giochi ma non compili il diario di bordo, perdi 100 punti al giorno.</p>
@@ -3058,10 +3059,16 @@ function computeGamePoints(name){
   });
   parts.antenna=antennaCount*10;
   info.antenna={letti:Object.keys(reads).length,inTempo:antennaCount};
-  // --- Il Giurato: +0 per voto espresso (il valore è per chi RICEVE voti) ---
+  // --- Il Giurato: +100/settimana con ≥75% figurine votate; +100/mese se ≥75% nel mese ---
   const myVotes=gameVotes.filter(v=>v.voter&&v.voter.toLowerCase()===key);
-  parts.giurato=0;
-  info.giurato={voti:myVotes.length};
+  const othersAppr=gameFigurine.filter(f=>f.status==='approved'&&!(f.owner&&f.owner.toLowerCase()===key));
+  const totalAvailG=othersAppr.length;
+  const votedPerWeekG={};myVotes.forEach(v=>{const wk=gameWeekKey(v.ts);if(!wk)return;if(!votedPerWeekG[wk])votedPerWeekG[wk]=new Set();votedPerWeekG[wk].add(String(v.figurinaId));});
+  const settGiurato=totalAvailG>0?Object.keys(votedPerWeekG).filter(wk=>votedPerWeekG[wk].size/totalAvailG>=0.75).length:0;
+  const votedPerMonthG={};myVotes.forEach(v=>{const mk=gameMonthKey(v.ts);if(!mk)return;if(!votedPerMonthG[mk])votedPerMonthG[mk]=new Set();votedPerMonthG[mk].add(String(v.figurinaId));});
+  const mesiGiurato=totalAvailG>0?Object.keys(votedPerMonthG).filter(mk=>votedPerMonthG[mk].size/totalAvailG>=0.75).length:0;
+  parts.giurato=settGiurato*100+mesiGiurato*100;
+  info.giurato={voti:myVotes.length,settimane:settGiurato,mesi:mesiGiurato,totalAvail:totalAvailG};
   // --- Scrigni: +30 pt per ogni scrigno aperto ---
   const myChests=Object.keys(gameChestsOpened[key]||{}).length;
   parts.scrigno=myChests*30;
@@ -3091,7 +3098,7 @@ function renderMissioni(){
   // In anteprima senza iscrizione, mostra un esempio con numeri di esempio
   const demo=!me&&_gameDemo;
   const p=demo
-    ?{total:455,parts:{ore:90,rifornimento:60,antenna:40,figurine:75,votata:230,giurato:0,scrigno:60,penalita:0},info:{ore:{giorni:18,streaks:3,after12:0,serale:0},rifornimento:{rifornimenti:6,settimane:2},antenna:{inTempo:4,letti:5},figurine:{caricate:10,fotografoWeeks:3,registaMonths:0},votata:{mesiVinti:1,settVinte:3,votiRicevuti:8,votiMio:8,votiLeader:8,stoIlPrimo:true},giurato:{voti:6},scrigno:{scrigni:2,bonus:0},penalita:{giorni:0}}}
+    ?{total:655,parts:{ore:90,rifornimento:60,antenna:40,figurine:75,votata:230,giurato:200,scrigno:60,penalita:0},info:{ore:{giorni:18,streaks:3,after12:0,serale:0},rifornimento:{rifornimenti:6,settimane:2},antenna:{inTempo:4,letti:5},figurine:{caricate:10,fotografoWeeks:3,registaMonths:0},votata:{mesiVinti:1,settVinte:3,votiRicevuti:8,votiMio:8,votiLeader:8,stoIlPrimo:true},giurato:{voti:12,settimane:2,mesi:1,totalAvail:8},scrigno:{scrigni:2,bonus:0},penalita:{giorni:0}}}
     :computeGamePoints(me);
   const missions=[
     {ic:'⏱️',nome:'Ore Motore (Spacca Minuto)',rule:'+30 per giorno di registrazione · +30 ogni serie da 5 giorni · −50 per registrazione dopo le 12 · +20 spunta dotazioni completa',pts:p.parts.ore,prog:`${p.info.ore.giorni} giorni · ${p.info.ore.streaks} serie da 5 · ${p.info.ore.after12} dopo le 12 · ${p.info.ore.serale} dotazioni complete`},
@@ -3099,7 +3106,7 @@ function renderMissioni(){
     {ic:'📡',nome:'Antenna Alzata — Leggi i messaggi',rule:'+10 per messaggio letto entro 12 ore',pts:p.parts.antenna,prog:`${p.info.antenna.inTempo} in tempo su ${p.info.antenna.letti} letti`},
     {ic:'📸',nome:'Fotografo / Regista — Figurine',rule:'+25 a settimana (2 figurine/giorno × 5 gg) · +100 al mese costante (≥20 gg/mese)',pts:p.parts.figurine,prog:`${p.info.figurine.caricate} caricate · ${p.info.figurine.fotografoWeeks} sett. Fotografo · ${p.info.figurine.registaMonths} mesi Regista`},
     {ic:'⭐',nome:'Figurina più Votata — Sondaggio',rule:'+10 per ogni voto ricevuto · +50 a settimana · +100 a fine mese',pts:p.parts.votata,prog:p.info.votata.stoIlPrimo?`🏆 Sei in testa con ${p.info.votata.votiMio} voti! · ${p.info.votata.votiRicevuti} voti tot. (${p.info.votata.settVinte} sett. · ${p.info.votata.mesiVinti} mes${p.info.votata.mesiVinti===1?'e':'i'} vinti)`:p.info.votata.votiRicevuti>0?`${p.info.votata.votiRicevuti} voti ricevuti · leader mese: ${p.info.votata.votiLeader} · ${p.info.votata.settVinte} sett. · ${p.info.votata.mesiVinti} mes${p.info.votata.mesiVinti===1?'e':'i'} vinti`:`Nessuna figurina tua al voto ancora`},
-    {ic:'⚖️',nome:'Il Giurato — Vota i sondaggi',rule:'Vota le figurine — i punti vanno a chi riceve voti (+10 a voto ricevuto)',pts:p.parts.giurato,prog:`${p.info.giurato.voti} voti espressi`},
+    {ic:'⚖️',nome:'Il Giurato — Vota i sondaggi',rule:'+100 a settimana se voti ≥75% delle figurine · +100 al mese se mantieni la media',pts:p.parts.giurato,prog:`${p.info.giurato.voti} voti espressi · ${p.info.giurato.settimane} sett. ≥75% · ${p.info.giurato.mesi} mes${p.info.giurato.mesi===1?'e':'i'} · disponibili: ${p.info.giurato.totalAvail}`},
     {ic:'🧰',nome:'Scrigni — Bonus segreti',rule:'+30 pt per ogni scrigno aperto · sblocca 1 slot figurina extra (valido finché non lo usi)',pts:p.parts.scrigno,prog:`${p.info.scrigno.scrigni} scrigni aperti · ${p.info.scrigno.bonus} bonus figurina disponibil${p.info.scrigno.bonus===1?'e':'i'}`},
     {ic:'⛔',nome:'Penalità — Giochi ma non lavori',rule:'−100 per ogni giorno in cui giochi al Torneo ma NON compili il diario di bordo',pts:p.parts.penalita,prog:`${p.info.penalita.giorni} giorni senza diario`},
   ];
@@ -3122,6 +3129,7 @@ function renderMissioni(){
       <div style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink);line-height:1.6">
         ⛔ <strong>−100 punti</strong> per ogni giorno in cui accedi e giochi al Torneo ma <strong>non compili il diario di bordo</strong>: il gioco premia chi usa l'app per lavorare, non solo per giocare.<br><br>
         🎨 <strong>Come creare le figurine:</strong> scarica ChatGPT, scrivi un prompt e incolla il viso di uno dei partecipanti al Torneo. Carica poi la figurina nella sezione dedicata (verrà compressa in .webp con il tuo nome stampato sopra).<br><br>
+        ⚖️ <strong>Il Giurato:</strong> guadagni <strong>+100 pt a settimana</strong> se voti almeno il 75% delle figurine disponibili in quella settimana. Se mantieni questa media per un mese intero, ottieni altri <strong>+100 pt</strong>.<br><br>
         🏅 <strong>Figurine premio:</strong> vengono assegnate <strong>in automatico</strong> ai vincitori (Re del Rifornimento, figurina più votata settimanale +50 · mensile +100, ecc.) a fine periodo.<br><br>
         🧰 <strong>Scrigni:</strong> durante il percorso troverai degli scrigni. Aprirli vale <strong>+30 pt</strong> e sblocca <strong>1 slot figurina extra</strong> (normalmente il limite è 2 figurine/giorno; con il bonus puoi caricarne 3). Il bonus rimane disponibile finché non carichi la 3ª figurina, dopodiché ritorni al limite di 2.
       </div>

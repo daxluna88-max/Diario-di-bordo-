@@ -3211,27 +3211,28 @@ function figLPEnd(ev){
   _figLPT0=0;_figLPBar=null;_figLPUrl='';_figLPId='';
   if(elapsed>=_FIG_LP_MS&&url){ev.preventDefault();figDoDownload(id,url);}
 }
-// Salva la figurina: Web Share API nativa iOS (foglio condivisione -> "Salva su File")
+// Salva la figurina direttamente in File (gestore download Safari) — un solo passaggio
 async function figDoDownload(figId,url){
   if(!url)return;
   try{
     const resp=await fetch(url,{mode:'cors'});
     const blob=await resp.blob();
-    const file=new File([blob],'figurina-'+figId+'.webp',{type:blob.type||'image/webp'});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){
-      await navigator.share({files:[file],title:'Figurina'});
-    }else if(navigator.share){
-      await navigator.share({url:url,title:'Figurina'});
-    }else{
-      const a=document.createElement('a');const obj=URL.createObjectURL(blob);
-      a.href=obj;a.download='figurina-'+figId+'.webp';document.body.appendChild(a);a.click();a.remove();
-      setTimeout(()=>URL.revokeObjectURL(obj),3000);
-    }
+    const obj=URL.createObjectURL(blob);
+    // Download diretto: iOS Safari salva in File > Download senza foglio di condivisione
+    const a=document.createElement('a');
+    a.href=obj;a.download='figurina-'+figId+'.webp';a.rel='noopener';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(obj),4000);
     if(figId){_figDownloaded[String(figId)]=true;try{localStorage.setItem('_figDl',JSON.stringify(_figDownloaded));}catch(e){}renderMyFigurine();}
   }catch(e){
-    if(e&&e.name==='AbortError')return; // utente ha annullato il foglio di condivisione
     console.error(e);
-    try{window.open(url,'_blank','noopener');}catch(_){}
+    // Fallback: foglio di condivisione nativo (se il download diretto fallisce)
+    try{
+      const resp=await fetch(url,{mode:'cors'});const blob=await resp.blob();
+      const file=new File([blob],'figurina-'+figId+'.webp',{type:blob.type||'image/webp'});
+      if(navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:'Figurina'});
+      else window.open(url,'_blank','noopener');
+    }catch(_){}
   }
 }
 function figLPCancel(){

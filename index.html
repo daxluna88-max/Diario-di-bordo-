@@ -490,10 +490,7 @@ body{padding:.8rem .3rem 3rem;}
       <div class="lf" id="pwField" style="display:none"><label class="ll">Password amministratore</label><input class="lin" id="loginPw" type="password" placeholder="••••••••"></div>
       <div class="lf" id="driverPwField" style="display:none"><label class="ll">Password autista</label><input class="lin" id="driverPwInput" type="password" placeholder="••••••••"></div>
       <button class="lb dark" onclick="doLogin()">Entra nell'agenda →</button>
-      <div class="lf" style="margin-top:.6rem;display:flex;align-items:center;gap:.5rem;position:relative;z-index:3">
-        <input type="checkbox" id="rememberMe" style="accent-color:var(--red);width:16px;height:16px;cursor:pointer">
-        <label for="rememberMe" style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);cursor:pointer">Resta connesso</label>
-      </div>
+
       <div class="le" id="loginErr"></div>
       <div class="lsw">
         <a onclick="toggleAdmin()" id="switchLink">Accedi come amministratore</a>
@@ -804,10 +801,7 @@ body{padding:.8rem .3rem 3rem;}
         </div>
         <div class="otptimer">Scade tra <span id="otpCd">120</span>s · <a href="#" style="color:var(--purple)" onclick="resendOTP(event)">Rinvia</a></div>
         <button class="lb pur" style="margin-top:1rem" onclick="saVerifyOTP()">Accedi →</button>
-        <div class="lf" style="margin-top:.6rem;display:flex;align-items:center;gap:.5rem;position:relative;z-index:3">
-          <input type="checkbox" id="rememberMeSA" style="accent-color:var(--purple);width:16px;height:16px;cursor:pointer">
-          <label for="rememberMeSA" style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);cursor:pointer">Resta connesso</label>
-        </div>
+
         <div class="le" id="saErr2"></div>
       </div>
       <div class="sab"><a onclick="hideSALogin()">← Torna al login normale</a></div>
@@ -2150,14 +2144,9 @@ function canAccessCisterna(){
 }
 
 async function enterApp(){
-  // Salva sessione se "Resta connesso" è selezionato
-  const rememberNormal=document.getElementById('rememberMe')?.checked;
-  const rememberSA=document.getElementById('rememberMeSA')?.checked;
-  if(rememberNormal||rememberSA){
-    try{localStorage.setItem('ccb_session',JSON.stringify({
-      name:currentUser.name,isAdmin:currentUser.isAdmin,isSA:currentUser.isSA,accIdx:currentUser.accIdx,ts:Date.now()
-    }));}catch(e){}
-  }
+  try{localStorage.setItem('ccb_session',JSON.stringify({
+    name:currentUser.name,isAdmin:currentUser.isAdmin,isSA:currentUser.isSA,accIdx:currentUser.accIdx,ts:Date.now()
+  }));}catch(e){}
   document.getElementById('pageLogin').style.display='none';
   document.getElementById('pageSALogin').style.display='none';
   const _gw=document.getElementById('pageGameWelcome');if(_gw)_gw.style.display='none';

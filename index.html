@@ -3193,12 +3193,14 @@ function gameFigurinaDownloadUrl(url){
 }
 var _figDownloaded=JSON.parse(localStorage.getItem('_figDl')||'{}');
 function scaricaFigurina(ev,figId){
-  ev.stopPropagation();
+  ev.stopPropagation();ev.preventDefault();
   const fig=gameFigurine.find(f=>String(f.id)===String(figId));if(!fig)return;
   _figDownloaded[String(figId)]=true;
   try{localStorage.setItem('_figDl',JSON.stringify(_figDownloaded));}catch(e){}
   renderMyFigurine();
-  window.open(gameFigurinaDownloadUrl(fig.url),'_blank','noopener');
+  // iOS Safari naviga la pagina con Content-Disposition:attachment — usiamo il lightbox
+  openFigLightbox(fig.url||fig.raw||'');
+  setTimeout(()=>{const i=document.getElementById('figLightboxInfo');if(i){i.textContent='📲 Tieni premuto per salvare';i.style.display='block';}},60);
 }
 async function uploadFigurinaCloudinary(file){
   const compressed=await compressImageWhatsApp(file);

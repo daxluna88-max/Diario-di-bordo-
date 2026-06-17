@@ -3194,24 +3194,30 @@ function gameFigurinaDownloadUrl(url){
   return url.replace('/upload/','/upload/fl_attachment/');
 }
 // Long-press per salvare figurina su iOS (touchend è user-gesture, window.open non bloccato)
-var _figLPT0=0,_figLPBar=null,_figLPUrl='';
+var _figDownloaded=JSON.parse(localStorage.getItem('_figDl')||'{}');
+var _figLPT0=0,_figLPBar=null,_figLPUrl='',_figLPId='';
 const _FIG_LP_MS=1200;
 function figLPStart(ev,img){
   _figLPT0=Date.now();
   _figLPUrl=img.dataset.dl||'';
+  _figLPId=img.dataset.figid||'';
   _figLPBar=img.nextElementSibling;
   if(_figLPBar){_figLPBar.style.transition='none';_figLPBar.style.width='0%';_figLPBar.getBoundingClientRect();_figLPBar.style.transition='width '+_FIG_LP_MS+'ms linear';_figLPBar.style.width='100%';}
 }
 function figLPEnd(ev){
   const elapsed=Date.now()-_figLPT0;
   if(_figLPBar){_figLPBar.style.transition='none';_figLPBar.style.width='0%';}
-  if(elapsed>=_FIG_LP_MS&&_figLPUrl){ev.preventDefault();window.open(_figLPUrl,'_blank','noopener');}
-  _figLPT0=0;_figLPBar=null;_figLPUrl='';
+  if(elapsed>=_FIG_LP_MS&&_figLPUrl){
+    ev.preventDefault();
+    if(_figLPId){_figDownloaded[_figLPId]=true;try{localStorage.setItem('_figDl',JSON.stringify(_figDownloaded));}catch(e){}renderMyFigurine();}
+    window.open(_figLPUrl,'_blank','noopener');
+  }
+  _figLPT0=0;_figLPBar=null;_figLPUrl='';_figLPId='';
 }
 function figLPCancel(){
   _figLPT0=0;
   if(_figLPBar){_figLPBar.style.transition='none';_figLPBar.style.width='0%';}
-  _figLPBar=null;_figLPUrl='';
+  _figLPBar=null;_figLPUrl='';_figLPId='';
 }
 async function uploadFigurinaCloudinary(file){
   const compressed=await compressImageWhatsApp(file);
@@ -3304,7 +3310,7 @@ function renderMyFigurine(){
   if(!mine.length){c.innerHTML='<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded);text-align:center;padding:.8rem 0">Nessuna figurina caricata.</p>';return;}
   c.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.7rem">'+mine.map(f=>`
     <div style="border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fafaf8">
-      <img src="${f.url||f.raw||''}" alt="figurina" loading="eager" onerror="if(this.src!==this.dataset.raw){this.src=this.dataset.raw;}else{this.style.background='#f0f2f5';}" data-raw="${f.raw||f.url||''}" data-dl="${gameFigurinaDownloadUrl(f.url||f.raw||'')||''}" onclick="openFigLightbox(this.src)" ontouchstart="figLPStart(event,this)" ontouchend="figLPEnd(event)" ontouchmove="figLPCancel()" style="width:100%;height:120px;object-fit:cover;display:block;cursor:zoom-in;-webkit-touch-callout:none">
+      <img src="${f.url||f.raw||''}" alt="figurina" loading="eager" onerror="if(this.src!==this.dataset.raw){this.src=this.dataset.raw;}else{this.style.background='#f0f2f5';}" data-raw="${f.raw||f.url||''}" data-dl="${gameFigurinaDownloadUrl(f.url||f.raw||'')||''}" data-figid="${f.id}" onclick="openFigLightbox(this.src)" ontouchstart="figLPStart(event,this)" ontouchend="figLPEnd(event)" ontouchmove="figLPCancel()" style="width:100%;height:120px;object-fit:cover;display:block;cursor:zoom-in;-webkit-touch-callout:none">
       <div style="height:4px;background:var(--blue);width:0%;transition:none"></div>
       <div style="padding:.45rem .5rem">
         <div style="margin-bottom:.35rem">${statusBadgeFigurina(f.status)}</div>
@@ -3312,7 +3318,7 @@ function renderMyFigurine(){
         ${f.status==='approved'&&!figInGara(f)?`<div style="font-size:.68rem;color:var(--ink-faded);margin-bottom:.2rem">⏳ fuori gara (15 gg passati)</div>`:''}
         ${f.caption?`<div style="font-size:.74rem;color:var(--ink);margin-bottom:.35rem">${escHtml(f.caption)}</div>`:''}
         ${f.status==='rejected'&&f.rejectReason?`<div style="font-size:.68rem;color:var(--red);margin-bottom:.35rem">Motivo: ${escHtml(f.rejectReason)}</div>`:''}
-        ${f.status==='approved'?`<div style="font-size:.65rem;color:var(--ink-faded);margin-bottom:.3rem">📲 tieni premuto per salvare</div>`:''}
+        ${f.status==='approved'?(_figDownloaded[String(f.id)]?`<div style="font-size:.68rem;color:var(--green);font-weight:600;margin-bottom:.3rem">✓ Scaricata</div>`:`<div style="font-size:.65rem;color:var(--ink-faded);margin-bottom:.3rem">📲 tieni premuto per salvare</div>`):''}
         <div style="display:flex;gap:.35rem;flex-wrap:wrap">
           ${f.status!=='approved'?`<button class="bh red" style="font-size:.72rem" onclick="deleteMyFigurina(${f.id})">× elimina</button>`:''}
         </div>

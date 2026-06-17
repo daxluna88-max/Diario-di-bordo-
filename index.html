@@ -4498,7 +4498,7 @@ async function submitFuel(){
 
   // Se tessera: registra movimento scarico
   if(tessera){
-    tessereMovimenti.unshift({id:rec.id,tesseraId:tessera.id,tipo:'scarico',data,litri,costo:tesseraCosto,barca,autore:currentUser.name,note:rec.note,salvato:new Date().toISOString()});
+    tessereMovimenti.unshift({id:rec.id,tesseraId:tessera.id,tipo:'scarico',data,litri,costo:tesseraCosto,barca,autore:currentUser.name,note:rec.note,fornitori:rec.fornitori||'',salvato:new Date().toISOString()});
     await svTessereMovimenti();
     renderTessereAdminFuelSection();
     checkTessereBlink();
@@ -5424,6 +5424,9 @@ function exportAllManutenzioneCSV(){
 // TESSERE PREPAGATE
 // =============================================
 let tessereList=[];       // [{id, nome, tipo, fornitore, creato}]
+var _tessPageFuel={}; // paginazione per card in renderTessereAdminFuelSection {tesseraId: pageIndex}
+const TESS_PG=5;
+function tessPageNav(tid,dir){_tessPageFuel[tid]=Math.max(0,(_tessPageFuel[tid]||0)+dir);renderTessereAdminFuelSection();}
 let tessereMovimenti=[];  // [{id, tesseraId, tipo:'ricarica'|'scarico'|'saldo', data, importo, litri, costo, barca, autore, note, salvato}]
 let tesserePerms={};      // {adminName: true/false}
 
@@ -5627,13 +5630,28 @@ function renderTessereAdminFuelSection(){
         <div style="font-size:.78rem;color:var(--ink-faded)">${t.tipo.toUpperCase()} · ${t.fornitore||'—'} · ${totL.toFixed(1)}L</div>
         <div style="margin-left:auto;font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;color:${saldoColor}">€${saldo.toFixed(2)} <span style="font-size:.6rem;font-family:'Source Sans 3',sans-serif;font-weight:400;color:var(--ink-faded)">saldo</span></div>
       </div>
-      ${scarichi.slice(0,5).map(m=>{const d=m.data?new Date(m.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'}):'—';
-        return`<div style="display:flex;align-items:center;gap:.5rem;padding:.2rem 0;border-bottom:1px dashed var(--line-light);font-size:.78rem">
-          <span style="color:var(--ink-faded);min-width:38px">${d}</span><span style="flex:1">${m.barca||'—'}</span>
-          <span>${m.litri}L</span><span style="font-weight:600;color:var(--red)">€${m.costo.toFixed(2)}</span>
-          <span style="font-size:.7rem;color:var(--ink-faded)">${m.autore||''}</span>
-        </div>`;
-      }).join('')}
+      ${(()=>{
+        const pg=_tessPageFuel[t.id]||0;const tot=scarichi.length;const start=pg*TESS_PG;const slice=scarichi.slice(start,start+TESS_PG);
+        if(!slice.length)return'';
+        const rows=slice.map(m=>{
+          const d=m.data?new Date(m.data).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'}):'—';
+          const fRec=fuelRecords.find(r=>r.id===m.id);
+          const forn=m.fornitori||(fRec?fRec.fornitori:'')||'';
+          return`<div style="display:flex;align-items:center;gap:.5rem;padding:.2rem 0;border-bottom:1px dashed var(--line-light);font-size:.78rem">
+            <span style="color:var(--ink-faded);min-width:38px">${d}</span>
+            <span style="flex:1">${m.barca||'—'}</span>
+            <span style="color:var(--ink-faded);font-size:.7rem">${escHtml(forn)}</span>
+            <span>${m.litri}L</span><span style="font-weight:600;color:var(--red)">€${m.costo.toFixed(2)}</span>
+            <span style="font-size:.7rem;color:var(--ink-faded)">${m.autore||''}</span>
+          </div>`;
+        }).join('');
+        const nav=tot>TESS_PG?`<div style="display:flex;align-items:center;justify-content:space-between;padding:.3rem 0;margin-top:.2rem">
+          <button class="dx" style="font-size:.72rem;padding:.2rem .5rem" onclick="tessPageNav(${t.id},-1)" ${pg===0?'disabled':''}>◀ Prec</button>
+          <span style="font-size:.7rem;color:var(--ink-faded)">${start+1}–${Math.min(start+TESS_PG,tot)} di ${tot}</span>
+          <button class="dx" style="font-size:.72rem;padding:.2rem .5rem" onclick="tessPageNav(${t.id},1)" ${start+TESS_PG>=tot?'disabled':''}>Succ ▶</button>
+        </div>`:'';
+        return rows+nav;
+      })()}
     </div>`;
   }).join('');
 }

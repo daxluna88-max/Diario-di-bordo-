@@ -3193,6 +3193,26 @@ function gameFigurinaDownloadUrl(url){
   if(!url||!url.includes('/upload/'))return url;
   return url.replace('/upload/','/upload/fl_attachment/');
 }
+// Long-press per salvare figurina su iOS (touchend è user-gesture, window.open non bloccato)
+var _figLPT0=0,_figLPBar=null,_figLPUrl='';
+const _FIG_LP_MS=1200;
+function figLPStart(ev,img){
+  _figLPT0=Date.now();
+  _figLPUrl=img.dataset.dl||'';
+  _figLPBar=img.nextElementSibling;
+  if(_figLPBar){_figLPBar.style.transition='none';_figLPBar.style.width='0%';_figLPBar.getBoundingClientRect();_figLPBar.style.transition='width '+_FIG_LP_MS+'ms linear';_figLPBar.style.width='100%';}
+}
+function figLPEnd(ev){
+  const elapsed=Date.now()-_figLPT0;
+  if(_figLPBar){_figLPBar.style.transition='none';_figLPBar.style.width='0%';}
+  if(elapsed>=_FIG_LP_MS&&_figLPUrl){ev.preventDefault();window.open(_figLPUrl,'_blank','noopener');}
+  _figLPT0=0;_figLPBar=null;_figLPUrl='';
+}
+function figLPCancel(){
+  _figLPT0=0;
+  if(_figLPBar){_figLPBar.style.transition='none';_figLPBar.style.width='0%';}
+  _figLPBar=null;_figLPUrl='';
+}
 async function uploadFigurinaCloudinary(file){
   const compressed=await compressImageWhatsApp(file);
   const fd=new FormData();fd.append('file',compressed);fd.append('upload_preset',CL_PRESET);
@@ -3284,7 +3304,8 @@ function renderMyFigurine(){
   if(!mine.length){c.innerHTML='<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded);text-align:center;padding:.8rem 0">Nessuna figurina caricata.</p>';return;}
   c.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.7rem">'+mine.map(f=>`
     <div style="border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fafaf8">
-      <img src="${f.url||f.raw||''}" alt="figurina" loading="eager" onerror="if(this.src!==this.dataset.raw){this.src=this.dataset.raw;}else{this.style.background='#f0f2f5';}" data-raw="${f.raw||f.url||''}" onclick="openFigLightbox(this.src)" style="width:100%;height:120px;object-fit:cover;display:block;cursor:zoom-in">
+      <img src="${f.url||f.raw||''}" alt="figurina" loading="eager" onerror="if(this.src!==this.dataset.raw){this.src=this.dataset.raw;}else{this.style.background='#f0f2f5';}" data-raw="${f.raw||f.url||''}" data-dl="${f.url||f.raw||''}" onclick="openFigLightbox(this.src)" ontouchstart="figLPStart(event,this)" ontouchend="figLPEnd(event)" ontouchmove="figLPCancel()" style="width:100%;height:120px;object-fit:cover;display:block;cursor:zoom-in;-webkit-touch-callout:none">
+      <div style="height:4px;background:var(--blue);width:0%;transition:none"></div>
       <div style="padding:.45rem .5rem">
         <div style="margin-bottom:.35rem">${statusBadgeFigurina(f.status)}</div>
         ${f.status==='approved'?`<div style="font-size:.72rem;color:var(--blue);margin-bottom:.2rem">🗳️ ${votesForFigurina(f.id)} vot${votesForFigurina(f.id)===1?'o':'i'} ricevut${votesForFigurina(f.id)===1?'o':'i'}</div>`:''}

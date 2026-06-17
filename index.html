@@ -919,12 +919,13 @@ body{padding:.8rem .3rem 3rem;}
   <div id="adminRegSec" style="display:none;position:relative;z-index:2;">
     <div class="ph" style="margin-bottom:.6rem;border-bottom:1px solid var(--line);"><span class="ph-title" style="font-size:1.1rem">Registro carburanti</span></div>
     <div style="display:flex;gap:.9rem;margin-bottom:1.1rem;flex-wrap:wrap;">
-      <select class="hs" id="filterFuelType" onchange="renderFuelHistory()" style="flex:1;min-width:120px;"><option value="">Tutti i carburanti</option><option value="diesel">DIESEL</option><option value="benzina">BENZINA</option><option value="elettrica">ELETTRICA</option></select>
-      <select class="hs" id="filterFuelBarca" onchange="renderFuelHistory()" style="flex:1;min-width:120px;"><option value="">Tutte le barche</option></select>
+      <select class="hs" id="filterFuelType" onchange="_fuelHistPage=0;renderFuelHistory()" style="flex:1;min-width:120px;"><option value="">Tutti i carburanti</option><option value="diesel">DIESEL</option><option value="benzina">BENZINA</option><option value="elettrica">ELETTRICA</option></select>
+      <select class="hs" id="filterFuelBarca" onchange="_fuelHistPage=0;renderFuelHistory()" style="flex:1;min-width:120px;"><option value="">Tutte le barche</option></select>
     </div>
     <div style="overflow-x:auto;margin-bottom:2rem;">
       <table class="at"><thead><tr><th>Barca</th><th>Data</th><th>Tipo</th><th>Litri</th><th>Fornitori</th><th>Note</th><th></th></tr></thead><tbody id="fuelTableBody"></tbody></table>
     </div>
+    <div id="fuelHistPager" style="display:none;display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;margin-bottom:1.5rem;font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded)"></div>
   </div>
   <div id="autoristaFuel">
     <!-- ULTIMO RIFORNIMENTO -->
@@ -4535,13 +4536,26 @@ function renderUltimoRifornimento(){
     (last.note?`<br><span style="color:var(--ink-faded);font-size:.8rem">${escHtml(last.note)}</span>`:'');
   div.style.display='block';
 }
+var _fuelHistPage=0;
+const FUEL_PG=20;
 function renderFuelHistory(){
   let data=fuelRecords;
   if((currentUser.isAdmin||currentUser.isSA)&&document.getElementById('filterFuelType')){const ft=document.getElementById('filterFuelType').value;const fb=document.getElementById('filterFuelBarca').value;data=fuelRecords.filter(r=>(!ft||r.tipo===ft)&&(!fb||r.barca===fb));}
-  else{data=fuelRecords.filter(r=>selectedFuelType?r.tipo===selectedFuelType:false).slice(0,20);}
-  const tb=document.getElementById('fuelTableBody');
-  if(!data.length){tb.innerHTML='<tr><td colspan="7" class="el">— nessun rifornimento —</td></tr>';return;}
-  tb.innerHTML=data.map(r=>{
+  else{data=fuelRecords.filter(r=>selectedFuelType?r.tipo===selectedFuelType:false);}
+  const tb=document.getElementById('fuelTableBody');const pg=document.getElementById('fuelHistPager');
+  if(!data.length){tb.innerHTML='<tr><td colspan="7" class="el">— nessun rifornimento —</td></tr>';if(pg)pg.style.display='none';return;}
+  // Paginazione solo per admin/SA
+  let slice=data;
+  if(currentUser.isAdmin||currentUser.isSA){
+    const tot=data.length;const start=_fuelHistPage*FUEL_PG;
+    _fuelHistPage=Math.min(_fuelHistPage,Math.floor((tot-1)/FUEL_PG));
+    slice=data.slice(_fuelHistPage*FUEL_PG,_fuelHistPage*FUEL_PG+FUEL_PG);
+    if(pg){
+      pg.style.display='flex';
+      pg.innerHTML=`<button class="dx" style="font-size:.78rem;padding:.25rem .6rem" onclick="_fuelHistPage=Math.max(0,_fuelHistPage-1);renderFuelHistory()" ${_fuelHistPage===0?'disabled':''}>◀ Prec</button><span>${_fuelHistPage*FUEL_PG+1}–${Math.min(_fuelHistPage*FUEL_PG+FUEL_PG,tot)} di ${tot}</span><button class="dx" style="font-size:.78rem;padding:.25rem .6rem" onclick="_fuelHistPage=Math.min(Math.floor((${tot}-1)/FUEL_PG),_fuelHistPage+1);renderFuelHistory()" ${_fuelHistPage*FUEL_PG+FUEL_PG>=tot?'disabled':''}>Succ ▶</button>`;
+    }
+  }else{if(pg)pg.style.display='none';}
+  tb.innerHTML=slice.map(r=>{
     const _fd=new Date(r.data);
     const d=_fd.toLocaleDateString('it-IT');
     const ora=r.data&&r.data.includes('T')?r.data.slice(11,16):'';

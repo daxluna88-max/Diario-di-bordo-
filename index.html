@@ -5000,6 +5000,7 @@ function renderDotazioniSera(){
     const dot=r.dotazioni||{};
     function dCls(v,type){return v===type?(type==='ok'?' ok':' no'):'';}
     const fuel=r.dotazioni?.carburante||null;
+    const litri=r.dotazioni?.litriRimasti||'';
     const fuelSection=`<div class="fuel-level-row" style="margin-top:.35rem"><span class="check-label">⛽ Carburante</span><div class="fuel-level-btns">
         <button class="fuel-lvl-btn${fuel==='4/4'?' sel':''}" onclick='setDotFuel(${r.id},"4/4",this)'>4/4</button>
         <button class="fuel-lvl-btn${fuel==='3/4'?' sel':''}" onclick='setDotFuel(${r.id},"3/4",this)'>3/4</button>
@@ -5008,7 +5009,14 @@ function renderDotazioniSera(){
         <button class="fuel-lvl-btn${fuel==='3/8b'?' sel':''}" onclick='setDotFuel(${r.id},"3/8b",this)'>1/2½</button>
         <button class="fuel-lvl-btn${fuel==='1/4'?' sel':''}" onclick='setDotFuel(${r.id},"1/4",this)'>1/4</button>
         <button class="fuel-lvl-btn${fuel==='1/8'?' sel':''}" onclick='setDotFuel(${r.id},"1/8",this)'>1/4½</button>
-      </div></div>${renderFuelNotesTable(r)}`;
+      </div></div>
+      <div style="display:flex;align-items:center;gap:.5rem;margin-top:.4rem">
+        <span class="check-label" style="white-space:nowrap">⛽ Litri rimasti</span>
+        <input id="dotLitriInp-${r.id}" type="number" min="0" step="1" placeholder="es. 35" value="${escHtml(String(litri))}"
+          onblur="setDotLitri(${r.id})" onkeydown="if(event.key==='Enter'){this.blur()}"
+          style="width:72px;border:1px solid var(--line);border-radius:4px;padding:.3rem .5rem;font-size:.9rem;outline:none;font-family:'Source Sans 3',sans-serif;text-align:right">
+        <span style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded)">L</span>
+      </div>${renderFuelNotesTable(r)}`;
     return`<div style="border:1.5px solid var(--line);border-radius:4px;padding:.8rem .9rem;margin-bottom:.8rem;background:#fafaf8">
       <div style="font-family:'Playfair Display',serif;font-size:.9rem;font-style:italic;color:var(--ink);margin-bottom:.65rem">🚤 ${r.mezzo}</div>
       <div class="check-row"><span class="check-label">🥂 Prosecco</span><div class="check-btns">

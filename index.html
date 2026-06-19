@@ -4998,19 +4998,9 @@ function renderDotazioniSera(){
   const list=document.getElementById('dotazioniSeraList');
   list.innerHTML=mine.map(r=>{
     const dot=r.dotazioni||{};
-    const isRiva=r.mezzo&&r.mezzo.toLowerCase().includes('riva');
     function dCls(v,type){return v===type?(type==='ok'?' ok':' no'):'';}
     const fuel=r.dotazioni?.carburante||null;
-    const litri=r.dotazioni?.litriRimasti||'';
-    const fuelSection=isRiva
-      ?`<div class="fuel-level-row" style="margin-top:.35rem;align-items:center;gap:.5rem">
-          <span class="check-label">⛽ Litri benzina rimasti</span>
-          <input id="dotLitriInp-${r.id}" type="number" min="0" step="1" placeholder="es. 35" value="${escHtml(String(litri))}"
-            onblur="setDotLitri(${r.id})" onkeydown="if(event.key==='Enter'){this.blur()}"
-            style="width:72px;border:1px solid var(--line);border-radius:4px;padding:.3rem .5rem;font-size:.9rem;outline:none;font-family:'Source Sans 3',sans-serif;text-align:right">
-          <span style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded)">L</span>
-        </div>`
-      :`<div class="fuel-level-row" style="margin-top:.35rem"><span class="check-label">⛽ Carburante</span><div class="fuel-level-btns">
+    const fuelSection=`<div class="fuel-level-row" style="margin-top:.35rem"><span class="check-label">⛽ Carburante</span><div class="fuel-level-btns">
         <button class="fuel-lvl-btn${fuel==='4/4'?' sel':''}" onclick='setDotFuel(${r.id},"4/4",this)'>4/4</button>
         <button class="fuel-lvl-btn${fuel==='3/4'?' sel':''}" onclick='setDotFuel(${r.id},"3/4",this)'>3/4</button>
         <button class="fuel-lvl-btn${fuel==='3/8'?' sel':''}" onclick='setDotFuel(${r.id},"3/8",this)'>3/4½</button>

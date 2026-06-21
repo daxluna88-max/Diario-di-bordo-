@@ -599,12 +599,12 @@ body{padding:.8rem .3rem 3rem;}
     <div class="att-md" style="border-color:#0d3b66;max-width:540px">
       <div class="att-mh" style="background:#0d3b66">📸 Le mie Figurine</div>
       <div class="att-mb">
-        <p style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);line-height:1.55;margin-bottom:.5rem">Carica una figurina: verrà compressa, marchiata con il tuo nome e inviata al Super Admin per l'approvazione. Le figurine approvate sono scaricabili.</p>
+        <p style="font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded);line-height:1.55;margin-bottom:.5rem">Carica una foto o un video: verrà compresso/a, marchiato/a con il tuo nome e inviato/a al Super Admin per l'approvazione. Le figurine approvate sono scaricabili.</p>
         <div id="figDayLimit" style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;margin-bottom:.6rem"></div>
         <div style="border:1.5px dashed rgba(13,59,102,.3);border-radius:6px;padding:.8rem .9rem;margin-bottom:1rem">
           <div class="field"><label class="fl">Didascalia (opzionale)</label><input type="text" id="figCaption" maxlength="60" placeholder="es. Sorriso al pontile" style="border-bottom:1px solid var(--line);background:transparent;font-family:'Source Sans 3',sans-serif;font-size:.95rem;width:100%;outline:none;padding:.25rem 0;"></div>
-          <input type="file" id="figFileInput" accept="image/*" style="display:none" onchange="uploadMyFigurina(event)">
-          <button class="lb dark" style="margin-top:.6rem;background:#0d3b66" onclick="document.getElementById('figFileInput').click()">＋ Scegli e carica figurina</button>
+          <input type="file" id="figFileInput" accept="image/*,video/*" style="display:none" onchange="uploadMyFigurina(event)">
+          <button class="lb dark" style="margin-top:.6rem;background:#0d3b66" onclick="document.getElementById('figFileInput').click()">＋ Scegli foto o video</button>
         </div>
         <div id="myFigurineList"></div>
       </div>
@@ -1114,7 +1114,7 @@ body{padding:.8rem .3rem 3rem;}
     <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Supervisiona le figurine caricate dagli autisti e approvale o rifiutale. Permesso assegnato dal Super Admin.</p>
     <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin-bottom:.6rem;position:relative;z-index:2">
       <select id="staffFigOwnerAdmin" style="flex:1;min-width:150px;border:1px solid var(--line);border-radius:4px;padding:.3rem .5rem;font-family:'Source Sans 3',sans-serif;font-size:.85rem;background:#fff"><option value="">— assegna a (nessun autista) —</option></select>
-      <input type="file" id="staffFigFileAdmin" accept="image/*" style="display:none" onchange="staffUploadFigurina(event)">
+      <input type="file" id="staffFigFileAdmin" accept="image/*,video/*" style="display:none" onchange="staffUploadFigurina(event)">
       <button class="bh" onclick="document.getElementById('staffFigFileAdmin').click()">📤 Carica figurina</button>
     </div>
     <div class="figurineGiacenzaInfo" style="font-size:.74rem;color:var(--purple-dark);margin:.1rem 0 .5rem;font-weight:600;position:relative;z-index:2"></div>
@@ -1223,7 +1223,7 @@ body{padding:.8rem .3rem 3rem;}
       <label class="fl">📸 Figurine da approvare (<span class="figurinePendingCount">0</span>)</label>
       <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin:.4rem 0">
         <select id="staffFigOwnerSA" style="flex:1;min-width:150px;border:1px solid var(--line);border-radius:4px;padding:.3rem .5rem;font-family:'Source Sans 3',sans-serif;font-size:.85rem;background:#fff"><option value="">— assegna a (nessun autista) —</option></select>
-        <input type="file" id="staffFigFileSA" accept="image/*" style="display:none" onchange="staffUploadFigurina(event)">
+        <input type="file" id="staffFigFileSA" accept="image/*,video/*" style="display:none" onchange="staffUploadFigurina(event)">
         <button class="bh" onclick="document.getElementById('staffFigFileSA').click()">📤 Carica figurina</button>
       </div>
       <div class="figurineGiacenzaInfo" style="font-size:.74rem;color:var(--purple-dark);margin:.1rem 0 .4rem;font-weight:600"></div>
@@ -2508,7 +2508,7 @@ function renderSondaggi(){
     else if(voted)btn='<button class="bh" style="width:100%;font-size:.74rem" disabled>✓ Votata</button>';
     else btn=`<button class="bh" style="width:100%;font-size:.74rem;background:#0d3b66;color:#fff;border-color:#0d3b66" onclick="castVote(${f.id})">🗳️ Vota</button>`;
     return`<div style="flex:0 0 170px;scroll-snap-align:start;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fafaf8;box-shadow:0 1px 4px rgba(0,0,0,.07)">
-      <img src="${f.url||f.raw||''}" loading="eager" onerror="if(this.src!==this.dataset.raw){this.src=this.dataset.raw;}else{this.style.background='#f0f2f5';}" data-raw="${f.raw||f.url||''}" onclick="openFigLightbox(this.src)" style="width:170px;height:200px;object-fit:cover;display:block;cursor:zoom-in">
+      ${f.type==='video'?`<video src="${f.url||f.raw||''}" style="width:170px;height:200px;object-fit:cover;display:block;background:#000" controls playsinline preload="metadata"></video>`:`<img src="${f.url||f.raw||''}" loading="eager" onerror="if(this.src!==this.dataset.raw){this.src=this.dataset.raw;}else{this.style.background='#f0f2f5';}" data-raw="${f.raw||f.url||''}" onclick="openFigLightbox(this.src)" style="width:170px;height:200px;object-fit:cover;display:block;cursor:zoom-in">`}
       <div style="padding:.5rem .55rem">
         <div style="font-size:.82rem;font-weight:700;color:var(--ink);margin-bottom:.15rem">${escHtml(f.owner||'')}</div>
         ${f.caption?`<div style="font-size:.7rem;color:var(--ink-faded);margin-bottom:.2rem;font-style:italic">${escHtml(f.caption)}</div>`:''}
@@ -3246,6 +3246,21 @@ async function uploadFigurinaCloudinary(file){
   const r=await fetch(`https://api.cloudinary.com/v1_1/${CL_CLOUD}/image/upload`,{method:'POST',body:fd});
   const j=await r.json();return j.secure_url||'';
 }
+async function uploadVideoCloudinary(file){
+  // Limite 100MB
+  if(file.size>100*1024*1024){alert('Il video supera i 100 MB. Accorcialo prima di caricarlo.');return'';}
+  const fd=new FormData();fd.append('file',file);fd.append('upload_preset',CL_PRESET);
+  const r=await fetch(`https://api.cloudinary.com/v1_1/${CL_CLOUD}/video/upload`,{method:'POST',body:fd});
+  const j=await r.json();if(j.error){console.error(j.error);return'';}return j.secure_url||'';
+}
+function gameVideoWatermarkUrl(rawUrl,name){
+  if(!rawUrl||!rawUrl.includes('/upload/'))return rawUrl;
+  const clean=String(name||'').replace(/[\/,%]/g,' ').replace(/\s+/g,' ').trim().slice(0,40)||'Flotta';
+  const txt=encodeURIComponent(clean);
+  // 720p max, H264, qualità auto, watermark nome in basso a destra
+  const tr='w_720,c_limit,q_auto:good,f_mp4,vc_h264/l_text:Arial_40_bold:'+txt+',co_white,b_rgb:00000080/fl_layer_apply,g_south_east,x_20,y_16';
+  return rawUrl.replace('/upload/','/upload/'+tr+'/');
+}
 function openMyFigurineModal(){renderMyFigurine();document.getElementById('gameFigurineModal').classList.add('show');}
 function closeMyFigurineModal(){document.getElementById('gameFigurineModal').classList.remove('show');}
 async function uploadMyFigurina(e){
@@ -3267,11 +3282,12 @@ async function uploadMyFigurina(e){
   const _usingBonus=_todayFigs>=2&&_bonus>0;
   if(!showAttendi('Caricamento figurina in corso…'))return;
   try{
-    const raw=await uploadFigurinaCloudinary(file);
+    const isVid=file.type.startsWith('video/');
+    const raw=isVid?await uploadVideoCloudinary(file):await uploadFigurinaCloudinary(file);
     if(!raw){alert('Caricamento non riuscito. Riprova.');return;}
-    const url=gameWatermarkUrl(raw,me);
+    const url=isVid?gameVideoWatermarkUrl(raw,me):gameWatermarkUrl(raw,me);
     const caption=document.getElementById('figCaption').value.trim().slice(0,60);
-    const _newFig={id:Date.now(),owner:me,url,raw,status:'pending',caption,uploadedAt:new Date().toISOString()};
+    const _newFig={id:Date.now(),owner:me,url,raw,status:'pending',caption,uploadedAt:new Date().toISOString(),type:isVid?'video':'image'};
     await freshGameFigurine();
     gameFigurine.unshift(_newFig);
     if(_usingBonus){gameBonusFig[_meLow]=_bonus-1;await sv.gameBonusFig();}
@@ -3297,10 +3313,11 @@ async function staffUploadFigurina(e){
   const owner=assigned||(currentUser?currentUser.name:'Staff');
   if(!showAttendi('Caricamento figurina in corso…'))return;
   try{
-    const raw=await uploadFigurinaCloudinary(file);
+    const isVid=file.type.startsWith('video/');
+    const raw=isVid?await uploadVideoCloudinary(file):await uploadFigurinaCloudinary(file);
     if(!raw){alert('Caricamento non riuscito. Riprova.');return;}
-    const url=gameWatermarkUrl(raw,owner);
-    const _newFig={id:Date.now(),owner,url,raw,status:'approved',caption:'',uploadedAt:new Date().toISOString(),reviewedAt:new Date().toISOString(),reviewedBy:currentUser?currentUser.name:'Staff'};
+    const url=isVid?gameVideoWatermarkUrl(raw,owner):gameWatermarkUrl(raw,owner);
+    const _newFig={id:Date.now(),owner,url,raw,status:'approved',caption:'',uploadedAt:new Date().toISOString(),reviewedAt:new Date().toISOString(),reviewedBy:currentUser?currentUser.name:'Staff',type:isVid?'video':'image'};
     await freshGameFigurine();
     gameFigurine.unshift(_newFig);
     await sv.gameFigurine();
@@ -3331,7 +3348,7 @@ function renderMyFigurine(){
   if(!mine.length){c.innerHTML='<p style="font-style:italic;font-size:.82rem;color:var(--ink-faded);text-align:center;padding:.8rem 0">Nessuna figurina caricata.</p>';return;}
   c.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.7rem">'+mine.map(f=>`
     <div style="border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fafaf8">
-      <img src="${f.url||f.raw||''}" alt="figurina" loading="eager" onerror="if(this.src!==this.dataset.raw){this.src=this.dataset.raw;}else{this.style.background='#f0f2f5';}" data-raw="${f.raw||f.url||''}" data-dl="${gameFigurinaDownloadUrl(f.url||f.raw||'')||''}" data-figid="${f.id}" onclick="openFigLightbox(this.src)" ontouchstart="figLPStart(event,this)" ontouchend="figLPEnd(event)" ontouchmove="figLPCancel()" style="width:100%;height:120px;object-fit:cover;display:block;cursor:zoom-in;-webkit-touch-callout:none">
+      ${f.type==='video'?`<video src="${f.url||f.raw||''}" style="width:100%;height:120px;object-fit:cover;display:block;background:#000" controls playsinline preload="metadata"></video>`:`<img src="${f.url||f.raw||''}" alt="figurina" loading="eager" onerror="if(this.src!==this.dataset.raw){this.src=this.dataset.raw;}else{this.style.background='#f0f2f5';}" data-raw="${f.raw||f.url||''}" data-dl="${gameFigurinaDownloadUrl(f.url||f.raw||'')||''}" data-figid="${f.id}" onclick="openFigLightbox(this.src)" ontouchstart="figLPStart(event,this)" ontouchend="figLPEnd(event)" ontouchmove="figLPCancel()" style="width:100%;height:120px;object-fit:cover;display:block;cursor:zoom-in;-webkit-touch-callout:none">`}
       <div style="height:4px;background:var(--blue);width:0%;transition:none"></div>
       <div style="padding:.45rem .5rem">
         <div style="margin-bottom:.35rem">${statusBadgeFigurina(f.status)}</div>

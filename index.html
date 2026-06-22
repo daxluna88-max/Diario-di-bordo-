@@ -3240,6 +3240,10 @@ function figLPCancel(){
   if(_figLPBar){_figLPBar.style.transition='none';_figLPBar.style.width='0%';}
   _figLPBar=null;_figLPUrl='';_figLPId='';
 }
+function figDlVideo(id){
+  const fig=gameFigurine.find(f=>String(f.id)===String(id));if(!fig)return;
+  figDoDownload(id,fig.url||fig.raw||'');
+}
 async function uploadFigurinaCloudinary(file){
   const compressed=await compressImageWhatsApp(file);
   const fd=new FormData();fd.append('file',compressed);fd.append('upload_preset',CL_PRESET);
@@ -3356,7 +3360,7 @@ function renderMyFigurine(){
         ${f.status==='approved'&&!figInGara(f)?`<div style="font-size:.68rem;color:var(--ink-faded);margin-bottom:.2rem">⏳ fuori gara (15 gg passati)</div>`:''}
         ${f.caption?`<div style="font-size:.74rem;color:var(--ink);margin-bottom:.35rem">${escHtml(f.caption)}</div>`:''}
         ${f.status==='rejected'&&f.rejectReason?`<div style="font-size:.68rem;color:var(--red);margin-bottom:.35rem">Motivo: ${escHtml(f.rejectReason)}</div>`:''}
-        ${f.status==='approved'?(_figDownloaded[String(f.id)]?`<div style="font-size:.68rem;color:var(--green);font-weight:600;margin-bottom:.3rem">✓ Scaricata</div>`:`<div style="font-size:.65rem;color:var(--ink-faded);margin-bottom:.3rem">📲 tieni premuto per salvare</div>`):''}
+        ${f.status==='approved'?(f.type==='video'?(_figDownloaded[String(f.id)]?`<div style="font-size:.68rem;color:var(--green);font-weight:600;margin-bottom:.3rem">✓ Scaricato</div>`:`<button class="bh" style="font-size:.72rem;width:100%;margin-bottom:.2rem" onclick="figDlVideo(${f.id})">↓ Scarica video</button>`):(_figDownloaded[String(f.id)]?`<div style="font-size:.68rem;color:var(--green);font-weight:600;margin-bottom:.3rem">✓ Scaricata</div>`:`<div style="font-size:.65rem;color:var(--ink-faded);margin-bottom:.3rem">📲 tieni premuto per salvare</div>`)):''}
         <div style="display:flex;gap:.35rem;flex-wrap:wrap">
           ${f.status!=='approved'?`<button class="bh red" style="font-size:.72rem" onclick="deleteMyFigurina(${f.id})">× elimina</button>`:''}
         </div>

@@ -461,7 +461,7 @@ body{padding:.8rem .3rem 3rem;}
       <div class="cover-label">Diario di Bordo</div>
       <div class="cover-main">Flotta Navale<em>Como Classic Boats</em></div>
       <div class="cover-ornament">❧ ✦ ❧</div>
-      <div class="cover-year">Anno 2026</div>
+      <div class="cover-year" id="coverYearDisplay">Anno 2026</div>
     </div>
   </div>
   <div class="spirals">
@@ -1245,6 +1245,16 @@ body{padding:.8rem .3rem 3rem;}
   </div>
 
   <div class="sas">
+    <div class="sast">📅 Anno in Copertina</div>
+    <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:.8rem;position:relative;z-index:2">
+      <input type="number" id="saCoverYear" min="2020" max="2099" step="1" placeholder="es. 2026"
+        style="width:110px;border:1px solid var(--line);border-radius:4px;padding:.4rem .6rem;font-size:1rem;font-family:'Source Sans 3',sans-serif;outline:none">
+      <button class="bh" onclick="saveCoverYear()" style="background:var(--purple);color:#fff;border-color:var(--purple)">✓ Salva</button>
+      <span id="coverYearSaved" style="font-size:.8rem;color:var(--green);display:none">✓ Salvato</span>
+    </div>
+  </div>
+
+  <div class="sas">
     <div class="sast">🔄 Aggiornamento App</div>
     <p style="font-family:'Source Sans 3',sans-serif;font-size:.78rem;color:var(--ink-faded);margin-bottom:.8rem;position:relative;z-index:2;line-height:1.5">Dopo aver pubblicato un aggiornamento, premi questo bottone: tutti gli utenti connessi riceveranno una notifica e la pagina verrà ricaricata automaticamente entro 90 secondi.</p>
     <button class="bh" onclick="saBumpAppVersion()" style="background:#c0392b;color:#fff;border-color:#c0392b;position:relative;z-index:2">🔄 Forza aggiornamento per tutti gli utenti</button>
@@ -2022,6 +2032,20 @@ async function init(){
   syncCisternaFromFuel();
   refreshGameEntryBanner();
   autoAssignPrizes();
+  applyCoverYear();
+}
+function applyCoverYear(){
+  const yr=gameConfig.coverYear||(new Date().getFullYear());
+  const el=document.getElementById('coverYearDisplay');if(el)el.textContent='Anno '+yr;
+  const inp=document.getElementById('saCoverYear');if(inp)inp.value=yr;
+}
+async function saveCoverYear(){
+  const inp=document.getElementById('saCoverYear');if(!inp)return;
+  const yr=parseInt(inp.value);if(!yr||yr<2020||yr>2099){alert('Anno non valido');return;}
+  gameConfig.coverYear=yr;
+  await sv.gameConfig();
+  applyCoverYear();
+  const ok=document.getElementById('coverYearSaved');if(ok){ok.style.display='inline';setTimeout(()=>ok.style.display='none',2000);}
 }
 init().then(async()=>{
   // Tenta auto-login da sessione salvata

@@ -923,7 +923,7 @@ body{padding:.8rem .3rem 3rem;}
       <select class="hs" id="filterFuelBarca" onchange="_fuelHistPage=0;renderFuelHistory()" style="flex:1;min-width:120px;"><option value="">Tutte le barche</option></select>
     </div>
     <div style="overflow-x:auto;margin-bottom:2rem;">
-      <table class="at"><thead><tr><th>Barca</th><th>Data</th><th>Tipo</th><th>Litri</th><th>Fornitori</th><th>Note</th><th></th></tr></thead><tbody id="fuelTableBody"></tbody></table>
+      <table class="at"><thead><tr><th>Barca</th><th>Autista</th><th>Data</th><th>Tipo</th><th>Litri</th><th>Fornitori</th><th>Note</th><th></th></tr></thead><tbody id="fuelTableBody"></tbody></table>
     </div>
     <div id="fuelHistPager" style="display:none;display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;margin-bottom:1.5rem;font-family:'Source Sans 3',sans-serif;font-size:.82rem;color:var(--ink-faded)"></div>
   </div>
@@ -973,6 +973,8 @@ body{padding:.8rem .3rem 3rem;}
       <button class="sb" onclick="submitFuel()">✦ Salva rifornimento</button>
       <div class="sn" id="successNoteFuel">✓ Rifornimento salvato!</div>
     </div>
+    <!-- Storico ultimi 7 giorni (solo autista) -->
+    <div id="driverFuelHistory" style="display:none;margin-top:1.5rem"></div>
   </div>
 
   <!-- TESSERE PREPAGATE: sezione admin (nella pagina Fuel) -->
@@ -4585,6 +4587,38 @@ async function submitFuel(){
   renderUltimoRifornimento();
 }
 
+function renderDriverFuelHistory(){
+  const div=document.getElementById('driverFuelHistory');
+  if(!div||!currentUser||currentUser.isAdmin||currentUser.isSA){if(div)div.style.display='none';return;}
+  const myName=(currentUser.name||'').trim().toLowerCase();
+  const cutoff=new Date();cutoff.setDate(cutoff.getDate()-7);
+  const cutStr=cutoff.toISOString().slice(0,10);
+  const myFuel=(fuelRecords||[]).filter(r=>(r.autista||'').trim().toLowerCase()===myName&&(r.data||'').slice(0,10)>=cutStr);
+  if(!myFuel.length){div.style.display='none';return;}
+  const byDay={};
+  myFuel.forEach(r=>{const day=(r.data||'').slice(0,10);(byDay[day]=byDay[day]||[]).push(r);});
+  const days=Object.keys(byDay).sort().reverse();
+  let out='<div style="border-top:1.5px solid var(--line);padding-top:1rem">';
+  out+='<div style="font-family:Playfair Display,serif;font-size:.95rem;font-style:italic;color:var(--blue);margin-bottom:.8rem">⛽ I miei rifornimenti — ultimi 7 giorni</div>';
+  days.forEach(day=>{
+    const recs=byDay[day].slice().sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+    const dFmt=new Date(day+'T12:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+    out+=`<div style="margin-bottom:.9rem"><div style="font-size:.7rem;font-weight:700;color:var(--ink-faded);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">${dFmt}</div>`;
+    recs.forEach((r,i)=>{
+      const isLast=i===recs.length-1;
+      const ora=r.data&&r.data.includes('T')?r.data.slice(11,16):'';
+      out+=`<div style="display:flex;align-items:center;gap:.45rem;padding:.4rem .6rem;border-radius:6px;margin-bottom:.25rem;background:${isLast?'rgba(74,144,184,.1)':'#fafaf8'};border:1.5px solid ${isLast?'rgba(74,144,184,.38)':'var(--line)'}">`;
+      if(isLast)out+=`<span style="font-size:.6rem;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.05em;border:1px solid var(--blue);border-radius:3px;padding:.05rem .3rem;white-space:nowrap">ULTIMO</span>`;
+      out+=`<span style="font-weight:700;font-size:.88rem;color:var(--ink);flex:1">${escHtml(r.barca||'—')}</span>`;
+      out+=`<span style="font-size:.82rem;color:var(--ink)">${r.litri}L <strong>${(r.tipo||'').toUpperCase()}</strong></span>`;
+      if(ora)out+=`<span style="font-size:.72rem;color:var(--ink-faded)">${ora}</span>`;
+      out+='</div>';
+    });
+    out+='</div>';
+  });
+  out+='</div>';
+  div.innerHTML=out;div.style.display='block';
+}
 function renderUltimoRifornimento(){
   const div=document.getElementById('ultimoRifDiv');
   const content=document.getElementById('ultimoRifContent');
@@ -4606,6 +4640,7 @@ function renderUltimoRifornimento(){
     (last.fornitori?` &nbsp;·&nbsp; ${escHtml(last.fornitori)}`:'') +
     (last.note?`<br><span style="color:var(--ink-faded);font-size:.8rem">${escHtml(last.note)}</span>`:'');
   div.style.display='block';
+  renderDriverFuelHistory();
 }
 var _fuelHistPage=0;
 const FUEL_PG=20;
@@ -4630,7 +4665,7 @@ function renderFuelHistory(){
     const _fd=new Date(r.data);
     const d=_fd.toLocaleDateString('it-IT');
     const ora=r.data&&r.data.includes('T')?r.data.slice(11,16):'';
-    return`<tr><td class="tm">${r.barca}</td><td class="td">${d}${ora?`<br><span style="font-size:.72rem;color:var(--ink-faded)">${ora}</span>`:''}</td><td><strong>${r.tipo.toUpperCase()}</strong></td><td>${r.litri}L</td><td>${r.fornitori}</td><td class="tn">${r.note||'—'}</td><td>${(currentUser.isAdmin||currentUser.isSA)?`<button class="dx" onclick="delFuelRec(${r.id})">×</button>`:''}</td></tr>`;
+    return`<tr><td class="tm">${r.barca}</td><td style="font-size:.78rem;color:var(--ink-faded)">${escHtml(r.autista||'—')}</td><td class="td">${d}${ora?`<br><span style="font-size:.72rem;color:var(--ink-faded)">${ora}</span>`:''}</td><td><strong>${r.tipo.toUpperCase()}</strong></td><td>${r.litri}L</td><td>${r.fornitori}</td><td class="tn">${r.note||'—'}</td><td>${(currentUser.isAdmin||currentUser.isSA)?`<button class="dx" onclick="delFuelRec(${r.id})">×</button>`:''}</td></tr>`;
   }).join('');
 }
 async function delFuelRec(id){

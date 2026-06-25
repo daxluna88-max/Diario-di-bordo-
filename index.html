@@ -4647,7 +4647,7 @@ function renderUltimoRifornimento(){
   const div=document.getElementById('ultimoRifDiv');
   const content=document.getElementById('ultimoRifContent');
   if(!div||!content||!currentUser)return;
-  let myFuel=(fuelRecords||[]).filter(r=>!GHOST_BOATS.includes((r.barca||'').trim()));
+  let myFuel=(fuelRecords||[]).filter(r=>!isTestBarca((r.barca||'').trim()));
   if(currentUser.isAdmin&&!currentUser.isSA){
     const mz=getAdminMezzi();
     myFuel=myFuel.filter(r=>mz.some(m=>m.trim().toLowerCase()===(r.barca||'').trim().toLowerCase()||

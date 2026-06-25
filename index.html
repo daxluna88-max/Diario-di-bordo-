@@ -4613,7 +4613,7 @@ async function submitFuel(){
 
 function renderDriverFuelHistory(){
   const div=document.getElementById('driverFuelHistory');
-  if(!div||!currentUser||currentUser.isAdmin||currentUser.isSA){if(div)div.style.display='none';return;}
+  if(!div||!currentUser||currentUser.isSA){if(div)div.style.display='none';return;}
   const myName=(currentUser.name||'').trim().toLowerCase();
   const cutoff=new Date();cutoff.setDate(cutoff.getDate()-7);
   const cutStr=cutoff.toISOString().slice(0,10);

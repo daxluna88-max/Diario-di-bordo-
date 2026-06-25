@@ -4624,12 +4624,12 @@ function renderDriverFuelHistory(){
   const days=Object.keys(byDay).sort().reverse();
   let out='<div style="border-top:1.5px solid var(--line);padding-top:1rem">';
   out+='<div style="font-family:Playfair Display,serif;font-size:.95rem;font-style:italic;color:var(--blue);margin-bottom:.8rem">⛽ I miei rifornimenti — ultimi 7 giorni</div>';
-  days.forEach(day=>{
+  days.forEach((day,dayIdx)=>{
     const recs=byDay[day].slice().sort((a,b)=>(a.data||'').localeCompare(b.data||''));
     const dFmt=new Date(day+'T12:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
     out+=`<div style="margin-bottom:.9rem"><div style="font-size:.7rem;font-weight:700;color:var(--ink-faded);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">${dFmt}</div>`;
     recs.forEach((r,i)=>{
-      const isLast=i===recs.length-1;
+      const isLast=dayIdx===0&&i===recs.length-1;
       const ora=r.data&&r.data.includes('T')?r.data.slice(11,16):'';
       out+=`<div style="display:flex;align-items:center;gap:.45rem;padding:.4rem .6rem;border-radius:6px;margin-bottom:.25rem;background:${isLast?'rgba(74,144,184,.1)':'#fafaf8'};border:1.5px solid ${isLast?'rgba(74,144,184,.38)':'var(--line)'}">`;
       if(isLast)out+=`<span style="font-size:.6rem;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.05em;border:1px solid var(--blue);border-radius:3px;padding:.05rem .3rem;white-space:nowrap">ULTIMO</span>`;
@@ -4656,7 +4656,7 @@ function renderUltimoRifornimento(){
   }else if(!currentUser.isAdmin&&!currentUser.isSA){
     myFuel=myFuel.filter(r=>(r.autista||'').trim().toLowerCase()===(currentUser.name||'').trim().toLowerCase());
   }
-  if(!myFuel.length){div.style.display='none';return;}
+  if(!myFuel.length){div.style.display='none';renderDriverFuelHistory();return;}
   const last=myFuel[0];
   const dataFmt=last.data?new Date(last.data).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
   content.innerHTML=`<strong>${escHtml(last.barca||'—')}</strong> &nbsp;·&nbsp; ${dataFmt}<br>`+

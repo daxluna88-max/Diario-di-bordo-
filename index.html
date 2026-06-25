@@ -2151,17 +2151,34 @@ async function doLogin(){
     // autista: cerca nella lista globale; se ha password la richiede
     const d=drivers.find(d=>d.name.toLowerCase()===name.toLowerCase());
     if(!d){showLoginErr("Nome non riconosciuto. Contatta l'amministratore.");return;}
-    if(d.pw){
-      // ha una password: mostra campo se non già visibile
+    // Se l'utente è anche admin, usa il percorso admin direttamente
+    const driverAdminAcc=adminAccounts.find(a=>a.name.toLowerCase()===name.toLowerCase()&&a.active);
+    if(driverAdminAcc){
+      // Admin che usa il form driver: mostra campo password admin
       const driverPwField=document.getElementById('driverPwField');
-      if(driverPwField&&driverPwField.style.display==='none'){
-        driverPwField.style.display='block';
+      const adminPwField=document.getElementById('pwField');
+      if(adminPwField&&adminPwField.style.display==='none'){
+        adminPwField.style.display='block';
         showLoginErr('Inserisci la tua password per continuare.');return;
       }
-      const enteredPw=document.getElementById('driverPwInput')?document.getElementById('driverPwInput').value:'';
-      if(enteredPw!==d.pw){showLoginErr('Password non corretta.');return;}
+      const enteredPw=document.getElementById('loginPw')?document.getElementById('loginPw').value:'';
+      if(!driverAdminAcc.active){showLoginErr('Account disabilitato.');return;}
+      if(enteredPw!==driverAdminAcc.pw){showLoginErr('Password non corretta.');return;}
+      driverAdminAcc.lastLogin=new Date().toISOString();driverAdminAcc.lastLoginIP=await getIP();await sv.adminAcc();
+      currentUser={name:driverAdminAcc.name,isAdmin:true,isSA:false,accIdx:adminAccounts.indexOf(driverAdminAcc)};
+    }else{
+      if(d.pw){
+        // ha una password: mostra campo se non già visibile
+        const driverPwField=document.getElementById('driverPwField');
+        if(driverPwField&&driverPwField.style.display==='none'){
+          driverPwField.style.display='block';
+          showLoginErr('Inserisci la tua password per continuare.');return;
+        }
+        const enteredPw=document.getElementById('driverPwInput')?document.getElementById('driverPwInput').value:'';
+        if(enteredPw!==d.pw){showLoginErr('Password non corretta.');return;}
+      }
+      currentUser={name:d.name,isAdmin:false,isSA:false};
     }
-    currentUser={name:d.name,isAdmin:false,isSA:false};
   }
   await addAudit(currentUser.name,isAdminMode?'admin':'driver','login',`Login ${isAdminMode?'admin':'autista'}`);
   enterApp();

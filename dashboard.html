@@ -387,7 +387,14 @@ tr:hover td{background:var(--light)}
           <button class="btn btn-primary" onclick="downloadCsv()">↓ CSV</button>
         </div>
         <div id="tabReg" class="tab-panel active"><div id="tblReg"></div></div>
-        <div id="tabFuel" class="tab-panel"><div id="tblFuel"></div></div>
+        <div id="tabFuel" class="tab-panel">
+          <div style="margin-bottom:.7rem">
+            <select id="fuelBoatFilter" onchange="renderAll()" style="font-family:inherit;font-size:.82rem;padding:.4rem .6rem;border:1.5px solid var(--border);border-radius:7px;background:var(--card);max-width:100%">
+              <option value="">🚤 Tutte le barche</option>
+            </select>
+          </div>
+          <div id="tblFuel"></div>
+        </div>
         <div id="tabConsumo" class="tab-panel"><div id="tblConsumo"></div></div>
         <div id="tabOre" class="tab-panel"><div id="tblOre"></div></div>
         <div id="tabForn" class="tab-panel"><div id="tblForn"></div></div>
@@ -741,9 +748,22 @@ function renderTables(records,fuelRecords,tessereLog,allRecords){
       esc(r.intervento||'—'),`<span class="td-muted">${esc(r.note||'')}</span>`])
   );
 
-  // --- RIFORNIMENTI ---
-  const sortedFuel=[...fuelRecords].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
-  document.getElementById('tblFuel').innerHTML=tbl(
+  // --- RIFORNIMENTI (con filtro barca) ---
+  // popola il menu barche una sola volta / mantieni selezione
+  const boatSel=document.getElementById('fuelBoatFilter');
+  if(boatSel){
+    const cur=boatSel.value;
+    const allBoats=[...new Set((DB['fleet-fuel-records']||[]).map(r=>(r.barca||'').trim()).filter(b=>b&&!GHOST_BOATS.includes(b)))].sort();
+    boatSel.innerHTML='<option value="">🚤 Tutte le barche</option>'+allBoats.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
+    if(cur&&allBoats.includes(cur))boatSel.value=cur;
+  }
+  const boatFilter=boatSel?boatSel.value:'';
+  let fuelForList=fuelRecords;
+  if(boatFilter)fuelForList=fuelRecords.filter(r=>(r.barca||'').trim()===boatFilter);
+  const sortedFuel=[...fuelForList].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  const fuelTot=sortedFuel.reduce((s,r)=>s+(parseFloat(r.litri)||0),0);
+  const fuelHead=boatFilter?`<div style="font-size:.82rem;color:var(--muted);margin-bottom:.5rem">${esc(boatFilter)} — <strong>${sortedFuel.length}</strong> rifornimenti, <strong>${Math.round(fuelTot)} L</strong> totali</div>`:'';
+  document.getElementById('tblFuel').innerHTML=fuelHead+tbl(
     ['Data','Autista','Barca','Tipo','Litri','Fornitore','Note'],
     sortedFuel.map(r=>[fmtDate(r.data),esc(r.autista||'—'),esc(r.barca||'—'),
       r.tipo?`<span class="chip chip-${r.tipo}">${esc(r.tipo)}</span>`:'—',
@@ -873,9 +893,11 @@ function downloadCsv(){
     csv=toCsv(['Data','Autista','Barca','Contaore','Intervento','Note'],
       [...records].sort((a,b)=>(b.data||'').localeCompare(a.data||'')).map(r=>[r.data||'',r.autista||'',r.mezzo||'',r.ore||'',r.intervento||'',r.note||'']));
   }else if(activeTab==='fuel'){
-    name='rifornimenti.csv';
+    const bf=(document.getElementById('fuelBoatFilter')||{}).value||'';
+    const ff=bf?fuelRecords.filter(r=>(r.barca||'').trim()===bf):fuelRecords;
+    name=bf?`rifornimenti_${bf.replace(/[^A-Za-z0-9]+/g,'_')}.csv`:'rifornimenti.csv';
     csv=toCsv(['Data','Autista','Barca','Tipo','Litri','Fornitore','Note'],
-      [...fuelRecords].sort((a,b)=>(b.data||'').localeCompare(a.data||'')).map(r=>[(r.data||'').slice(0,10),r.autista||'',r.barca||'',r.tipo||'',r.litri||'',cleanFornitore(r.fornitori)||'',r.note||'']));
+      [...ff].sort((a,b)=>(b.data||'').localeCompare(a.data||'')).map(r=>[(r.data||'').slice(0,10),r.autista||'',r.barca||'',r.tipo||'',r.litri||'',cleanFornitore(r.fornitori)||'',r.note||'']));
   }else if(activeTab==='consumo'){
     const range=getDateRange(currentPeriod);
     const sfx=range.from&&range.from!=='0000-01-01'?`_${range.from}_${range.to==='9999-12-31'?'oggi':range.to}`:'';

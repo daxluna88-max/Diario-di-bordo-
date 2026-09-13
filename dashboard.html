@@ -837,7 +837,7 @@ function renderTables(records,fuelRecords,tessereLog,allRecords){
   if(!consumo.rows.length){
     document.getElementById('tblConsumo').innerHTML='<div class="empty">Nessun rifornimento nel periodo/filtro selezionato.</div>';
   }else{
-    document.getElementById('tblConsumo').innerHTML=tbl(
+    let consumoHtml=tbl(
       ['Barca','Rifornimenti','Diesel','Benzina','Elettrica','Totale litri'],
       consumo.rows.map(([b,v])=>[
         esc(b),v.rif,
@@ -850,6 +850,20 @@ function renderTables(records,fuelRecords,tessereLog,allRecords){
         `<span class="td-num" style="font-weight:700;color:var(--orange)">${Math.round(consumo.tot)} L</span>`
       ]])
     );
+    // se c'è almeno un filtro attivo, mostra anche l'elenco dettagliato dei singoli rifornimenti
+    if(cBoatFilter||cDriverFilter||cTypeFilter){
+      const sortedDetail=[...fuelForConsumo].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+      consumoHtml+=`<div style="margin-top:1.3rem;font-weight:600;font-size:.85rem;color:var(--ink)">📋 Elenco rifornimenti (${sortedDetail.length})</div>`+
+        `<div style="margin-top:.5rem">`+tbl(
+          ['Data','Autista','Barca','Tipo','Litri','Fornitore','Note'],
+          sortedDetail.map(r=>[fmtDate(r.data),esc(r.autista||'—'),esc(r.barca||'—'),
+            r.tipo?`<span class="chip chip-${r.tipo}">${esc(r.tipo)}</span>`:'—',
+            r.litri?`<span class="td-num">${r.litri} L</span>`:'—',
+            esc(cleanFornitore(r.fornitori)||'—'),
+            `<span class="td-muted">${esc(r.note||'')}</span>`])
+        )+`</div>`;
+    }
+    document.getElementById('tblConsumo').innerHTML=consumoHtml;
   }
 
   // --- ORE MOTORE: per autista con dettaglio barche ---

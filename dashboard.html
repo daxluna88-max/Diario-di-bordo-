@@ -977,8 +977,16 @@ function downloadCsv(){
     const slug=s=>s.replace(/[^A-Za-z0-9]+/g,'_');
     const parts=[bf,df,tf].filter(Boolean).map(slug);
     name=parts.length?`rifornimenti_${parts.join('_')}.csv`:'rifornimenti.csv';
+    const sortedFF=[...ff].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
     csv=toCsv(['Data','Autista','Barca','Tipo','Litri','Fornitore','Note'],
-      [...ff].sort((a,b)=>(b.data||'').localeCompare(a.data||'')).map(r=>[(r.data||'').slice(0,10),r.autista||'',r.barca||'',r.tipo||'',r.litri||'',cleanFornitore(r.fornitori)||'',r.note||'']));
+      sortedFF.map(r=>[(r.data||'').slice(0,10),r.autista||'',r.barca||'',r.tipo||'',r.litri||'',cleanFornitore(r.fornitori)||'',r.note||'']));
+    // con un filtro attivo, aggiungi in cima una riga di riepilogo (conteggio + litri totali)
+    if(bf||df||tf){
+      const ffTot=sortedFF.reduce((s,r)=>s+(parseFloat(r.litri)||0),0);
+      const labelParts=[bf,df,tf?cap(tf):''].filter(Boolean);
+      const summaryCsv=toCsv(['Filtro','Rifornimenti','Totale litri'],[[labelParts.join(' · '),sortedFF.length,Math.round(ffTot)]]);
+      csv=summaryCsv+'\n\nElenco rifornimenti\n'+csv;
+    }
   }else if(activeTab==='consumo'){
     const range=getDateRange(currentPeriod);
     const sfx=range.from&&range.from!=='0000-01-01'?`_${range.from}_${range.to==='9999-12-31'?'oggi':range.to}`:'';

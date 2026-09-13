@@ -619,9 +619,13 @@ function renderCharts(records,fuelRecords,allRec,allFuel){
   const tipi=Object.entries(tipiMap).filter(([k])=>k).sort((a,b)=>b[1]-a[1]);
   mkDoughnut('chartFuelTipo',tipi.map(x=>cap(x[0])),tipi.map(x=>Math.round(x[1])));
 
-  // ---- litri per barca ----
+  // ---- litri per barca (TUTTE le barche) ----
   const litriB=sumBy(fuelRecords,r=>(r.barca||'').trim(),r=>parseFloat(r.litri)||0);
-  mkBarChart('chartFuelBarca',topN(litriB,8).map(x=>x.k),topN(litriB,8).map(x=>Math.round(x.v)),PALETTE,'y');
+  const litriBall=topN(litriB,9999);
+  // altezza dinamica: ~28px per barca (min 200px) così si vedono tutte
+  const fbCanvas=document.getElementById('chartFuelBarca');
+  if(fbCanvas&&fbCanvas.parentElement)fbCanvas.parentElement.style.height=Math.max(200,litriBall.length*28+40)+'px';
+  mkBarChart('chartFuelBarca',litriBall.map(x=>x.k),litriBall.map(x=>Math.round(x.v)),PALETTE,'y');
 
   // ---- litri per fornitore ----
   const fornMap=sumBy(fuelRecords,r=>cleanFornitore(r.fornitori),r=>parseFloat(r.litri)||0);

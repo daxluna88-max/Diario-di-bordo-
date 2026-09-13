@@ -404,7 +404,23 @@ tr:hover td{background:var(--light)}
           </div>
           <div id="tblFuel"></div>
         </div>
-        <div id="tabConsumo" class="tab-panel"><div id="tblConsumo"></div></div>
+        <div id="tabConsumo" class="tab-panel">
+          <div style="margin-bottom:.7rem;display:flex;flex-wrap:wrap;gap:.5rem">
+            <select id="consumoBoatFilter" onchange="renderAll()" style="font-family:inherit;font-size:.82rem;padding:.4rem .6rem;border:1.5px solid var(--border);border-radius:7px;background:var(--card);max-width:100%">
+              <option value="">🚤 Tutte le barche</option>
+            </select>
+            <select id="consumoDriverFilter" onchange="renderAll()" style="font-family:inherit;font-size:.82rem;padding:.4rem .6rem;border:1.5px solid var(--border);border-radius:7px;background:var(--card);max-width:100%">
+              <option value="">👤 Tutti gli autisti</option>
+            </select>
+            <select id="consumoTypeFilter" onchange="renderAll()" style="font-family:inherit;font-size:.82rem;padding:.4rem .6rem;border:1.5px solid var(--border);border-radius:7px;background:var(--card);max-width:100%">
+              <option value="">⛽ Tutti i tipi</option>
+              <option value="diesel">Diesel</option>
+              <option value="benzina">Benzina</option>
+              <option value="elettrica">Elettrica</option>
+            </select>
+          </div>
+          <div id="tblConsumo"></div>
+        </div>
         <div id="tabOre" class="tab-panel"><div id="tblOre"></div></div>
         <div id="tabForn" class="tab-panel"><div id="tblForn"></div></div>
         <div id="tabTslog" class="tab-panel"><div id="tblTslog"></div></div>
@@ -794,10 +810,32 @@ function renderTables(records,fuelRecords,tessereLog,allRecords){
       `<span class="td-muted">${esc(r.note||'')}</span>`])
   );
 
-  // --- CONSUMO PER BARCA ---
-  const consumo=aggConsumoBarca(fuelRecords);
+  // --- CONSUMO PER BARCA (con filtro barca / autista / tipo) ---
+  const cBoatSel=document.getElementById('consumoBoatFilter');
+  if(cBoatSel){
+    const cur=cBoatSel.value;
+    const allBoats=[...new Set((DB['fleet-fuel-records']||[]).map(r=>(r.barca||'').trim()).filter(b=>b&&!GHOST_BOATS.includes(b)))].sort();
+    cBoatSel.innerHTML='<option value="">🚤 Tutte le barche</option>'+allBoats.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
+    if(cur&&allBoats.includes(cur))cBoatSel.value=cur;
+  }
+  const cDriverSel=document.getElementById('consumoDriverFilter');
+  if(cDriverSel){
+    const cur=cDriverSel.value;
+    const allDrivers=[...new Set((DB['fleet-fuel-records']||[]).map(r=>(r.autista||'').trim()).filter(Boolean))].sort();
+    cDriverSel.innerHTML='<option value="">👤 Tutti gli autisti</option>'+allDrivers.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join('');
+    if(cur&&allDrivers.includes(cur))cDriverSel.value=cur;
+  }
+  const cBoatFilter=cBoatSel?cBoatSel.value:'';
+  const cDriverFilter=cDriverSel?cDriverSel.value:'';
+  const cTypeSel=document.getElementById('consumoTypeFilter');
+  const cTypeFilter=cTypeSel?cTypeSel.value:'';
+  let fuelForConsumo=fuelRecords;
+  if(cBoatFilter)fuelForConsumo=fuelForConsumo.filter(r=>(r.barca||'').trim()===cBoatFilter);
+  if(cDriverFilter)fuelForConsumo=fuelForConsumo.filter(r=>(r.autista||'').trim()===cDriverFilter);
+  if(cTypeFilter)fuelForConsumo=fuelForConsumo.filter(r=>(r.tipo||'').trim().toLowerCase()===cTypeFilter);
+  const consumo=aggConsumoBarca(fuelForConsumo);
   if(!consumo.rows.length){
-    document.getElementById('tblConsumo').innerHTML='<div class="empty">Nessun rifornimento nel periodo selezionato.</div>';
+    document.getElementById('tblConsumo').innerHTML='<div class="empty">Nessun rifornimento nel periodo/filtro selezionato.</div>';
   }else{
     document.getElementById('tblConsumo').innerHTML=tbl(
       ['Barca','Rifornimenti','Diesel','Benzina','Elettrica','Totale litri'],
@@ -930,8 +968,17 @@ function downloadCsv(){
   }else if(activeTab==='consumo'){
     const range=getDateRange(currentPeriod);
     const sfx=range.from&&range.from!=='0000-01-01'?`_${range.from}_${range.to==='9999-12-31'?'oggi':range.to}`:'';
-    name=`consumo_per_barca${sfx}.csv`;
-    const c=aggConsumoBarca(fuelRecords);
+    const cbf=(document.getElementById('consumoBoatFilter')||{}).value||'';
+    const cdf=(document.getElementById('consumoDriverFilter')||{}).value||'';
+    const ctf=(document.getElementById('consumoTypeFilter')||{}).value||'';
+    let cf=fuelRecords;
+    if(cbf)cf=cf.filter(r=>(r.barca||'').trim()===cbf);
+    if(cdf)cf=cf.filter(r=>(r.autista||'').trim()===cdf);
+    if(ctf)cf=cf.filter(r=>(r.tipo||'').trim().toLowerCase()===ctf);
+    const slug2=s=>s.replace(/[^A-Za-z0-9]+/g,'_');
+    const fparts=[cbf,cdf,ctf].filter(Boolean).map(slug2);
+    name=`consumo_per_barca${fparts.length?'_'+fparts.join('_'):''}${sfx}.csv`;
+    const c=aggConsumoBarca(cf);
     csv=toCsv(['Barca','Rifornimenti','Diesel (L)','Benzina (L)','Elettrica (L)','Totale litri'],
       c.rows.map(([b,v])=>[b,v.rif,Math.round(v.diesel),Math.round(v.benzina),Math.round(v.elettrica),Math.round(v.litri)]));
   }else if(activeTab==='ore'){

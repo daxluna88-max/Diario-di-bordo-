@@ -210,6 +210,12 @@ tr:hover td{background:var(--light)}
       <button class="pill" onclick="setPeriod('week7',this)">7 Giorni</button>
       <button class="pill" onclick="setPeriod('week',this)">Settimana</button>
       <button class="pill active" onclick="setPeriod('month',this)">Mese</button>
+      <button class="pill" onclick="setPeriod('all',this)">Tutto</button>
+    </div>
+    <div class="period-pills" style="align-items:center;gap:.3rem">
+      <input type="date" id="customFrom" onchange="setCustomPeriod()" style="font-family:inherit;font-size:.78rem;padding:.3rem .4rem;border:1.5px solid var(--border);border-radius:6px;background:var(--card)">
+      <span style="color:var(--muted);font-size:.78rem">→</span>
+      <input type="date" id="customTo" onchange="setCustomPeriod()" style="font-family:inherit;font-size:.78rem;padding:.3rem .4rem;border:1.5px solid var(--border);border-radius:6px;background:var(--card)">
     </div>
     <span class="period-range" id="periodRange"></span>
   </div>
@@ -370,6 +376,7 @@ tr:hover td{background:var(--light)}
       <div class="tabs-nav">
         <button class="tab-btn active" onclick="switchTab('reg',this)">📋 Registrazioni</button>
         <button class="tab-btn" onclick="switchTab('fuel',this)">⛽ Rifornimenti</button>
+        <button class="tab-btn" onclick="switchTab('consumo',this)">🚤 Consumo/barca</button>
         <button class="tab-btn" onclick="switchTab('ore',this)">⏱ Ore Motore</button>
         <button class="tab-btn" onclick="switchTab('forn',this)">🏪 Fornitori</button>
         <button class="tab-btn" onclick="switchTab('tslog',this)">💳 Tessere</button>
@@ -381,6 +388,7 @@ tr:hover td{background:var(--light)}
         </div>
         <div id="tabReg" class="tab-panel active"><div id="tblReg"></div></div>
         <div id="tabFuel" class="tab-panel"><div id="tblFuel"></div></div>
+        <div id="tabConsumo" class="tab-panel"><div id="tblConsumo"></div></div>
         <div id="tabOre" class="tab-panel"><div id="tblOre"></div></div>
         <div id="tabForn" class="tab-panel"><div id="tblForn"></div></div>
         <div id="tabTslog" class="tab-panel"><div id="tblTslog"></div></div>
@@ -447,6 +455,17 @@ function setPeriod(p,btn){
   currentPeriod=p;
   document.querySelectorAll('.pill').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
+  // svuota i campi custom quando si usa un preset
+  const cf=document.getElementById('customFrom'),ct=document.getElementById('customTo');
+  if(cf)cf.value='';if(ct)ct.value='';
+  renderAll();
+}
+function setCustomPeriod(){
+  const cf=document.getElementById('customFrom'),ct=document.getElementById('customTo');
+  if(!cf||!ct)return;
+  if(!cf.value&&!ct.value)return;
+  currentPeriod='custom';
+  document.querySelectorAll('.pill').forEach(b=>b.classList.remove('active'));
   renderAll();
 }
 
@@ -488,6 +507,14 @@ function getDateRange(period){
   const pad=n=>String(n).padStart(2,'0');
   const fmt=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
   if(period==='all')return{from:null,to:null,label:'Tutti i dati'};
+  if(period==='custom'){
+    const cf=(document.getElementById('customFrom')||{}).value||'';
+    const ct=(document.getElementById('customTo')||{}).value||'';
+    const lf=s=>new Date(s+'T12:00').toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'});
+    let label='Periodo personalizzato';
+    if(cf&&ct)label=lf(cf)+' – '+lf(ct);else if(cf)label='Dal '+lf(cf);else if(ct)label='Fino al '+lf(ct);
+    return{from:cf||'0000-01-01',to:ct||'9999-12-31',label};
+  }
   if(period==='day'){
     const t=fmt(now);return{from:t,to:t,label:'Oggi, '+now.toLocaleDateString('it-IT',{day:'2-digit',month:'long'})};
   }
@@ -721,6 +748,26 @@ function renderTables(records,fuelRecords,tessereLog,allRecords){
       `<span class="td-muted">${esc(r.note||'')}</span>`])
   );
 
+  // --- CONSUMO PER BARCA ---
+  const consumo=aggConsumoBarca(fuelRecords);
+  if(!consumo.rows.length){
+    document.getElementById('tblConsumo').innerHTML='<div class="empty">Nessun rifornimento nel periodo selezionato.</div>';
+  }else{
+    document.getElementById('tblConsumo').innerHTML=tbl(
+      ['Barca','Rifornimenti','Diesel','Benzina','Elettrica','Totale litri'],
+      consumo.rows.map(([b,v])=>[
+        esc(b),v.rif,
+        v.diesel?`<span class="td-num">${Math.round(v.diesel)} L</span>`:'—',
+        v.benzina?`<span class="td-num">${Math.round(v.benzina)} L</span>`:'—',
+        v.elettrica?`<span class="td-num">${Math.round(v.elettrica)} L</span>`:'—',
+        `<span class="td-num" style="font-weight:700;color:var(--blue)">${Math.round(v.litri)} L</span>`
+      ]).concat([[
+        '<strong>Totale flotta</strong>',`<strong>${consumo.totRif}</strong>`,'','','',
+        `<span class="td-num" style="font-weight:700;color:var(--orange)">${Math.round(consumo.tot)} L</span>`
+      ]])
+    );
+  }
+
   // --- ORE MOTORE: per autista con dettaglio barche ---
   const deltaOre=calcDeltaOre(allRecords,records);
   const autSorted=Object.entries(deltaOre.byAutista).sort((a,b)=>b[1].totale-a[1].totale);
@@ -779,6 +826,18 @@ function renderTables(records,fuelRecords,tessereLog,allRecords){
   );
 }
 
+function aggConsumoBarca(fuelRecords){
+  const agg={};
+  fuelRecords.forEach(r=>{
+    const b=(r.barca||'—').trim();
+    const a=(agg[b]=agg[b]||{litri:0,rif:0,diesel:0,benzina:0,elettrica:0});
+    const l=parseFloat(r.litri)||0;a.litri+=l;a.rif++;
+    const t=(r.tipo||'').trim().toLowerCase();
+    if(t==='diesel')a.diesel+=l;else if(t==='benzina')a.benzina+=l;else if(t==='elettrica')a.elettrica+=l;
+  });
+  const rows=Object.entries(agg).sort((a,b)=>b[1].litri-a[1].litri);
+  return{rows,tot:rows.reduce((s,[,v])=>s+v.litri,0),totRif:rows.reduce((s,[,v])=>s+v.rif,0)};
+}
 function tbl(headers,rows){
   if(!rows.length)return '<div class="empty" style="padding:.7rem 0">Nessun dato disponibile.</div>';
   return`<div style="overflow-x:auto"><table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${
@@ -787,7 +846,7 @@ function tbl(headers,rows){
 }
 
 // ── TABS ──────────────────────────────────────────────────────────────────
-const TAB_TITLES={reg:'Registrazioni',fuel:'Rifornimenti',ore:'Ore Motore per Autista',forn:'Riepilogo Fornitori',tslog:'Movimenti Tessere'};
+const TAB_TITLES={reg:'Registrazioni',fuel:'Rifornimenti',consumo:'Consumo Carburante per Barca',ore:'Ore Motore per Autista',forn:'Riepilogo Fornitori',tslog:'Movimenti Tessere'};
 function switchTab(name,btn){
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
@@ -813,6 +872,13 @@ function downloadCsv(){
     name='rifornimenti.csv';
     csv=toCsv(['Data','Autista','Barca','Tipo','Litri','Fornitore','Note'],
       [...fuelRecords].sort((a,b)=>(b.data||'').localeCompare(a.data||'')).map(r=>[(r.data||'').slice(0,10),r.autista||'',r.barca||'',r.tipo||'',r.litri||'',cleanFornitore(r.fornitori)||'',r.note||'']));
+  }else if(activeTab==='consumo'){
+    const range=getDateRange(currentPeriod);
+    const sfx=range.from&&range.from!=='0000-01-01'?`_${range.from}_${range.to==='9999-12-31'?'oggi':range.to}`:'';
+    name=`consumo_per_barca${sfx}.csv`;
+    const c=aggConsumoBarca(fuelRecords);
+    csv=toCsv(['Barca','Rifornimenti','Diesel (L)','Benzina (L)','Elettrica (L)','Totale litri'],
+      c.rows.map(([b,v])=>[b,v.rif,Math.round(v.diesel),Math.round(v.benzina),Math.round(v.elettrica),Math.round(v.litri)]));
   }else if(activeTab==='ore'){
     name='ore_motore.csv';
     const d=calcDeltaOre(DB['fleet-records']||[],records);
